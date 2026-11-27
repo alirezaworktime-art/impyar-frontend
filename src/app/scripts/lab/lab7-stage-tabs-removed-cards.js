@@ -6,22 +6,13 @@ var L7={stage:'all'};
   L.innerHTML=l6BenchSeg()+`<div class="l7st"><label class="f">مرحله<select id="l7stage"><option value="all">همه‌ی مراحل (${fa(cnt('all'))})</option>${L4T.map(([k,l])=>`<option value="${k}"${L7.stage===k?' selected':''}>${esc(l)} (${fa(cnt(k))})</option>`).join('')}</select></label><small class="meta">${rows.length?fa(rows.length)+' کار':''}</small></div>`+(rows.length?rows.map(l4Card).join(''):'<div class="empty">کاری در این مرحله نیست.</div>')}catch(e){}return r}})();
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='l7stage'){L7.stage=e.target.value;renderLab()}});
 /* W4: the lateness of a waiting step counts only its own part */
-l2Late=function(x,s){const f=l2Dept(s.dept).flags||{},now=Date.now(),pt=s.part||'';
+function l2Late(x,s){const f=l2Dept(s.dept).flags||{},now=Date.now(),pt=s.part||'';
   if(s.st==='pend'){const lim=(+f.acceptMin||0)*6e4+(+f.acceptDay||0)*864e5;if(!lim)return false;const prev=(x.steps||[]).filter(t=>t.idx<s.idx&&(t.part||'')===pt&&t.done_at&&!(t.grp&&t.grp===s.grp)).map(t=>t.done_at).sort().pop()||(x.data||{}).startAt||x.upd;return prev&&now-Date.parse(prev)>lim}
-  if(s.st==='acc'){const lim=(+f.doneMin||0)*6e4+(+f.doneDay||0)*864e5;return !!lim&&s.acc_at&&now-Date.parse(s.acc_at)>lim}return false};
+  if(s.st==='acc'){const lim=(+f.doneMin||0)*6e4+(+f.doneDay||0)*864e5;return !!lim&&s.acc_at&&now-Date.parse(s.acc_at)>lim}return false}
 /* A3: actions plain staff cannot do are not shown */
 const l7Rec=()=>{const me=L2.me||{};return l5Sup()||!!me.recep};
 function l7Trim(root){if(!root||l7Rec())return;root.querySelectorAll('[data-l5edit],[data-l6a="renew"],[data-l6a="renewall"],[data-l6a="reproc"],[data-l6a="test"],[data-l6a="finish"]').forEach(b=>b.remove())}
-(function(){const _m=l6Menu;l6Menu=function(){const r=_m.apply(this,arguments);l7Trim($('l6MenuSh'));return r}})();
-(function(){const _b=l6BenchOp;l6BenchOp=async function(){const r=await _b.apply(this,arguments);l7Trim($('l6MenuSh'));return r}})();
 (function(){const _r=l2Render;l2Render=function(){const r=_r.apply(this,arguments);try{l7Trim($('l2In'))}catch(e){}return r}})();
-(function(){const _c=l4Card;l4Card=function(){const h=_c.apply(this,arguments);return l7Rec()?h:h.replace(/<button class="btn sm ghost" type="button" data-l5edit="[^"]*">ویرایش<\/button>/,'')}})();
-/* W3: «شروع اصلاح» chips name their part */
-(function(){const _o=l2StartOpen;l2StartOpen=async function(lid){const r=await _o.apply(this,arguments);try{const sh=$('l2StSh'),c=sh&&sh.querySelector('#l2From');if(!c)return r;const o=(L2.ord&&L2.ord.order&&L2.ord.order.id===lid)?L2.ord:null,x=LB.items.find(i=>i.id===lid),steps=(x&&x.steps)||(o&&o.steps)||[],P=(((x||o&&o.order)||{}).data||{}).parts||[];
-  if(!P.length)return r;c.querySelectorAll('[data-from]').forEach(b=>{const s=steps.find(v=>String(v.idx)===b.dataset.from),p=s&&P.find(q=>q.p===s.part);if(p)b.insertAdjacentHTML('afterbegin',`<small class="l6pt">${esc(p.label)}</small> `)})}catch(e){}return r}})();
-/* a new work shows in its stage when the cards view is open */
-(function(){const _s=l4Save;l4Save=async function(){const seg=LB.seg;const r=await _s.apply(this,arguments);try{if(LB.seg!==seg&&/^s_/.test(LB.seg)&&L7.stage!=='all')L7.stage=LB.seg.slice(2)}catch(e){}return r}})();
-(function(){const _bs=l6BenchSeg;l6BenchSeg=function(){return _bs.apply(this,arguments).replace('کارت‌های این مرحله','کارت‌ها')}})();
 
 document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t&&t.dataset&&t.dataset.fx2sel&&t.classList.contains('fx2d')){e.preventDefault();t.click()}});
 /* fix6a: prosthesis path in the owner's order; after an approved test the order form opens for the next piece */

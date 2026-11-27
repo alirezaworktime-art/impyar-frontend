@@ -13,8 +13,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.matches&&t.matche
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button.btn');if(!t||t.classList.contains('ghost')||t.classList.contains('chip'))return;
   const c=t.closest('.sheet,form,.card,[role=dialog]');if(!c)return;const bad=[...c.querySelectorAll(FX7_AMT)].find(i=>!i.disabled&&fx7IsBad(i));if(!bad)return;
   e.preventDefault();e.stopImmediatePropagation();fx7Mark(bad,true);try{bad.focus({preventScroll:false})}catch(x){}const m=c.querySelector('#uxAskM');if(m){m.className='msg err';m.textContent=FX7_AMT_MSG}else toast(FX7_AMT_MSG,true)},true);
-/* M3: the surgery-difference settlement asks the card-to-card destination too */
-{const _sr=stRender;stRender=function(){const r=_sr.apply(this,arguments);try{if(ST&&ST.k==='card'){const ch=document.querySelector('#stF .poschips');if(ch&&!document.querySelector('[data-fin1w="stacct"]'))ch.closest('.f').insertAdjacentHTML('afterend',fin1AcctHTML('stacct',ST.pos==='xfer',ST.acct||''))}}catch(e){}return r}}
+/* M3: the surgery-difference settlement asks the card-to-card destination too (its render is in stRender) */
 {const _sp=stPays;stPays=function(){const r=_sp.apply(this,arguments);try{if(Array.isArray(r)&&r[0]&&r[0].kind==='card'&&ST&&ST.pos==='xfer'){if(!ST.acct){const m=$('sdMsg');m.className='msg err';m.textContent='حساب مقصد کارت‌به‌کارت را انتخاب کنید.';return null}r[0].acct=ST.acct}}catch(e){}return r}}
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;const d=t.dataset;
   if(d.stacct!==undefined&&ST){ST.acct=fin1Pick(t,'stacct');const m=$('sdMsg');if(m&&/حساب مقصد/.test(m.textContent))m.textContent='';return}

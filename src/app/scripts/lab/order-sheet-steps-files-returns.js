@@ -1,5 +1,6 @@
 /* ---------- order sheet: steps, files, returns ---------- */
-async function l2Open(lid){L2.ord={id:lid};const s=mkSheet('l2Sheet','<div id="l2In"><div class="empty">در حال بارگذاری…</div></div><div class="btns"><button class="btn ghost" type="button" id="l2Close">بستن</button></div>');s.classList.add('l2sheet');s.hidden=false;
+/* l2Open: base + lab5 (l5Seen) */
+async function l2Open(lid){l5Seen(lid);L2.ord={id:lid};const s=mkSheet('l2Sheet','<div id="l2In"><div class="empty">در حال بارگذاری…</div></div><div class="btns"><button class="btn ghost" type="button" id="l2Close">بستن</button></div>');s.classList.add('l2sheet');s.hidden=false;
   $('l2Close').onclick=()=>{s.hidden=true;L2.ord=null};await l2Load(lid)}
 async function l2Load(lid,quiet){try{const [j]=await Promise.all([api('labOrder',{lid}),l2Defs().catch(()=>null)]);if(!L2.ord||L2.ord.id!==lid)return;if(j.me)L2.me=j.me;j.id=lid;L2.ord=j;l2Render()}catch(e){if(!quiet)$('l2In').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 function l2Render(){const J=L2.ord,o=J.order,d=o.data||{},me=L2.me||{},lab=ROLE==='lab',steps=J.steps||[],rec=lab&&(me.recep||me.sup);
@@ -27,11 +28,18 @@ function l2Render(){const J=L2.ord,o=J.order,d=o.data||{},me=L2.me||{},lab=ROLE=
   $('l2In').innerHTML=h;const fi=$('l2file');if(fi)fi.onchange=()=>l2UpFiles(o.id,[...fi.files])}
 async function l2UpFiles(lid,files){const M=$('l2upM'),k=$('l2fk')?$('l2fk').value:'other';for(const f of files){try{await l2Upload(lid,f,k,p=>{if(M)M.textContent=f.name+' — '+fa(Math.round(p*100))+'٪'})}catch(e){alertMsg(e.message);toast(e.message,1);break}}if(M)M.textContent='';toast('فایل بارگذاری شد.');l2Load(lid,true);if(ROLE==='lab')pollLab(true)}
 const l2B64=u8=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(new Error('خواندن فایل ناموفق بود'));r.readAsDataURL(new Blob([u8]))});
-async function l2Upload(lid,file,kind,onp){if(file.size>120*1024*1024)throw new Error('حجم «'+file.name+'» بیش از ۱۲۰ مگابایت است.');
+/* l2Upload: base + voice (voice notes go as «other») + lab8 (long names cut, progress rows, errors shown in the row) + up2 (a failed file is thrown when the caller follows the progress) + m36 (photo kind of the work order) */
+async function l2Upload(lid,file,kind,onp){try { if (M36.upk && kind === 'photo') kind = /^برگه-دستورکار-/.test(file.name || '') ? 'ophoto' : M36.upk } catch (e) { }
+  const n0 = (L8.up || []).length;if(file&&file.name&&file.name.length>120){const m=file.name.match(/(\.[A-Za-z0-9]{1,16})$/),ext=m?m[1]:'';file=new File([file],file.name.slice(0,119-ext.length).trim()+'…'+ext,{type:file.type})}
+  const r=l8UpRow(file);r.retry=()=>l2Upload(lid,file,kind);
+  try{const k=file&&V9EXT.test(file.name)?'other':kind,up=q=>{l8UpSet(r,q);if(onp)onp(q)};if(file.size>120*1024*1024)throw new Error('حجم «'+file.name+'» بیش از ۱۲۰ مگابایت است.');
   let buf=new Uint8Array(await file.arrayBuffer()),gz=0;
   if(window.CompressionStream&&!/\.(jpe?g|png|webp|heic|mp4|mov|zip|rar|7z|pdf)$/i.test(file.name)){try{const z=new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());if(z.length<buf.length*0.92){buf=z;gz=1}}catch(e){}}
-  const CH=1050000,n=Math.max(1,Math.ceil(buf.length/CH));const b=await api('labFile',{op:'begin',lid,kind,name:file.name,size:file.size,gz,n});
-  for(let i=0;i<n;i++){const d=await l2B64(buf.subarray(i*CH,(i+1)*CH));let ok=false,err=null;for(let t=0;t<3&&!ok;t++){try{await api('labFile',{op:'chunk',fid:b.id,i,d},{timeout:120000});ok=true}catch(e){err=e;await new Promise(r=>setTimeout(r,1500))}}if(!ok)throw err;if(onp)onp((i+1)/n)}}
+  const CH=1050000,n=Math.max(1,Math.ceil(buf.length/CH));const b=await api('labFile',{op:'begin',lid,kind:k,name:file.name,size:file.size,gz,n});
+  for(let i=0;i<n;i++){const d=await l2B64(buf.subarray(i*CH,(i+1)*CH));let ok=false,err=null;for(let t=0;t<3&&!ok;t++){try{await api('labFile',{op:'chunk',fid:b.id,i,d},{timeout:120000});ok=true}catch(e){err=e;await new Promise(r=>setTimeout(r,1500))}}if(!ok)throw err;up((i+1)/n)}
+    l8UpSet(r,1,'')}catch(e){l8UpSet(r,null,(e&&e.message)||'خطا')}
+  const u = (L8.up || [])[n0];
+  if (u && u.el && u.el.classList.contains('bad')) { const e = new Error(((u.el.querySelector('.l8upp') || {}).textContent || 'خطا').replace(/^خطا: /, '')); if (onp) throw e; }}
 async function l2Fetch(f,onp){if(L2.blobs.has(f.id))return L2.blobs.get(f.id);const P=[];for(let i=0;i<f.n;i++){const j=await api('labFile',{op:'get',fid:f.id,i},{timeout:120000});const s=atob(j.d),u=new Uint8Array(s.length);for(let k=0;k<s.length;k++)u[k]=s.charCodeAt(k);P.push(u);if(onp)onp((i+1)/f.n)}
   let bl=new Blob(P);if(f.gz){if(!window.DecompressionStream)throw new Error('این مرورگر فایل فشرده را باز نمی‌کند؛ Chrome را به‌روز کنید.');bl=await new Response(bl.stream().pipeThrough(new DecompressionStream('gzip'))).blob()}
   if(L2.blobs.size>4)L2.blobs.delete(L2.blobs.keys().next().value);L2.blobs.set(f.id,bl);return bl}

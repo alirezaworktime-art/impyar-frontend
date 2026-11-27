@@ -33,12 +33,17 @@ function h9HTML(j){const H=h9Init(j);
   const drop=`<div class="h9drop" id="h9Drop" role="button" tabindex="0" aria-label="انتخاب فایل اسکن یا عکس" data-l8d="1"><b>بارگذاری فایل اسکن / عکس</b><span>برای انتخاب فایل اینجا بزنید، یا فایل را بکشید و اینجا رها کنید</span></div>`;
   return `<div class="payform h9form">${h9HTML(j)}${drop}${tail.replace('<span>فایل اسکن و عکس (اختیاری) — STL، PLY، OBJ، ZIP، عکس، PDF</span>','<span>STL، PLY، OBJ، ZIP، عکس، PDF (اختیاری)</span>')}`}})();
 /* sheet → order fields the lab system already understands */
+/* h9Apply: base + voice (voice notes in the note) + lab6 (brand per tooth, typed text) */
 function h9Apply(){const H=LO&&LO.h9;if(!H)return;const base=H.base.filter(isTooth),pon=H.pon.filter(isTooth),all=[...new Set(base.concat(pon))];
   LO.teeth=all;LO.all=[...new Set((LO.all||[]).concat(all))];LO.pon=pon;LO.shade=H.shade;LO.sys=H.brand;LO.doc=H.doc;
   const has=(g,v)=>(H[g]||[]).includes(v);LO.mat=has('itype','Implant (zirconia)')||has('crown','Zirconia')?'زیرکونیا':has('itype','Implant (PFM)')||has('crown','PFM')?'PFM':LO.mat;
   LO.ret=has('itype','پیچ شونده')||has('itype','اسکروسمنت')?'پیچی':has('itype','سمان شونده')?'سمانی':LO.ret;LO.type=pon.length?'بریج':all.length===1?'روکش تک':LO.type;
   const L=[['عکس دهانی',H.photo==='yes'?'دارد':H.photo==='no'?'ندارد':''],['روکش دندانی',H.crown.join('، ')],['ایمپلنت',H.imp.join('، ')],['روکش ایمپلنت',H.itype.concat(H.imat).join('، ')],['نام دستیار',H.asst],['شماره پرونده',H.file],['سن بیمار',H.age]].filter(x=>x[1]).map(x=>x[0]+': '+x[1]);
-  LO.note=('برگه‌ی دستورکار — '+L.join(' · ')+(H.draw?' · توضیحات دست‌نویس در تصویر برگه':'')).slice(0,990)}
+  LO.note=('برگه‌ی دستورکار — '+L.join(' · ')+(H.draw?' · توضیحات دست‌نویس در تصویر برگه':'')).slice(0,990);
+  try{const n=v9Files().length;if(n&&LO&&!/توضیح صوتی/.test(LO.note))LO.note=(LO.note+' · '+fa(n)+' توضیح صوتی پیوست است').slice(0,1000)}catch(e){}
+  try{const X=l6Extra(H),k=Object.keys(X.tbrand),ex=[];LO.tbrand=X.tbrand;LO.txt=X.txt;
+    if(k.length){LO.sys=[...new Set(Object.values(X.tbrand))].join('، ');ex.push('برند هر دندان: '+k.map(t=>l6Fdi(t)+' '+X.tbrand[t]).join('، '))}
+    if(X.txt)ex.push('توضیحات: '+X.txt);if(ex.length)LO.note=(String(LO.note||'')+' · '+ex.join(' · ')).slice(0,1000)}catch(e){}}
 function h9Read(){if(!LO||!LO.h9)return;document.querySelectorAll('[data-h9f]').forEach(i=>{LO.h9[i.dataset.h9f]=i.value});const d=$('lo_due');if(d){const iso=parseJ(d.value);LO.dueTxt=d.value;LO.due=iso||''}}
 (function(){const _r=loRead;loRead=function(){const r=_r.apply(this,arguments);try{h9Read();h9Apply()}catch(e){}return r}})();
 /* the base / pontic chart is the prosthesis map: save it before the order (the server refuses an order without it) */
@@ -46,6 +51,7 @@ async function h9Map(){const H=LO&&LO.h9;if(!H||!PF)return;const M={};H.base.for
   const cur=(PF.j.pros||{}).map||{};if(JSON.stringify(Object.keys(cur).sort().map(k=>k+cur[k]))===JSON.stringify(Object.keys(M).sort().map(k=>k+M[k])))return;
   const r=await api('prosMap',{id:PF.id,map:M,note:'',by:USERNAME||ROLE_LBL[ROLE]||''});if(r&&r.pros&&PF.j)PF.j.pros=Object.assign(PF.j.pros||{},{map:r.pros.map})}
 /* the filled sheet as an image (A5) for the lab and the file */
+/* h9Sheet: base + voice (a line about the voice notes) + lab6 (brand per tooth, typed text under the sheet) */
 async function h9Sheet(){const H=LO.h9,W=1240,Hh=1754,c=document.createElement('canvas');c.width=W;c.height=Hh;const x=c.getContext('2d'),F=getComputedStyle(document.body).fontFamily||'sans-serif';
   x.fillStyle='#fff';x.fillRect(0,0,W,Hh);x.direction='rtl';x.textBaseline='middle';const G='#1f4d3a',T=(t,X,Y,s,w,col,al)=>{x.font=`${w||400} ${s||28}px ${F}`;x.fillStyle=col||'#111';x.textAlign=al||'right';x.fillText(String(t||''),X,Y)};
   const C=(X,Y,on)=>{x.beginPath();x.arc(X,Y,15,0,7);x.strokeStyle='#a08a3c';x.lineWidth=2.5;x.stroke();if(on){x.beginPath();x.arc(X,Y,9,0,7);x.fillStyle=G;x.fill()}};
@@ -64,7 +70,18 @@ async function h9Sheet(){const H=LO.h9,W=1240,Hh=1754,c=document.createElement('
   ch('pon',70,'پونتیک');ch('base',W-600,'پایه');
   y+=150;T('توضیحات :',W-70,y,30,800);if(H.draw){const im=new Image();await new Promise(res=>{im.onload=res;im.onerror=res;im.src=H.draw});const bw=W-140,bh=Hh-y-60,s=Math.min(bw/im.width,bh/im.height);x.drawImage(im,70+(bw-im.width*s)/2,y+20,im.width*s,im.height*s)}
   else for(let i=1;i<7;i++){x.setLineDash([4,10]);x.strokeStyle='#999';x.lineWidth=2;x.beginPath();x.moveTo(70,y+i*70);x.lineTo(W-70,y+i*70);x.stroke();x.setLineDash([])}
-  return await new Promise(res=>c.toBlob(b=>res(new File([b],'برگه-دستورکار-'+(H.name||'بیمار').replace(/[\\/:*?"<>|]/g,'')+'.png',{type:'image/png'})),'image/png'))}
+  let f=await new Promise(res=>c.toBlob(b=>res(new File([b],'برگه-دستورکار-'+(H.name||'بیمار').replace(/[\\/:*?"<>|]/g,'')+'.png',{type:'image/png'})),'image/png'));
+  {const n=v9Files().length;if(n)try{const im=await createImageBitmap(f),c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);x.direction='rtl';x.textAlign='right';x.textBaseline='middle';
+    x.font=`700 28px ${getComputedStyle(document.body).fontFamily}`;x.fillStyle='#0b3b8c';x.fillText('🎙 '+fa(n)+' توضیح صوتی همراه این سفارش',im.width-70,im.height-50);
+    f=await new Promise(res=>c.toBlob(b=>res(new File([b],f.name,{type:'image/png'})),'image/png'))}catch(e){}}
+  try{const H=LO&&LO.h9,X=l6Extra(H),tb=Object.keys(X.tbrand);if(!X.txt&&!tb.length)return f;
+  const im=await createImageBitmap(f),W=im.width,F=getComputedStyle(document.body).fontFamily||'sans-serif',m=document.createElement('canvas').getContext('2d');m.font=`400 28px ${F}`;
+  const wrap=t=>{const out=[];String(t).split('\n').forEach(p=>{let ln='';p.split(/\s+/).forEach(w=>{const tt=ln?ln+' '+w:w;if(m.measureText(tt).width>W-140&&ln){out.push(ln);ln=w}else ln=tt});out.push(ln)});return out};
+  const L=[];if(tb.length)L.push(['b','برند هر دندان:'],...wrap(tb.map(k=>l6Fdi(k)+': '+X.tbrand[k]).join('   ')).map(s=>['t',s]));if(X.txt)L.push(['b','توضیحات تایپ‌شده:'],...wrap(X.txt).map(s=>['t',s]));
+  const c=document.createElement('canvas');c.width=W;c.height=im.height+70+L.length*44;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,c.height);x.drawImage(im,0,0);
+  x.direction='rtl';x.textAlign='right';x.textBaseline='middle';x.strokeStyle='#1f4d3a';x.lineWidth=3;x.beginPath();x.moveTo(50,im.height+12);x.lineTo(W-50,im.height+12);x.stroke();
+  L.forEach(([k,s],i)=>{x.font=`${k==='b'?800:400} 28px ${F}`;x.fillStyle=k==='b'?'#111':'#0b3b8c';x.fillText(s,W-70,im.height+50+i*44)});
+  return await new Promise(res=>c.toBlob(b=>res(new File([b],f.name,{type:'image/png'})),'image/png'))}catch(e){return f}}
 /* send: map → order (existing flow) → the sheet image as an order file */
 (function(){const _s=loSend;loSend=async function(t){try{loRead();await h9Map()}catch(e){const m=$('loMsg');if(m){m.className='msg err';m.textContent=e.message}return}
   if(LO&&LO.h9){try{const f=await h9Sheet();if(!LOF.some(x=>x.name===f.name))LOF.unshift(f)}catch(e){}}return _s.apply(this,arguments)}})();

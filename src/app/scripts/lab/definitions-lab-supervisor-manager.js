@@ -1,5 +1,6 @@
 /* ---------- definitions (lab supervisor, manager) ---------- */
-async function l2DefsView(L){L.innerHTML='<div class="empty">در حال بارگذاری…</div>';let D;try{D=await l2Defs(true)}catch(e){L.innerHTML=`<div class="empty">${esc(e.message)}</div>`;return}
+/* l2DefsView: base + lab5 (no tabs inside the side menu) + lab8 (l8DefsPost) */
+async function l2DefsView(L){L.innerHTML='<div class="empty">در حال بارگذاری…</div>';view:{let D;try{D=await l2Defs(true)}catch(e){L.innerHTML=`<div class="empty">${esc(e.message)}</div>`;break view}
   const T=[['dept','دپارتمان‌ها (مراحل)'],['proc','پروسه‌ها'],['wt','نوع کارها'],['col','رنگ‌ها']],dn=id=>(D.depts.find(d=>d.id===Number(id))||{}).name||'؟';
   let h=`<div class="seg l2seg" role="group" aria-label="تعریف‌ها" style="margin-bottom:10px">${T.map(([k,l])=>`<button type="button" data-l2ds="${k}" aria-pressed="${L2.dseg===k}">${l}</button>`).join('')}</div>`;
   if(L2.dseg==='dept')h+=`<div class="acts"><button class="btn sm main" type="button" data-l2de="dept" data-id="">＋ دپارتمان تازه</button></div><div class="list">${D.depts.map(d=>{const f=d.flags||{};return `<div class="item${d.active?'':' off'}"><div class="row1"><div><b>${esc(d.name)}</b><div class="meta">${[f.test&&'ارسال برای تست لازم',f.desc&&esc(f.desc),f.upload&&'بارگذاری فایل لازم',f.single&&'پذیرش و تکمیل یک‌جا',(f.acceptDay||f.acceptMin)&&'مهلت پذیرش '+(f.acceptDay?fa(f.acceptDay)+' روز':fa(f.acceptMin)+' دقیقه'),(f.doneDay||f.doneMin)&&'مهلت انجام '+(f.doneDay?fa(f.doneDay)+' روز':fa(f.doneMin)+' دقیقه'),!d.active&&'غیرفعال'].filter(Boolean).join(' · ')||'—'}</div></div><button class="btn sm ghost" type="button" data-l2de="dept" data-id="${d.id}">ویرایش</button></div></div>`}).join('')}</div>`;
@@ -7,6 +8,8 @@ async function l2DefsView(L){L.innerHTML='<div class="empty">در حال بار�
   if(L2.dseg==='wt')h+=`<div class="acts"><button class="btn sm main" type="button" data-l2de="wt" data-id="">＋ نوع کار تازه</button></div><div class="list">${D.wts.map(w=>`<div class="item${w.active?'':' off'}"><div class="row1"><div><b>${esc(w.name)}</b><div class="meta">${w.proc?'پروسه: '+esc((D.procs.find(p=>p.id===w.proc)||{}).name||'؟'):'<b class="late">بدون پروسه</b>'}${w.active?'':' · غیرفعال'}</div></div><button class="btn sm ghost" type="button" data-l2de="wt" data-id="${w.id}">ویرایش</button></div></div>`).join('')}</div>`;
   if(L2.dseg==='col')h+=`<section class="card"><label class="f full">رنگ‌ها (با ویرگول جدا کنید)<textarea id="l2cols" rows="4" dir="ltr">${esc(D.colors.join(', '))}</textarea></label><div class="btns"><button class="btn sm" type="button" id="l2colSave">ذخیره</button></div></section>`;
   L.innerHTML=h}
+  if(ROLE==='lab'&&L5.sec.startsWith('d/')){const g=L.querySelector('.l2seg[aria-label="تعریف‌ها"]');if(g)g.remove()}
+  try{l8DefsPost(L)}catch(e){}}
 async function l2DefEdit(kind,id){const D=await l2Defs(),reload=()=>{const L=ROLE==='lab'?$('lbList'):$('l2DefIn');if(L)l2DefsView(L)};
   const save=async x=>{try{await api('labDefs',{op:kind,x});toast('ذخیره شد.');await l2Defs(true);reload();return true}catch(e){alertMsg(e.message);toast(e.message,1);return false}};
   if(kind==='dept'){const d=D.depts.find(v=>v.id===Number(id))||{flags:{},active:1},f=d.flags||{};

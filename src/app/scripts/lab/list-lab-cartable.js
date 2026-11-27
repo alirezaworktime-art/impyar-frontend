@@ -50,12 +50,15 @@ renderLab=function(){if(ROLE!=='lab')return;const n=l2Cnt(),me=L2.me||{};
   if(LB.seg==='defs'){l2DefsView(L);return}
   const rows=LB.items.filter(L2_SEG[LB.seg]||L2_SEG.new).sort((a,b)=>(((b.data||{}).prio==='urgent')-((a.data||{}).prio==='urgent'))||String(a.due).localeCompare(String(b.due)));
   L.innerHTML=rows.length?rows.map(l2Card).join(''):'<div class="empty">سفارشی در این بخش نیست.</div>'};
-pollLab=async function(force){if(ROLE!=='lab'||document.hidden&&!force)return;
+/* pollLab: lab2 list (replaces the dental-lab base) + lab5 (boots the lab5 data after the list poll; a parallel request would cancel the first poll) + lab6 (bench stats) */
+async function pollLab(force){if(!(ROLE!=='lab'||document.hidden&&!force)){
   try{const j=await api('labList',{ver:force?'':LB.ver},{prio:'poll'});$('lbLive').classList.remove('off');$('lbLive').textContent='زنده';
     if(j.me)L2.me=j.me;if(j.dv&&(!L2.defs||L2.defs.v!==j.dv)){L2.dv=j.dv;await l2Defs(true).catch(()=>{})}
-    if(j.same)return;LB.ver=j.ver;const prev=LB.seen;LB.items=j.items||[];LB.seen=new Set(LB.items.map(x=>x.id+':'+x.st));
+    if(!j.same){LB.ver=j.ver;const prev=LB.seen;LB.items=j.items||[];LB.seen=new Set(LB.items.map(x=>x.id+':'+x.st));
     if(prev&&LB.items.some(x=>(x.st==='new'||x.st==='redo')&&!prev.has(x.id+':'+x.st)))beep();
     const fo=document.activeElement;if(!(fo&&fo.id==='l2Q'))renderLab();
-    if(L2.ord&&$('l2Sheet')&&!$('l2Sheet').hidden)l2Load(L2.ord.id,true)}
-  catch(e){if(e.message!=='aborted'){$('lbLive').classList.add('off');$('lbLive').textContent='اتصال قطع است؛ دوباره تلاش می‌شود…'}}};
+    if(L2.ord&&$('l2Sheet')&&!$('l2Sheet').hidden)l2Load(L2.ord.id,true)}}
+  catch(e){if(e.message!=='aborted'){$('lbLive').classList.add('off');$('lbLive').textContent='اتصال قطع است؛ دوباره تلاش می‌شود…'}}}
+  if(ROLE==='lab'&&!L5.boot&&!L5.booting){L5.booting=1;l5Boot().then(()=>{L5.booting=0;l5Nav()}).catch(()=>{L5.booting=0})}
+  try{if(ROLE==='lab'&&L5.sec==='bench'&&L6.bv==='tbl'&&!L6.statsBusy){L6.statsBusy=1;l6Stats().finally(()=>{L6.statsBusy=0})}}catch(e){}}
 

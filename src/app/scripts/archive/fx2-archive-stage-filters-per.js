@@ -6,13 +6,14 @@ function fx2Key(d){const q=d.queue||'',p=d.pst||'';
   if(p){if(p==='done')return 'done';if(p==='deliv')return 'deliv';if(p==='lab')return 'lab';if(p==='impr')return 'impr';if(p==='heal')return 'heal';if(p==='tmpd'||p==='tmpx')return 'tmp';if(p==='fail'||p==='pause')return 'stop';return 'try'}
   if(q==='surgery'||q==='surgpart')return 'surg';if(q==='surgdone')return 'sdone';
   if(q==='consult'||q==='consulting')return 'cons';if(d.status==='queued'||q==='waiting'||q==='reviewing')return 'wait';if(d.status==='draft')return 'draft';return 'conf'}
-renderFilt=function(){const el=$('lFilt');if(!el)return;const n={};ARCHIVE.forEach(d=>{const k=fx2Key(d);n[k]=(n[k]||0)+1});n.all=ARCHIVE.length;if(LFILT!=='all'&&!n[LFILT])LFILT='all';
-  el.innerHTML=FX2F.filter(([k])=>k==='all'||n[k]).map(([k,l])=>`<button type="button" class="chip" data-lfilt="${k}" aria-pressed="${LFILT===k}">${l} <span class="cnt">${fa(n[k]||0)}</span></button>`).join('')};
+/* renderFilt: archive-filters base replaced by fx2 (one filter per stage) */
+function renderFilt(){const el=$('lFilt');if(!el)return;const n={};ARCHIVE.forEach(d=>{const k=fx2Key(d);n[k]=(n[k]||0)+1});n.all=ARCHIVE.length;if(LFILT!=='all'&&!n[LFILT])LFILT='all';
+  el.innerHTML=FX2F.filter(([k])=>k==='all'||n[k]).map(([k,l])=>`<button type="button" class="chip" data-lfilt="${k}" aria-pressed="${LFILT===k}">${l} <span class="cnt">${fa(n[k]||0)}</span></button>`).join('')}
 /* ---- 2. forgotten (paper) files: big button on top of the archive ---- */
-fxArcBar=function(){const el=$('fxArcBar');if(!el)return;const n=(ARCHIVE||[]).filter(d=>d.arc).length;
-  el.innerHTML=(fxCanFile()?'<button class="btn fx2big" type="button" id="fxArcNew"><b>+ افزودن پرونده‌ی جا مانده</b><small>بیماران قبلی و پرونده‌های کاغذی — همه‌ی اطلاعات، درمان‌ها و پرداخت‌ها به تفکیک تاریخ</small></button>':'')+`<button class="chip" type="button" id="fxArcOnly" aria-pressed="${FXARC}">فقط پرونده‌های جا مانده / کاغذی (${fa(n)})</button>`};
+/* fxArcBar: fx1 base replaced by fx2 (big button) */
+function fxArcBar(){const el=$('fxArcBar');if(!el)return;const n=(ARCHIVE||[]).filter(d=>d.arc).length;
+  el.innerHTML=(fxCanFile()?'<button class="btn fx2big" type="button" id="fxArcNew"><b>+ افزودن پرونده‌ی جا مانده</b><small>بیماران قبلی و پرونده‌های کاغذی — همه‌ی اطلاعات، درمان‌ها و پرداخت‌ها به تفکیک تاریخ</small></button>':'')+`<button class="chip" type="button" id="fxArcOnly" aria-pressed="${FXARC}">فقط پرونده‌های جا مانده / کاغذی (${fa(n)})</button>`}
 var FX2SVC=null;
-async function fx2Svcs(){if(FX2SVC)return FX2SVC;try{const j=await api('finCatalog');FX2SVC=(j.svc||[]).filter(s=>s.active!==0).map(s=>s.name)}catch(e){FX2SVC=[]}return FX2SVC}
 const FX2M={cash:'نقد',card:'کارت',bank:'واریز بانکی',chq:'چک'};
 const fx2Num=v=>Number(toEn(String(v||'')).replace(/[^\d]/g,''))||0;
 function fx2VisitRow(x,i){const dl=x.dayJ!==undefined?x.dayJ:(x.day?jDay(x.day):'');
@@ -71,7 +72,9 @@ function fx2Set(o){FX2CV[TILE]=Object.assign({},FX2CV[TILE]||{},o);try{localStor
 var FX2DP=null;
 const fx2IsDate=el=>el&&el.tagName==='INPUT'&&(el.id==='rc_date'||el.dataset.jd!==undefined||el.dataset.v==='day'||/^[۰-۹0-9]{4}\/[۰-۹0-9]{2}\/[۰-۹0-9]{2}$/.test(((el.getAttribute('placeholder')||'').replace(/^مثلاً\s*/,'')).trim()));
 function fx2DpClose(){if(FX2DP&&FX2DP.el)FX2DP.el.remove();FX2DP=null}
-function fx2DpOpen(inp){const cur=parseJ(inp.value||'');if(FX2DP&&FX2DP.inp===inp)return;fx2DpClose();const el=document.createElement('div');el.className='fx2dp';el.setAttribute('role','dialog');el.setAttribute('aria-label','انتخاب تاریخ');document.body.appendChild(el);FX2DP={inp,el,anc:cur||tDay(),sel:cur};fx2DpDraw();fx2DpPlace()}
+/* fx2DpOpen: base + arc6 (opens at the last date used, also when already open) */
+function fx2DpOpen(inp){const cur=parseJ(inp.value||'');if(!(FX2DP&&FX2DP.inp===inp)){fx2DpClose();const el=document.createElement('div');el.className='fx2dp';el.setAttribute('role','dialog');el.setAttribute('aria-label','انتخاب تاریخ');document.body.appendChild(el);FX2DP={inp,el,anc:cur||tDay(),sel:cur};fx2DpDraw();fx2DpPlace()}
+  try{if(FX2DP&&FX2DP.inp===inp&&!parseJ(inp.value||'')&&inp.dataset.anc&&/^\d{4}-\d{2}-\d{2}$/.test(inp.dataset.anc)){FX2DP.anc=inp.dataset.anc;fx2DpDraw();fx2DpPlace()}}catch(e){}}
 function fx2DpPlace(){if(!FX2DP)return;const r=FX2DP.inp.getBoundingClientRect(),el=FX2DP.el,Z=(window.ZM?ZM():1),w=(el.offsetWidth||290)*Z,h=(el.offsetHeight||320)*Z;let top=r.bottom+6,left=r.right-w;if(left<6)left=6;if(left+w>innerWidth-6)left=innerWidth-w-6;if(top+h>innerHeight-6&&r.top-h-6>6)top=r.top-h-6;el.style.top=(top+scrollY)/Z+'px';el.style.left=(left+scrollX)/Z+'px'}
 function fx2DpDraw(){const S=FX2DP,[f,t]=jMonth(S.anc),P=jParts(S.anc),td=tDay(),s0=weekStart(f),D=[];for(let d=s0;d<=t||D.length%7;d=dAdd(d,1))D.push(d);
   S.el.innerHTML=`<div class="fx2dpn"><button type="button" data-dpn="1" aria-label="ماه بعد">‹</button><b>${JMN[P[1]-1]} ${faD(String(P[0]))}</b><button type="button" data-dpn="-1" aria-label="ماه قبل">›</button></div>

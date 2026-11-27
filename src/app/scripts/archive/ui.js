@@ -165,6 +165,4 @@ function tileInitQueue(){const v=$('viewQueue');if(!v||v.dataset.tiled)return;v.
   const qh=v.querySelector('.qhead');const w=document.createElement('div');w.dataset.tile='cons plan surg';qh.parentNode.insertBefore(w,qh);w.appendChild(qh);w.appendChild($('qList'));w.insertBefore($('kpiStrip'),qh);$('qAppt').dataset.tile='surg chk unc';$('qWaitW').dataset.tile='surg';
   const cx=$('conxW');cx.dataset.tile='chq und';const H=[...cx.querySelectorAll(':scope>.qhead')];const w1=document.createElement('div');w1.dataset.tile='chq';cx.insertBefore(w1,H[0]);w1.appendChild(H[0]);w1.appendChild($('chqList'));const w2=document.createElement('div');w2.dataset.tile='und';cx.appendChild(w2);w2.appendChild(H[1]);w2.appendChild($('folList'))}
 try{tileInitStaff();tileInitQueue()}catch(e){console.error(e)}
-/* reception: national id (10 digits) and mobile (11 digits, 09…) are required and checked */
-function phoneOk(v){const d=toEn(v||'').replace(/\D/g,'');return /^09\d{9}$/.test(d)}
 

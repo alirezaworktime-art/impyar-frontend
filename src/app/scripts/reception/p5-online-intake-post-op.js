@@ -66,7 +66,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.datase
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.rxf==='kind'&&RX.edit){const x=RX.edit[+t.dataset.rxi];if(x){x.kind=t.value;renderRx()}}});
 
 /* -- win-back: patients who drifted away -- */
-const WB={items:[],k:'all'};
+const WB={items:[],k:'all',n:300,q:''};
 const WBK={lost:['تصمیم نگرفت یا انصراف','wait'],nosurg:['طرح را پذیرفت، جراحی نشد','surg'],recall:['چکاپ دوره‌ای عقب افتاده','rev'],pros:['پروتز نیمه‌کاره مانده','mod']};
 function wbMsg(x){const n=x.name||'',c=SET.clinic||'کلینیک',p=SET.phone?' '+faD(SET.phone):'';
   return x.kind==='lost'?`سلام ${n} عزیز، از ${c} پیام می‌دهیم. اگر هنوز درباره‌ی درمان ایمپلنت سؤال یا نگرانی دارید، خوشحال می‌شویم دوباره در خدمتتان باشیم.${p}`
@@ -74,7 +74,8 @@ function wbMsg(x){const n=x.name||'',c=SET.clinic||'کلینیک',p=SET.phone?' 
     :x.kind==='recall'?`سلام ${n} عزیز، زمان چکاپ دوره‌ای ایمپلنت‌های شما در ${c} رسیده است. برای گرفتن نوبت با ما تماس بگیرید.${p}`
     :`سلام ${n} عزیز، برای ادامه‌ی مرحله‌ی پروتز ایمپلنت‌ها در ${c} منتظر شما هستیم. برای گرفتن نوبت با ما تماس بگیرید.${p}`}
 async function loadWb(){try{const j=await api('winback');WB.items=j.items||[];renderWb()}catch(e){$('wbList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
-function renderWb(){const A=WB.items,cnt={};A.forEach(x=>cnt[x.kind]=(cnt[x.kind]||0)+1);
+/* renderWb: base (p5 win-back list, now the inner wbDraw) + m18 (3) (search box + page-by-page «نمایش بیشتر») */
+function renderWb(){function wbDraw(){const A=WB.items,cnt={};A.forEach(x=>cnt[x.kind]=(cnt[x.kind]||0)+1);
   $('wbF').innerHTML=[['all','همه',A.length],...Object.keys(WBK).map(k=>[k,WBK[k][0],cnt[k]||0])].map(([k,l,n])=>`<button type="button" class="chip" data-wbk="${k}" aria-pressed="${WB.k===k}">${esc(l)} <b>${fa(n)}</b></button>`).join('');
   const V=WB.k==='all'?A:A.filter(x=>x.kind===WB.k);
   $('wbList').innerHTML=V.length?V.slice(0,300).map((x,i)=>{const tx=wbMsg(x),wa=x.phone?waLink(x.phone,tx):'',sm=x.phone?smsLink(x.phone,tx):'';
@@ -82,6 +83,14 @@ function renderWb(){const A=WB.items,cnt={};A.forEach(x=>cnt[x.kind]=(cnt[x.kind
       <div class="meta">${x.phone?esc(faD(x.phone))+' · ':''}${x.since?'از '+esc(x.since.length>10?jd(x.since):jDay(x.since)):''}${x.info?' · '+esc(x.kind==='pros'?(PSTN[x.info]||x.info):x.info):''}</div></div>
       <div class="acts">${x.phone?`<a class="btn sm" href="tel:${esc(String(x.phone).replace(/[^\d+]/g,''))}">تماس</a>`:''}${wa?`<a class="btn sm ghost" target="_blank" rel="noopener" href="${esc(wa)}">واتس‌اپ</a>`:''}${sm?`<a class="btn sm ghost" href="${esc(sm)}">پیامک</a>`:''}
       <button class="btn sm ghost" type="button" data-wbfile="${esc(x.id)}" data-wbn="${esc(x.name)}">پرونده</button><button class="btn sm ghost" type="button" data-wbsn="${esc(x.id)}" data-wbkind="${x.kind}" data-days="30">یک ماه بعد</button><button class="btn sm ghost" type="button" data-wbsn="${esc(x.id)}" data-wbkind="${x.kind}" data-days="3650">دیگر پیگیری نشود</button></div></div></div>`}).join('')+(V.length>300?`<p class="note">${fa(V.length-300)} مورد دیگر هم هست.</p>`:''):'<div class="empty">موردی نیست.</div>'}
+  const all = WB.items; try { let q = $('wbQ'); if (!q) { $('wbList').insertAdjacentHTML('beforebegin', '<input id="wbQ" type="search" placeholder="جستجوی نام یا موبایل" autocomplete="off">'); q = $('wbQ'); q.addEventListener('input', () => { WB.q = q.value.trim(); WB.n = 300; renderWb() }) }
+      const k = toEn(WB.q || '').replace(/\s+/g, ''), V0 = WB.q ? all.filter(x => String(x.name || '').includes(WB.q) || (k && toEn(String(x.phone || '')).includes(k))) : all, V = WB.k === 'all' ? V0 : V0.filter(x => x.kind === WB.k);
+      if (V.length <= 300) { WB.items = V0; wbDraw(); WB.items = all; return }
+      /* long list: draw it page by page with the original card of each row */
+      const cut = V.slice(0, WB.n); WB.items = cut; const k0 = WB.k; WB.k = 'all'; wbDraw(); WB.k = k0; WB.items = V0; const cnt = {}; V0.forEach(x => cnt[x.kind] = (cnt[x.kind] || 0) + 1);
+      $('wbF').innerHTML = [['all', 'همه', V0.length], ...Object.keys(WBK).map(z => [z, WBK[z][0], cnt[z] || 0])].map(([z, l, n]) => `<button type="button" class="chip" data-wbk="${z}" aria-pressed="${WB.k === z}">${esc(l)} <b>${fa(n)}</b></button>`).join('');
+      WB.items = all; if (V.length > WB.n) $('wbList').insertAdjacentHTML('beforeend', `<div class="btns"><button class="btn ghost" type="button" id="wbMore">نمایش ${fa(Math.min(300, V.length - WB.n))} مورد بعدی (از ${fa(V.length - WB.n)} مورد مانده)</button></div>`) }
+    catch (e) { WB.items = all; wbDraw() } }
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.id==='tabWb'){if(dirty&&!$('viewForm').hidden){alertMsg('اول فرم را ذخیره کنید.');return}show('wb');return}
   if(t.dataset.wbk){WB.k=t.dataset.wbk;renderWb();return}

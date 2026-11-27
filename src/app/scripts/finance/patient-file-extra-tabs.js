@@ -1,12 +1,21 @@
 /* ---------- patient file: extra tabs ---------- */
 function refreshFile(){if(!PF)return;const {id}=PF;api('get',{id},{timeout:12000}).then(j=>{if(PF&&PF.id===id){PF.j=j;renderFile()}}).catch(()=>{})}
-function pfTabs(j){const T=[['tl','سیر درمان'],['hist','تاریخچه'+(PF&&PF.ev?' <small id="pfEvN">'+fa(PF.ev.length)+'</small>':' <small id="pfEvN"></small>')]];if(seesMoney()&&CF_ON)T.push(['pay','پرداخت‌ها']);if(CF_ON&&(j.pros||j.status==='confirmed'||j.status==='modified'))T.push(['pros','پروتز و لابراتوار']);if(CF_ON)T.push(['ap','نوبت‌ها']);if(ROLE!=='lab'&&ROLE!=='inventory')T.push(['img','تصاویر'+((j.files||[]).length?' ('+fa(j.files.length)+')':'')]);
-  if(!T.some(t=>t[0]===PF.tab))PF.tab='tl';return T.length>1?`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0">${T.map(([k,l])=>`<button type="button" data-pft="${k}" aria-pressed="${PF.tab===k}">${l}</button>`).join('')}</div>`:''}
-function pfTabHTML(tab,j,r){try{if(tab==='hist')return pfHist(j);if(tab==='pay')return pfPays(j,r);if(tab==='pros')return pfPros(j,r);if(tab==='ap')return pfAppts(j);if(tab==='img')return pfImgs(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}return ''}
+/* pfTabs: base + m42b («همه‌ی توضیح‌ها» tab) */
+function pfTabs(j){const was=PF&&PF.tab;if(was==='cm')PF.tab='tl';const T=[['tl','سیر درمان'],['hist','تاریخچه'+(PF&&PF.ev?' <small id="pfEvN">'+fa(PF.ev.length)+'</small>':' <small id="pfEvN"></small>')]];if(seesMoney()&&CF_ON)T.push(['pay','پرداخت‌ها']);if(CF_ON&&(j.pros||j.status==='confirmed'||j.status==='modified'))T.push(['pros','پروتز و لابراتوار']);if(CF_ON)T.push(['ap','نوبت‌ها']);if(ROLE!=='lab'&&ROLE!=='inventory')T.push(['img','تصاویر'+((j.files||[]).length?' ('+fa(j.files.length)+')':'')]);
+  if(!T.some(t=>t[0]===PF.tab))PF.tab='tl';let h=T.length>1?`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0">${T.map(([k,l])=>`<button type="button" data-pft="${k}" aria-pressed="${PF.tab===k}">${l}</button>`).join('')}</div>`:'';if(was==='cm')PF.tab='cm';
+  try{let n=0;try{n=cmList(j).length}catch(e){}const btn=`<button type="button" data-pft="cm" aria-pressed="${was==='cm'}">همه‌ی توضیح‌ها${n?' <small>'+fa(n)+'</small>':''}</button>`;
+    if(!h)h=`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0"><button type="button" data-pft="tl" aria-pressed="${was!=='cm'}">سیر درمان</button>${btn}</div>`;
+    else{if(was==='cm')h=h.replace('data-pft="tl" aria-pressed="true"','data-pft="tl" aria-pressed="false"');const i=h.lastIndexOf('</div>');h=h.slice(0,i)+btn+h.slice(i)}}catch(e){console.error('m42b tabs',e)}
+  return h}
+/* pfTabHTML: base + m42b (cm) */
+function pfTabHTML(tab,j,r){if(tab==='cm'){try{return cmHTML(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}}try{if(tab==='hist')return pfHist(j);if(tab==='pay')return pfPays(j,r);if(tab==='pros')return pfPros(j,r);if(tab==='ap')return pfAppts(j);if(tab==='img')return pfImgs(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}return ''}
 /* payments */
-function payNums(j){const P=j.pays||[],sg=j.surg||{},sum=f=>P.filter(f).reduce((a,p)=>a+(Number(p.amount)||0),0);
+/* payNums: base + fx4 (the balance the server computes) */
+function payNums(j){if(j&&j.bal&&typeof j.bal==='object'){const b=j.bal;return {total:b.total,got:b.paid,wait:b.wait,bounce:b.bounce,rest:b.rest,credit:b.credit,rfOpen:b.rfOpen,waived:b.waived}}const P=j.pays||[],sg=j.surg||{},sum=f=>P.filter(f).reduce((a,p)=>a+(Number(p.amount)||0),0);
   const total=(Number(j.total)||0)+(j.settle&&sg.diff?Number(sg.diff):0),got=sum(p=>p.st==='ok')-(j.refunds||[]).filter(x=>x.st==='paid').reduce((a,x)=>a+(Number(x.amount)||0),0),wait=sum(p=>p.kind==='chq'&&p.st==='wait'),bounce=sum(p=>p.st==='bounce');return {total,got,wait,bounce,rest:total-got-wait}}
-function paySugs(r){const out=[];try{const pv=PV(r,1),T=totals(pv),b=effBrand(r),S=T.surg[b],P=T.pros;
+/* paySugs: base + o3s (option 3: two rows for the rest, no cheque) */
+function paySugs(r){try{if(pl10O3(r)){const T=totals(PV(r,1)),b=effBrand(r),S=T.surg[b]||0,P=T.pros||0,C=o3sCash(r,S);return [['cash','s',C,`نقد قبل از جراحی (${fa(pl10Pct(r))}٪ پارت جراحی)`],['cash','s',Math.max(0,S-C),'مانده‌ی پارت جراحی — تا روز قالب‌گیری'],['cash','p',P,'پارت پروتز — تا روز قالب‌گیری']].filter(s=>s[2]>0)}}catch(e){}
+  const out=[];try{const pv=PV(r,1),T=totals(pv),b=effBrand(r),S=T.surg[b],P=T.pros;
   if(S){const n=r.pay.opt==='1'?num(r.pay.n1)||1:1,x=splitPay(S,fracS(r),n);out.push(['cash','s',discOn(r)?S-discAmt(r,S):x.c,discOn(r)?'نقد جراحی با تخفیف':'پیش‌پرداخت نقد جراحی']);if(x.rest)out.push(['chq','s',x.per,n>1?'هر چک جراحی':'چک جراحی'])}
   if(P){const n=num(r.pay.n3)||1,x=splitPay(P,fracP(r),n);out.push(['cash','p',discOn(r)?P-(discAmt(r,S+P)-discAmt(r,S)):x.c,discOn(r)?'نقد پروتز با تخفیف':'پیش‌پرداخت نقد پروتز']);if(x.rest)out.push(['chq','p',x.per,n>1?'هر چک پروتز':'چک پروتز'])}}catch(e){}return out.filter(s=>s[2]>0)}
 let PYF={kind:'cash',part:'s'};
@@ -77,16 +86,6 @@ function cpHints(){const a=parseInt(toEn($('cp_amt').value).replace(/[^\d]/g,'')
   document.querySelectorAll('[data-cpu]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cpu===u))}
 function printHTML(html){const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f);const d=f.contentDocument;d.open();d.write(html);d.close();
   setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){alertMsg('چاپ در این دستگاه پشتیبانی نمی‌شود؛ از کامپیوتر چاپ کنید.')}setTimeout(()=>f.remove(),60000)},400)}
-function printChq(){const m=$('cpMsg'),a=parseInt(toEn($('cp_amt').value).replace(/[^\d]/g,''),10)||0,iso=parseJ($('cp_day').value.trim()),to=$('cp_to').value.trim();
-  if(!a){m.className='msg err';m.textContent='مبلغ را وارد کنید.';return}if(!iso){m.className='msg err';m.textContent='تاریخ را درست وارد کنید.';return}if(!to){m.className='msg err';m.textContent='«در وجه» را بنویسید.';return}
-  const u=CP.unit||'r',v=u==='r'?a*10:a,ul=u==='r'?'ریال':'تومان',dx=parseFloat(toEn($('cp_dx').value))||0,dy=parseFloat(toEn($('cp_dy').value))||0,nid=$('cp_nid').value.trim(),fr=$('cp_for').value.trim();
-  CPS.set('to',to);CPS.set('nid',nid);CPS.set('dx',String(dx));CPS.set('dy',String(dy));CPS.set('unit',u);
-  const E=x=>esc(x),pos=(l,t,w,c)=>`<div class="t" style="left:${(l-dx).toFixed(1)}mm;top:${(t+dy).toFixed(1)}mm;${w?'width:'+w+'mm;':''}">${c}</div>`;
-  printHTML(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>چک</title><style>@page{size:175mm 80mm;margin:0}html,body{margin:0;width:175mm;height:80mm}body{position:relative;font-family:Vazirmatn,Tahoma,sans-serif;font-size:11pt;color:#000}.t{position:absolute;white-space:nowrap;overflow:hidden}.b{font-weight:700}</style></head><body>
-${pos(108,11,52,`<span class="b">${E(jDateWords(iso))}</span>`)}${pos(14,11,34,`<span class="b">${E(faD(toEn(jDay(iso))))}</span>`)}
-${pos(18,27,118,`<span class="b">${E(numWords(v))} ${ul}</span>`)}${pos(18,37,118,`${E(to)}${fr?' — بابت '+E(fr):''}`)}${nid?pos(70,46,66,E(faD(toEn(nid)))):''}
-${pos(12,52,44,`<span class="b">${E(fa(v))} ${ul}</span>`)}</body></html>`);
-  m.className='msg ok';m.textContent='به پرینتر فرستاده شد.'}
 function printChqReceipt(){if(!PF||!PF.j)return;const r=fromDoc(PF.id,PF.j.data||{}),h=r.h||{},C=(PF.j.pays||[]).filter(p=>p.kind==='chq').sort((a,b)=>(a.due||'').localeCompare(b.due||'')),tot=C.reduce((x,p)=>x+(Number(p.amount)||0),0);
   if(!C.length){alertMsg('چکی برای این بیمار ثبت نشده.');return}const E=x=>esc(String(x??''));
   printHTML(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>رسید چک‌ها</title><style>@page{size:A5;margin:12mm}body{font-family:Vazirmatn,Tahoma,sans-serif;font-size:10.5pt;color:#000}h1{font-size:14pt;margin:0 0 2mm;text-align:center}.sub{text-align:center;margin:0 0 6mm;color:#333}table{width:100%;border-collapse:collapse;margin:4mm 0}th,td{border:1px solid #555;padding:2mm;text-align:center}th{background:#eee}.tot{font-weight:700}.sig{display:flex;justify-content:space-between;margin-top:16mm}.sig div{width:45%;border-top:1px solid #000;padding-top:2mm;text-align:center}</style></head><body>

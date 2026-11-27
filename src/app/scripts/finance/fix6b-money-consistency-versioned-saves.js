@@ -2,9 +2,7 @@
 const FX6_STALE='این پرونده در این فاصله تغییر کرده است؛ دوباره باز کنید.',FX6_SK='implantStale:';
 /* A2: parts stored at confirm = what the signed texts ask for */
 function fx6bParts(r,S0,P0,T){try{if(discOn(r)){const S=Math.max(0,S0-discAmt(r,S0));return {S,P:Math.max(0,T-S)}}}catch(e){}return {S:S0+P0>0?Math.round(S0*T/(S0+P0)):0,P:S0+P0>0?T-Math.round(S0*T/(S0+P0)):0}}
-/* A9: the cash note says what the typed amount means */
-{const _cn=cashNoteRender;cashNoteRender=function(){const r=_cn.apply(this,arguments);try{const el=$('cashNote'),p=F.pay||{},raw=String(p.cash==null?'':p.cash).trim();
-  if(el&&raw!==''&&discOn(F)){const C=num(raw),net=planTotal(F),G=partS(F)+partP(F),ex=C-net;el.hidden=false;el.innerHTML='نقد '+fa(C)+' تومان = <b>۱۰۰٪ نقد با '+fa(discPct(F))+'٪ تخفیف</b> (جمع طرح '+fa(G)+' تومان، با تخفیف '+fa(net)+' تومان)'+(ex>0?' · <b>'+fa(ex)+' تومان بیشتر از جمع با تخفیف</b>':'')}}catch(e){}return r}}
+/* A9: the cash note says what the typed amount means (in cashNoteRender) */
 /* A4: the version the form was opened with travels with every save / confirm */
 {const _fd=fromDoc;fromDoc=function(id,d){const r=_fd(id,d);if(d&&typeof d._v==='string')r._v=d._v;return r}}
 {const _td=toDoc;toDoc=function(r){const o=_td(r);if(r&&typeof r._v==='string')o._v=r._v;if(r&&r._sgd)o.sgDiff=r._sgd;return o}}

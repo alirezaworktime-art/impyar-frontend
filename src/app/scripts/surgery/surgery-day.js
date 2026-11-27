@@ -47,7 +47,6 @@ function surgActual(rec,sessions){const b=effBrand(rec),P=rec.s;let tot=0;
     ['U','L'].forEach(j=>imp+=num(S.imp.jc[j])*num(P.imp.bp[b]));
     tot+=t-impRow+imp});
   return tot}
-function surgPlanned(rec){const T0=totals(PV(rec,1));return (rec.brand==='ref'?Math.min(...BRANDS.map(x=>T0.surg[x.k])):T0.surg[rec.brand])+T0.pros}
 
 function openSurg(x){const d=x.data||{};const rec=fromDoc(x.id,d);if(!rec.h.name)Object.assign(rec.h,{name:x.name,nid:x.nid,phone:x.phone,age:x.age});
   const sg=x.surg||{sessions:[]},prev=sg.sessions||[];
@@ -201,6 +200,7 @@ function impTable(rows,cols0){const rh=44,cols=cols0||[['دندان',0.22],['ب�
     cols.forEach(([t,f])=>{T(cx,t,x-12,top+rh/2,{s:18,w:800});x-=W*f});
     rows.forEach((rw,i)=>{const yy=top+rh*(i+1);box(cx,C.L,yy,W,rh,i%2?FAINT:null,'#bbb',1);let xx=C.R;rw.forEach((v,ci)=>{const w=W*cols[ci][1];let fs=19;while(Wd(cx,v,{s:fs})>w-20&&fs>12)fs--;T(cx,v,xx-12,yy+rh/2,{s:fs});xx-=w})})}}}
 const impRows=im=>Object.keys(im||{}).sort().map(k=>{const m=im[k];return [toothTxt([k]),[m.b,m.sys].filter(Boolean).join(' '),(m.d?'Ø'+m.d:'')+(m.d&&m.l?' × ':'')+(m.l?m.l:''),m.ht?(({heal:'اباتمنت',chl:'کاستومایز هیلینگ'}[m.ht]||'کاور'))+(m.hs?' '+m.hs:''):'—']});
+/* surgBlocks: base + m31 (other treatments of every session) */
 function surgBlocks(sg){const blocks=[];
   (sg.sessions||[]).forEach(ss=>{blocks.push(bigTitle(`جلسه‌ی ${fa(ss.n||0)} جراحی — ${ss.jalali||jd(ss.at||ss.savedAt)||''}`));
     const S0=secFrom(ss.s||{}),ll=SECTIONS.filter(x=>rowUsed({s:S0,brand:'ko',pay:{}},x)).map(x=>{const who=SOLO.includes(x.id)?(ss.by||SURGEON()):((ss.sa||{})[x.id]||ss.asst||ss.by||'');const w2=(ss.sa2||{})[x.id];return [x.t,secDesc(S0,x)||'—',(SOLO.includes(x.id)?'':p5WhoTxt(Object.assign({},ss,{s:S0}),x))||who+(w2?' و '+w2:'')]});
@@ -208,6 +208,8 @@ function surgBlocks(sg){const blocks=[];
     const rows=impRows(ss.imp);if(rows.length){blocks.push(textBlock('ایمپلنت‌ها',[]));blocks.push(impTable(rows))}
     const o=[];if(ss.note)o.push('توضیحات: '+ss.note);if(ss.by)o.push('جراح: '+ss.by);if(ss.asst)o.push('دستیار: '+ss.asst);Object.keys(ss.sa||{}).forEach(id=>{if(SEC[id])o.push('دستیار '+SEC[id].t+': '+ss.sa[id])});Object.keys(ss.sa2||{}).forEach(id=>{if(SEC[id])o.push('دستیار دوم '+SEC[id].t+': '+ss.sa2[id])});Object.keys(ss.st||{}).forEach(id=>{if(SEC[id])o.push('تفکیک '+SEC[id].t+': '+p5WhoTxt(Object.assign({},ss,{s:S0}),SEC[id]))});if(o.length)blocks.push(textBlock('',o))});
   if(sg.finished)blocks.push(textBlock('',['درمان جراحی به پایان رسید.']));
+  /* m31: «سایر درمان‌ها» of every session */
+  try{const L=[];((sg||{}).sessions||[]).forEach(ss=>(Array.isArray(ss.oth)?ss.oth:[]).forEach(o=>L.push(`جلسه‌ی ${fa(ss.n||0)}: ${o.t}${o.amt?' — '+fa(o.amt)+' تومان':''}`)));if(L.length&&Array.isArray(blocks))blocks.push(textBlock('سایر درمان‌ها',L))}catch(e){}
   return blocks}
 async function surgReportPDF(r,sg){const blocks=surgBlocks(sg);
   blocks.push(signBlock());

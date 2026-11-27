@@ -1,9 +1,6 @@
 /* ---------- dental lab ---------- */
 const LB={ver:'',items:[],seg:'new',t:null,seen:null};
 const LB_SEGS=[['new','جدید',x=>x.st==='new'||x.st==='redo'],['work','در حال ساخت',x=>x.st==='recv'||x.st==='making'],['ready','ارسال‌شده',x=>x.st==='ready'],['done','تحویل‌شده',x=>x.st==='done'||x.st==='cancel']];
-async function pollLab(force){if(ROLE!=='lab'||document.hidden&&!force)return;try{const j=await api('labList',{ver:force?'':LB.ver},{prio:'poll'});$('lbLive').classList.remove('off');$('lbLive').textContent='زنده';if(j.same)return;LB.ver=j.ver;
-  const prev=LB.seen;LB.items=j.items||[];LB.seen=new Set(LB.items.map(x=>x.id+':'+x.st));if(prev&&LB.items.some(x=>(x.st==='new'||x.st==='redo')&&!prev.has(x.id+':'+x.st)))beep();renderLab()}
-  catch(e){if(e.message!=='aborted'){$('lbLive').classList.add('off');$('lbLive').textContent='اتصال قطع است؛ دوباره تلاش می‌شود…'}}}
 function labSpecs(d){return [d.for&&LFOR[d.for]&&'ساخت: '+LFOR[d.for],d.pon&&d.pon.length&&'پونتیک: '+toothTxt(d.pon),d.type,d.mat,d.abut&&'اباتمنت '+d.abut,d.ret,d.shade&&'رنگ '+d.shade,d.sys].filter(Boolean).map(v=>`<span>${esc(v)}</span>`).join('')}
 function labLog(log){return (log||[]).length?`<ul class="llog">${log.slice(-6).map(g=>`<li class="${g.lab?'lab':''}"><b>${esc(g.st?LST[g.st]||g.st:'پیام')}</b>${g.note?' — '+esc(g.note):''}<small>${esc(jt(g.at))}${g.by?' · '+esc(g.by):''}</small></li>`).join('')}</ul>`:''}
 function renderLab(){const n={};LB_SEGS.forEach(([k,,f])=>n[k]=LB.items.filter(f).length);

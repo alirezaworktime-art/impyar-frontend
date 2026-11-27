@@ -7,7 +7,6 @@ Object.assign(ROLE_LBL,{lf:'تعامل لابراتوار و پزشک',lfdoc:'پ
 const LF_ST={lab:'در دست لابراتوار',doc:'منتظر پاسخ پزشک',closed:'خاتمه‌یافته'};
 const LF_SLA={normal:48,urgent:24};
 const lfLate=c=>c.st==='lab'&&(Date.now()-new Date(c.labSince||c.at).getTime())>LF_SLA[c.pri==='urgent'?'urgent':'normal']*3600e3;
-const lfMine=()=>ROLE==='lflab'?'lflab':'lfdoc';
 const lfUnread=c=>{if(!LF_ROLES[ROLE])return false;const s=(c.seen||{})[ROLE];const last=(c.thread||[])[c.thread.length-1];return !!last&&last.role!==ROLE&&(!s||s<c.upd)};
 const lfCases=()=>(LF.d&&LF.d.cases)||[];
 const lfL=()=>(LF.d&&LF.d.lists)||{clinics:[],parts:[],issues:[],causes:[],outcomes:[]};

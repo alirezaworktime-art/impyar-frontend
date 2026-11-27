@@ -1,7 +1,6 @@
 /* ---------- q5: «سرجیکال گاید» at the end of the treatment-plan form (doctor / consultant): jaw (none / upper / lower / both) + optional teeth + note, kept in F.h.sgd.
    The consultant's guide box (pk1) is pre-filled with the doctor's jaw choice; reception sees it in the patient file and the surgeon on the surgery-day page. ---------- */
 const Q5_J={U:'فک بالا',L:'فک پایین',B:'هر دو فک'};
-const q5Teeth=j=>[7,6,5,4,3,2,1].map(n=>j+'R'+n).concat([1,2,3,4,5,6,7].map(n=>j+'L'+n));
 function q5Get(){if(!F.h.sgd||typeof F.h.sgd!=='object')F.h.sgd={j:'',t:[],note:''};const g=F.h.sgd;if(!Array.isArray(g.t))g.t=[];return g}
 function q5Txt(h){const g=h&&h.sgd;if(!g||!Q5_J[g.j])return '';return Q5_J[g.j]+(g.t&&g.t.length?' · دندان‌ها: '+g.t.join('، '):'')+(g.note?' · '+g.note:'')}
 function q5Can(){return ROLE==='doctor'||ROLE==='consultant'}

@@ -24,7 +24,8 @@ function tidySecs(){if(ROLE!=='staff')return;document.querySelectorAll('#viewRec
     const has=n||!!L.querySelector('[data-tall]');sec.hidden=!has;if(has)vis++;sec.classList.toggle('col',!!SECC[k]);const h=sec.querySelector('.rsh');if(h){h.dataset.sec=k;let b=h.querySelector('.rsc');if(!b){b=document.createElement('b');b.className='rsc';h.appendChild(b)}b.textContent=fa(n)}});
     let em=pn.querySelector('.rpEmpty');if(!em){em=document.createElement('div');em.className='empty rpEmpty';em.textContent='در این بخش فعلاً کاری نیست.';pn.appendChild(em)}em.hidden=!!vis||pn.dataset.rpane==='ex'||pn.id==='rAll'})}
 document.addEventListener('click',e=>{const h=e.target.closest&&e.target.closest('.rsec>.rsh[data-sec]');if(!h||e.target.closest('button,a'))return;const k=h.dataset.sec;SECC[k]=!SECC[k];if(!SECC[k])delete SECC[k];try{localStorage.setItem('implantSecC',JSON.stringify(SECC))}catch(x){}h.parentNode.classList.toggle('col',!!SECC[k])});
-function renderRecepAppts(){if(ROLE!=='staff'||!$('raSg'))return;const day=raDayISO(RAD),dl=RAD==='t'?'امروز':'فردا',A=QAPPT.filter(a=>a.st==='set'&&a.day===day).sort(apSort);
+/* renderRecepAppts: base + appt1 (refresh the booked-appointments tile) */
+function renderRecepAppts(){if(ROLE==='staff'&&$('raSg')){const day=raDayISO(RAD),dl=RAD==='t'?'امروز':'فردا',A=QAPPT.filter(a=>a.st==='set'&&a.day===day).sort(apSort);
   document.querySelectorAll('[data-rad]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rad===RAD));
   apFilterSec(A.filter(a=>SG_K.includes(a.kind)),SG_K,RAF.sg,'raSgF','raSg',dl+' نوبت جراحی ثبت نشده.');
   if($('raCk'))apFilterSec(A.filter(a=>CK_K.includes(a.kind)),CK_K,RAF.ck||'all','raCkF','raCk',dl+' نوبت چکاپ یا بخیه ثبت نشده.');
@@ -32,6 +33,7 @@ function renderRecepAppts(){if(ROLE!=='staff'||!$('raSg'))return;const day=raDay
   apFilterSec(A.filter(a=>AGRP.pr.includes(a.kind)),AGRP.pr,RAF.pr,'raPrF','raPr',dl+' نوبت پروتز ثبت نشده.');
   const O=A.filter(a=>!AGRP.sg.includes(a.kind)&&!AGRP.pr.includes(a.kind)&&!AGRP.cs.includes(a.kind)&&!AGRP.cp.includes(a.kind));$('raOt').innerHTML=O.map(a=>apptCard(Object.assign({},a))).join('');
   $('raOt').dataset.n=O.length;renderRecepBar();tidySecs();if(!$('ckSheet').hidden)renderCk()}
+  try{if(ROLE==='staff'&&TILE==='bkd'){bkdLoad();bkdRender()}}catch(e){console.error(e)}}
 function renderRecepBar(){if(ROLE!=='staff'||!$('rTabs'))return;const td=tDay(),T=QAPPT.filter(a=>a.st==='set'&&a.day===td),open=(ks,h)=>TASKS.filter(t=>!t.done&&ks.includes(t.kind)&&dDiff(t.due,td)<=h).length;
   const N={ex:QITEMS.filter(staffOwn).length,ap:T.filter(a=>!AGRP.cs.includes(a.kind)&&!AGRP.cp.includes(a.kind)).length,bk:open(['book'],3650)+open(['suture','labready'],1)+open(['uncover','recall'],0),fl:open(['fol1','fol4'],0)+open(['numb','week','pweek'],0)+QSET.length+TASKS.filter(t=>!t.done&&t.kind==='book'&&t.info!=='cont'&&dDiff(td,t.due)>30).length};
   Object.keys(N).forEach(k=>{const b=$('rtN_'+k);if(b){b.textContent=N[k]?fa(N[k]):'';b.hidden=!N[k]}});

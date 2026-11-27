@@ -11,11 +11,9 @@ const FX4_ONCE=['settleDone','fxArc','refundPay','fx4Refund','fx4RefundCancel','
       if(r&&sg.sessions&&sg.sessions.length&&!sg.arc){const pl=planTotal(r);if(Math.abs(pl-(Number(sg.planned)||0))<=1){const a0=surgActual(r,sg.sessions);payload.actual=(typeof discOn==='function'&&discOn(r))?a0-discAmt(r,a0):a0}}}catch(e){}}}
   return _a4(action,payload,opt)}}
 /* the patient file uses the balance the server computes (same as debtors, creditors and the payment check) */
-{const _pn=payNums;payNums=function(j){if(j&&j.bal&&typeof j.bal==='object'){const b=j.bal;return {total:b.total,got:b.paid,wait:b.wait,bounce:b.bounce,rest:b.rest,credit:b.credit,rfOpen:b.rfOpen,waived:b.waived}}return _pn(j)}}
 /* settlement: «رایگان» (waive) for a positive difference, e.g. a warranty re-implant */
 ST_K.splice(3,0,['waive','رایگان (بخشودن؛ مثلاً کاشت دوباره‌ی گارانتی)']);
 {const _sp=stPays;stPays=function(){if(typeof ST!=='undefined'&&ST&&ST.k==='waive')return [];return _sp.apply(this,arguments)}}
-{const _sr=stRender;stRender=function(){const r=_sr.apply(this,arguments);try{const f=$('stF');if(f&&ST&&ST.k==='waive')f.innerHTML=`<div class="fields"><label class="f">مبلغ رایگان (تومان)<input id="fx4_wv" inputmode="numeric" value="${fa(ST.d)}"></label><label class="f">دلیل (الزامی)<input id="fx4_wvn" maxlength="300" placeholder="مثلاً: کاشت دوباره‌ی ایمپلنت شکست‌خورده — گارانتی"></label></div><p class="note">اگر فقط بخشی رایگان است، مبلغ همان بخش را بنویسید؛ باقی‌مانده برای پذیرش به‌صورت «وصول مانده» پیگیری می‌شود.</p>`}catch(e){}return r}}
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='fx4_wv'){const n=mnum(t.value);t.value=n?fa(n):''}});
 /* tasks: «تأیید ادامه با پرداخت ناقص» for reception */
 Object.assign(TLBL,{payok:['تأیید ادامه با پرداخت ناقص','پزشک می‌خواهد کار را ادامه دهد ولی پرداخت بیمار طبق قرار کامل نیست. با بیمار هماهنگ کنید؛ اگر ادامه مجاز است دلیل را ثبت کنید تا پزشک دوباره بزند.']});Object.assign(TGRP,{payok:'fl'});

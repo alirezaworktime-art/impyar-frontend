@@ -18,7 +18,10 @@ function openPostConfirm(snap){if(!snap||!snap.id)return;const c=chqFor(snap);PC
     <div id="pcList"></div><div class="msg" id="pcMsg"></div>
     <div class="btns" style="flex-wrap:wrap"><button class="btn" type="button" id="pcSave">ثبت دریافت‌ها در پرونده</button>${c.chq.length?'<button class="btn ghost" type="button" id="pcPrint">🖨 چاپ چک‌ها</button>':''}<button class="btn ghost" type="button" id="pcClose">بعداً</button></div>`);
   pcRender();s.hidden=false;pcPrevLoad();ensurePos().then(()=>{if(PC&&$('pcPos'))$('pcPos').innerHTML=posChips('pcpos',PC.via,{cash:1})})}
-function pcRows(){const iso=parseJ(PC.first||'');return PC.chq.map((x,i)=>Object.assign({},x,{due:iso?jAddM(iso,i):'',i}))}
+/* pcRows: fin2 base + m12 (editable cheque amounts / due dates, kept in PC.m12) */
+function pcRows(){const iso=parseJ(PC.first||''),R=PC.chq.map((x,i)=>Object.assign({},x,{due:iso?jAddM(iso,i):'',i}));
+  try{const st=m12St();if(!st)return R;if(!st.L)st.L=R.map(x=>({o:x,part:x.part||'s',amount:Number(x.amount)||0,dt:'',man:false}));const iso0=parseJ(PC.first||'');
+  return st.L.map((x,i)=>Object.assign({},x.o,{part:x.part,amount:x.amount,due:x.man?(parseJ(x.dt)||''):(iso0?jAddM(iso0,i):''),i}))}catch(e){return R}}
 function pcRender(){const R=pcRows(),PN={s:'جراحی',p:'پروتز'};$('pcList').innerHTML=R.length?`<table class="cqt"><thead><tr><th>#</th><th>بخش</th><th>مبلغ (تومان)</th><th>سررسید</th></tr></thead><tbody>${R.map((x,i)=>`<tr><td>${fa(i+1)}</td><td>${PN[x.part]}</td><td><b>${fa(x.amount)}</b></td><td>${x.due?esc(jDay(x.due)):'—'}</td></tr>`).join('')}</tbody></table>`:''}
 document.addEventListener('input',e=>{const t=e.target;if(!PC||!t)return;if(t.id==='pc_first'){PC.first=t.value;const pos=t.selectionStart;pcRender();try{t.setSelectionRange(pos,pos)}catch(x){}}else if(t.id==='pc_cash')PC.rcash=num(t.value);else if(t.id==='pc_bank'){PC.bank=t.value;CPS.set('bank',t.value)}});
 document.addEventListener('change',e=>{const t=e.target;if(PC&&t&&t.id==='pc_bank'){PC.bank=t.value;CPS.set('bank',t.value)}});

@@ -25,7 +25,6 @@ window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('
   const pl=$('pcList');if(pl&&PC.chq&&PC.chq.length&&!$('fin1PcChq'))pl.insertAdjacentHTML('beforebegin',`<div id="fin1PcChq">${fin1ChqHTML('pc',PC)}</div>`);
   if(ROLE==='consultant'){p4Mode(true);const b=document.querySelector('#p4Mode [data-p4mode="full"]');if(b)b.hidden=true;const c=$('fin1PcChq');if(c)c.hidden=true;
     const m=$('pcMsg');if(m){m.className='msg';m.textContent='مبلغ بیعانه و روش دریافت را مشخص کنید، بعد «ثبت بیعانه» را بزنید. بقیه‌ی پول را پذیرش دریافت می‌کند.'}}}}catch(e){}return r}}
-{const _m=p4Mode;p4Mode=function(dep){const r=_m.apply(this,arguments);const c=$('fin1PcChq');if(c)c.hidden=!!dep||!(PC&&PC.chq&&PC.chq.length);return r}}
 /* the deposit / full collection need the account (card-to-card) and the cheque kind and payee */
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#pcSave');if(!t||!PC)return;const m=$('pcMsg'),bad=x=>{e.preventDefault();e.stopImmediatePropagation();m.className='msg err';m.textContent=x};
   const cash=PC.dep?num(($('pc_cash')||{}).value):PC.rcash;

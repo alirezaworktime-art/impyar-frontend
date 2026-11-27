@@ -19,8 +19,7 @@ document.addEventListener('focusin',e=>{const i=e.target;if(m48IsMoney(i))m48Hin
 {const _o=openPostConfirm;openPostConfirm=function(){const r=_o.apply(this,arguments);try{setTimeout(()=>{m48Hint($('pc_cash'));document.querySelectorAll('#pcSheet [data-m12a]').forEach(m48Hint)},60)}catch(e){}return r}}
 /* (7) a real press on the button always asks the result again */
 window.addEventListener('click',e=>{try{if(!e.isTrusted||!e.target.closest||!e.target.closest('#confirmBtn'))return;if(ROLE!=='consultant'||!F||!F._next)return;const open=id=>{const s=$(id);return !!s&&!s.hidden};if(open('pkSheet')||open('sgnSheet'))return;delete F._next}catch(x){}},true);
-/* (3) */
-{const _v=m11Vis;m11Vis=function(){const r=_v.apply(this,arguments);try{m48More()}catch(e){}return r}}
+/* (3) m48More runs at the end of m11Vis (consultant/layer.js) */
 function m48More(){const b=$('m11More'),bar=document.querySelector('#formBar .btns');let x=$('m48BarMore');
   if(!b||ROLE!=='consultant'||(typeof SURG!=='undefined'&&SURG)){if(x)x.remove();return}
   const bt=b.querySelector('button');if(bt){bt.className='m48more';bt.dataset.on=M11_SHOW?'1':'0'}

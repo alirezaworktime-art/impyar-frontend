@@ -16,7 +16,9 @@ const a8V = (p, base) => { if (!p || p.v === '' || p.v == null) return 0; const 
 /* total, when given, is the whole discount of the line; the doctor share stays as typed and the clinic takes the rest */
 function a8Line(l) { const base = a8Base(l), ds = l.ds || {}; const d = Math.min(base, a8V(ds.d, base)); let c, t = a8V(ds.t, base); if (t) { t = Math.min(base, t); c = Math.max(0, t - d) } else { c = Math.min(base - d, a8V(ds.c, base)); t = c + d } return { base, c, d, t } }
 const a8Any = () => (A6 && A6.lines || []).some(l => l.ds && ['c', 'd', 't'].some(k => l.ds[k] && String(l.ds[k].v || '') !== '' && Number(toEn(String(l.ds[k].v)).replace(/[^\d.]/g, ''))));
-function a8Sync() { if (!A6 || !a8Any()) return; let c = 0, d = 0; A6.lines.forEach(l => { const r = a8Line(l); c += r.c; d += r.d }); A6.disc = { c: { m: 'a', v: String(c) }, d: { m: 'a', v: String(d) } } }
+/* a8Sync: arc8 base + arc9 (6) (the whole-file discount is added to the clinic share) */
+function a8Sync() { if (A6 && a8Any()) { let c = 0, d = 0; A6.lines.forEach(l => { const r = a8Line(l); c += r.c; d += r.d }); A6.disc = { c: { m: 'a', v: String(c) }, d: { m: 'a', v: String(d) } } }
+  try { const g = a9GdAmt(); if (g) { if (!a8Any()) { let d = 0; A6.lines.forEach(l => { d += a8Line(l).d }); A6.disc = { c: { m: 'a', v: String(g) }, d: { m: 'a', v: String(d) } } } else A6.disc.c = { m: 'a', v: String(num(A6.disc.c.v) + g) } } } catch (e) { } }
 { const _c = a6Calc; a6Calc = function () { try { a8Sync() } catch (e) { } return _c.apply(this, arguments) } }
 function a8LineHTML(l) {
   if (!a6Money0()) return ''; const ds = l.ds || {}, r = a8Line(l);

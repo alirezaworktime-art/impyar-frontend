@@ -6,12 +6,6 @@ async function l5Open(id,name,aid){LOF=[];await openFile(id,name,'pros');if(!PF|
   L5={id,aid:aid||'',work:'',res:'',note:''};PF.sess=L5;const st=PF.j.pros.stage;L5.work=['heal','tmpd','impr','lab'].includes(st)?'impr':st==='deliv'?'deliv':PR2.TEST&&PR2.TEST.includes(st)?(st==='rabt'?'rabt':'rscr'):'';
   LO=null;renderFile();try{$('pfSheet').querySelector('.in').scrollTop=0}catch(e){}}
 function l5Read(){if(!L5)return;const n=$('ps_note');if(n)L5.note=n.value;try{if(LO)loRead()}catch(e){}}
-function l5Hist(j){const sg=j.surg||{},ses=sg.sessions||[],pr=j.pros||{},labs=j.labs||[];let h='';
-  h+=`<div class="l5sec"><b>جلسات جراحی</b>${ses.length?`<ul>${ses.map(ss=>{let ll=[];try{ll=secLines(secFrom(ss.s||{}))}catch(e){}const imp=Object.keys(ss.imp||{});return `<li><b>جلسه‌ی ${fa(ss.n||0)}</b><small>${esc(jd(ss.at))}${ss.by?' · '+esc(ss.by):''}</small><div>${esc(ll.map(l=>l.t+(l.d&&l.d!=='—'?' ('+l.d+')':'')).join(' · '))}</div>${imp.length?`<div>ایمپلنت: ${esc(imp.map(k=>toothTxt([k])+' '+impTxt(ss.imp[k])).join('؛ '))}</div>`:''}</li>`}).join('')}</ul>`:'<div class="meta">جلسه‌ی جراحی در این کلینیک ثبت نشده.</div>'}</div>`;
-  const S=Array.isArray(pr.sess)?pr.sess:[];if(S.length)h+=`<div class="l5sec"><b>جلسه‌های پروتز قبلی</b><ul>${S.slice().reverse().map(s=>`<li><b>${esc(L5W[s.work]||s.work)}${s.res?(s.res==='ok'?' — تأیید':' — اصلاح'):''}</b><small>${esc(jd(s.at))}${s.by?' · '+esc(s.by):''}</small>${s.note?'<div>'+esc(s.note)+'</div>':''}</li>`).join('')}</ul></div>`;
-  if(labs.length)h+=`<div class="l5sec"><b>سفارش‌های لابراتوار</b><ul>${labs.slice().reverse().map(l=>{const d=l.data||{};return `<li><b>${l.no?'#'+esc(faD(l.no))+' · ':''}${esc(LST[l.st]||l.st)}</b><small>${esc(jd(l.created))}</small><div>${esc([LFOR[d.for]||'',d.wt||'',toothTxt(d.teeth||[]),l2CurTxt(d)].filter(Boolean).join(' · '))}</div>${l2Btn(l)}</li>`}).join('')}</ul></div>`;
-  if((pr.log||[]).length)h+=`<div class="l5sec"><b>سابقه‌ی مراحل پروتز و آنکاوری</b><ul>${pr.log.slice().reverse().slice(0,25).map(g=>`<li><b>${esc(PSTN[g.k]||pr2Lbl(g.k,pr2T(pr))||g.k)}</b><small>${esc(jt(g.at))}${g.by?' · '+esc(g.by):''}</small>${g.note?'<div>'+esc(g.note)+'</div>':''}</li>`).join('')}</ul></div>`;
-  return h}
 function l5Render(){const {j}=PF,s=L5,name=(fromDoc(PF.id,j.data||{}).h||{}).name||'';$('pfTitle').textContent='جلسه‌ی پروتز · '+name;
   const stg=j.pros?(PSTN[j.pros.stage]||pr2Lbl(j.pros.stage,pr2T(j.pros))||j.pros.stage):'';
   let w=`<section class="l5work"><h3>کار این جلسه</h3><div class="meta">مرحله‌ی فعلی: <b>${esc(stg)}</b></div>

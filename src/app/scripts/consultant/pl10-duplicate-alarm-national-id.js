@@ -57,6 +57,7 @@ async function pl10Dep(snap) { try { const p = (snap && snap.pay) || {}, a = num
   const q = await api('payAdd', { id: snap.id, pid: 'dep-' + snap.id.slice(0, 36) + '-f', pay: { kind: posKind(via), pos: posId(via), acct: via === 'xfer' ? p.acct || '' : '', part: 's', amount: a, by: ROLE_LBL[ROLE], note: 'بیعانه' } });
   toast(q && q.dup ? 'بیعانه قبلاً ثبت شده بود.' : 'بیعانه‌ی ' + fa(a) + ' تومان در پرونده ثبت شد؛ مانده‌ی نقد و چک‌ها با منشی.') } catch (e) { toast('ثبت بیعانه: ' + e.message, 1) } }
 /* reception: a «brand later» plan first asks the brand; then the same collection sheet with that brand's amounts */
+/* pl10BrandSheet: base + m11 (8) (All on X: Iranian/Swiss chips off) + m57a (1) (title) */
 function pl10BrandSheet(snap) { const pv = PV(snap, 1), T = totals(pv), id = snap.id;
   const s = mkSheet('pl10BrSh', `<h3>برند ایمپلنت بیمار · ${esc((snap.h || {}).name || '')}</h3><p class="note">مشاور «بیمار بعداً انتخاب می‌کند» زده است. برندی را که بیمار می‌گوید بزنید؛ مبلغ و نقد و چک‌ها با همان شرایط مشاور حساب می‌شود.</p>
     <div class="brand-totals pl10brs">${BRANDS.map(b => { const r2 = Object.assign({}, snap, { brand: b.k }); return `<button type="button" class="tot" data-pl10br="${b.k}"><small>${b.n}</small><b>${fa(planTotal(r2))}</b><small>نقد: ${fa(cashFor(PV(r2, 1), T.surg[b.k], T.pros))}</small></button>` }).join('')}</div>
@@ -64,7 +65,9 @@ function pl10BrandSheet(snap) { const pv = PV(snap, 1), T = totals(pv), id = sna
   s.onclick = async ev => { const b = ev.target.closest('button'); if (!b) return; if (b.id === 'pl10BrX') { s.hidden = true; return } const k = b.dataset.pl10br; if (!k) return; const m = $('pl10BrMsg'), r2 = Object.assign({}, snap, { brand: k }), T2 = totals(PV(r2, 1));
     b.disabled = true; m.className = 'msg'; m.textContent = 'در حال ثبت…';
     try { await api('pl10Brand', { id, brand: k, total: planTotal(r2), parts: { S: T2.surg[k] || 0, P: T2.pros || 0 }, cash: pl10O3(r2) ? pl10Cash(r2, T2.surg[k] || 0, T2.pros || 0) : null }); s.hidden = true; toast('برند ثبت شد.'); const j = await api('get', { id }); openPostConfirm(fromDoc(id, j.data || {})) }
-    catch (err) { m.className = 'msg err'; m.textContent = err.message; b.disabled = false } } }
+    catch (err) { m.className = 'msg err'; m.textContent = err.message; b.disabled = false } }
+  try { const S = PV(snap, 1).s; if (m11Aox(S)) { const sh = $('pl10BrSh'); if (sh) M11_NB.forEach(k => sh.querySelectorAll(`[data-pl10br="${k}"]`).forEach(b => { b.disabled = true; b.classList.add('m11off'); b.title = 'برای All on X فقط برند ایتالیایی' })) } } catch (e) { }
+  try { m57Tit($('pl10BrSh')) } catch (e) { } }
 { const _o = openPostConfirm; openPostConfirm = function (snap) {
   if (ROLE === 'consultant' && Date.now() - PL10_P4 > 20000) { pl10Dep(snap); return }
   if (snap && snap.brand === 'ref' && snap.pay && snap.pay.blater && (ROLE === 'staff' || ROLE === 'consultant')) { pl10BrandSheet(snap); return }

@@ -19,5 +19,6 @@ function m7Read(test) {
   CPS.set('dx', String(o.dx)); CPS.set('dy', String(o.dy)); CPS.set('unit', u); if (!test) { CPS.set('to', to); CPS.set('nid', $('cp_nid').value.trim()) }
   return o
 }
-printChq = function () { const o = m7Read(false); if (!o) return; printHTML(m7Html(o, false)); const m = $('cpMsg'); m.className = 'msg ok'; m.textContent = 'به پرینتر فرستاده شد. در پنجره‌ی چاپ اندازه را «۱۰۰٪ / Actual size» بگذارید.' };
+/* printChq: m7 (replaces the first version of the patient file tabs) */
+function printChq() { const o = m7Read(false); if (!o) return; printHTML(m7Html(o, false)); const m = $('cpMsg'); m.className = 'msg ok'; m.textContent = 'به پرینتر فرستاده شد. در پنجره‌ی چاپ اندازه را «۱۰۰٪ / Actual size» بگذارید.' }
 document.addEventListener('click', e => { if (!e.target || e.target.id !== 'cpTest') return; const o = m7Read(true); if (!o) return; printHTML(m7Html(o, true)); const m = $('cpMsg'); m.className = 'msg ok'; m.textContent = 'برگه‌ی آزمایشی فرستاده شد: آن را روی چک بگذارید و جلوی نور ببینید؛ اگر جابه‌جا بود، «جابه‌جایی» را تنظیم کنید.' });

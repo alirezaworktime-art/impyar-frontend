@@ -71,7 +71,6 @@ function a6From(j){const d=j?j.data||{}:{},h=d.h||{},a=d.arc||{},v6=!!a.v6;
 const a6NoteOf=n=>{n=String(n||'');const m=/^پرداخت قبلی \([^)]*\)(?: — (.*))?$/.exec(n);return m?(m[1]||''):n};
 function a6Open(j){Promise.all([a6Meta(),ensurePos()]).catch(()=>{}).then(()=>{A6=a6From(j);A6.back=['list','queue','recep'].find(v=>{const el=$('view'+v[0].toUpperCase()+v.slice(1));return el&&!el.hidden})||'list';
   const pf=$('pfSheet');if(pf&&!pf.hidden)pf.hidden=true;show('arc6');a6Render();window.scrollTo(0,0)})}
-fxArcOpen=function(j){a6Open(j)};
 {const _s=show;show=function(v){const r=_s.apply(this,arguments);const el=$('viewArc6');if(el)el.hidden=v!=='arc6';return r}}
 {const _t=ttlNow;ttlNow=function(){const el=$('viewArc6');if(el&&!el.hidden)return 'پرونده‌ی جا مانده';return _t.apply(this,arguments)}}
 /* reception: a clear entry in its own tiles */
@@ -280,7 +279,6 @@ B.push(ffTitle('درمان‌های انجام‌شده'));
   const urls=pages.map(p=>p.cv.toDataURL('image/jpeg',0.82));
   return new Blob([jpegPDF(urls.map(u=>({jpg:dataUrlBytes(u),w:PW,h:PH})))],{type:'application/pdf'})}
 /* ---- calendar: quick year / month, opens at the last date used, no phone keyboard ---- */
-{const _o=fx2DpOpen;fx2DpOpen=function(inp){const r=_o.apply(this,arguments);try{if(FX2DP&&FX2DP.inp===inp&&!parseJ(inp.value||'')&&inp.dataset.anc&&/^\d{4}-\d{2}-\d{2}$/.test(inp.dataset.anc)){FX2DP.anc=inp.dataset.anc;fx2DpDraw();fx2DpPlace()}}catch(e){}return r}}
 {const _d=fx2DpDraw;fx2DpDraw=function(){_d.apply(this,arguments);const S=FX2DP;if(!S||!S.el)return;const P=jParts(S.anc),Y=jParts(tDay())[0],ys=[];for(let y=Y;y>=Y-40;y--)ys.push(y);
   const bar=document.createElement('div');bar.className='fx2dps';bar.innerHTML=`<select data-dpys aria-label="سال">${ys.map(y=>`<option value="${y}"${y===P[0]?' selected':''}>${faD(String(y))}</option>`).join('')}</select><select data-dpms aria-label="ماه">${JMN.map((n,i)=>`<option value="${i+1}"${i+1===P[1]?' selected':''}>${n}</option>`).join('')}</select>${S.inp&&S.inp.readOnly&&S.inp.dataset.a6ro?'<button type="button" data-dpkb="1">تایپ تاریخ</button>':''}`;
   S.el.insertBefore(bar,S.el.firstChild)}}
@@ -313,8 +311,4 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   const v=await uxAsk({title:'برگشت به پزشک طرح درمان',who:(F.h&&F.h.name)||'',msg:'طرح به کارتابل پزشک طرح درمان برمی‌گردد و توضیح شما روی کارت بیمار دیده می‌شود.'+(dirty?' تغییرهای ذخیره‌نشده‌ی این فرم ثبت نمی‌شود.':''),fields:[{k:'note',l:'توضیح برای پزشک طرح درمان (الزامی)',type:'textarea',req:true,full:1}],ok:'برگرداندن به پزشک'});
   if(!v||!v.note)return;if(v.note.trim().length<3){toast('توضیح را کامل‌تر بنویسید.',true);return}
   t.disabled=true;try{await api('fx7aBack',{id:F.id,note:v.note,by:USERNAME||ROLE_LBL[ROLE]});leaveForm('طرح به پزشک طرح درمان برگشت.');pollQ(true)}catch(err){toast(err.message,true)}finally{t.disabled=false}},true);
-/* fix7b: «امروز جراحی نشد» — the patient goes back where he came from (booking / continue surgery / operated) */
-fx5SurgCancelGo=async function(t){const reason=await new Promise(res=>{const s=fxSheet('fx5ScSheet',`<h3>امروز جراحی نشد</h3><p class="note">بیمار از کارتابل جراحی به جای قبلی برمی‌گردد: اگر جلسه‌ای ثبت نشده به صف نوبت‌دهی، اگر جراحی ناتمام است به «ادامه‌ی جراحی» و اگر جراحی تمام شده بود به «جراحی‌شده». نوبت جراحی امروز «انجام نشد» ثبت می‌شود و دلیل در سیر درمان می‌ماند.</p><label class="f">دلیل (الزامی)<input id="fx5_scr" maxlength="300" placeholder="مثلاً: فشار خون بالا؛ جراحی به جلسه‌ی بعد موکول شد"></label><div class="msg" id="fx5ScM"></div><div class="btns"><button class="btn" type="button" id="fx5ScGo" style="flex:1">ثبت و برگرداندن بیمار</button><button class="btn ghost" type="button" id="fx5ScNo">انصراف</button></div>`);
-  $('fx5ScNo').onclick=()=>{s.hidden=true;res('')};$('fx5ScGo').onclick=()=>{const v=$('fx5_scr').value.trim();if(v.length<3){$('fx5ScM').className='msg err';$('fx5ScM').textContent='دلیل را بنویسید.';return}s.hidden=true;res(v)};setTimeout(()=>{try{$('fx5_scr').focus()}catch(e){}},50)});
-  if(!reason)return;t.disabled=true;try{const j=await api('fx5SurgCancel',{id:t.dataset.fx5sc,reason});toast(j&&j.back==='surgpart'?'بیمار به «ادامه‌ی جراحی» (صف نوبت‌دهی) برگشت.':j&&j.back==='surgdone'?'بیمار به «جراحی‌شده» برگشت.':'بیمار به نوبت‌دهی برگشت.');pollQ(true);if(PF&&!$('pfSheet').hidden)refreshFile()}catch(err){alertMsg(err.message)}finally{t.disabled=false}};
 

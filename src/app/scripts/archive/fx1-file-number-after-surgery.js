@@ -78,7 +78,8 @@ function fxImpRow(x,i){const dl=x.dayJ!==undefined?x.dayJ:(x.day?jDay(x.day):'')
   <label>تاریخ جراحی<input data-k="day" placeholder="۱۴۰۲/۰۵/۱۰" value="${esc(dl)}"></label><label>جراح<input data-k="by" list="fxDocs" value="${esc(x.by||'')}"></label><button class="btn sm ghost x" type="button" data-fxirm="${i}" aria-label="حذف این ایمپلنت">✕</button></div>`}
 function fxArcRead(){const g=id=>($(id)||{}).value||'';const A=FXA;A.name=g('fxa_name').trim();A.phone=toEn(g('fxa_phone')).trim();A.nid=toEn(g('fxa_nid')).trim();A.age=toEn(g('fxa_age')).trim();A.city=g('fxa_city').trim();A.doc=g('fxa_doc').trim();A.file=toEn(g('fxa_file')).trim();A.dayJ=g('fxa_day').trim();A.other=g('fxa_other');A.note=g('fxa_note');A.type=g('fxa_type')||A.type||'fix';A.stage=g('fxa_stage')||A.stage;A.dueJ=g('fxa_due').trim();
   A.imps=[...document.querySelectorAll('#fxArcSheet .fximp')].map(r=>{const v=k=>(r.querySelector('[data-k="'+k+'"]')||{}).value||'';return {t:fxKey(v('t')),tRaw:v('t'),b:v('b').trim(),d:toEn(v('d')).trim(),l:toEn(v('l')).trim(),dayJ:v('day').trim(),day:parseJ(v('day')),by:v('by').trim()}});A.visits=fx2VisitsRead();return A}
-function fxArcRender(){const A=FXA,br=[...new Set((SET.catalog||[]).map(c=>c.b).filter(Boolean))],docs=SET.docs||[];
+/* fxArcRender: base + arc3 (archive surgery-day page) */
+function fxArcRender(){if(SURG&&SURG.arc)return arcRender();const A=FXA,br=[...new Set((SET.catalog||[]).map(c=>c.b).filter(Boolean))],docs=SET.docs||[];
   fxSheet('fxArcSheet',`<h3>${A.id?'ویرایش اطلاعات پرونده‌ی جا مانده':'افزودن پرونده‌ی جا مانده (بیماران قبلی / پرونده‌ی کاغذی)'}</h3>
   <p class="note">برای بیماران قبلی که پرونده‌ی کاغذی دارند. اگر درمانشان تمام نشده (مثلاً روکش را تحویل نگرفته‌اند) «باز» را بزنید تا از همان مرحله در سایت ادامه دهند. بعد از ذخیره، اسکن یا عکس پرونده‌ی کاغذی را در بخش «تصاویر» پرونده اضافه کنید.</p>
   <datalist id="fxBrands">${br.map(b=>`<option value="${esc(b)}">`).join('')}</datalist><datalist id="fxDocs">${docs.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>
@@ -99,9 +100,10 @@ function fxArcRender(){const A=FXA,br=[...new Set((SET.catalog||[]).map(c=>c.b).
    <label class="f">تاریخ پیگیری / نوبت (برای آنکاوری یا قالب)<input id="fxa_due" placeholder="امروز" value="${esc(A.dueJ||'')}"></label></div>`}
   <div class="msg" id="fxaMsg"></div>
   <div class="btns"><button class="btn" type="button" id="fxaGo" style="flex:1">${A.id?'ذخیره‌ی تغییرات':'ثبت در بایگانی'}</button><button class="btn ghost" type="button" data-fxclose="fxArcSheet">انصراف</button></div>`)}
-function fxArcOpen(j){if(j){const d=j.data||{},h=d.h||{},a=d.arc||{};FXA={id:j.id,name:h.name||'',phone:h.phone||'',nid:h.nid||'',age:h.age||'',city:h.city||'',doc:h.doc||'',file:h.file||'',dayJ:a.day?jDay(a.day):'',other:a.other||'',note:a.note||'',imps:(a.imps||[]).map(x=>Object.assign({},x)),visits:(a.visits||[]).map(x=>Object.assign({},x))}}
-  else FXA={open:false,type:'fix',stage:'imprw',imps:[{}],visits:[{}]};fxArcRender();fx2Svcs().then(()=>{const s=$('fxArcSheet');if(FXA&&s&&!s.hidden){fxArcRead();fxArcRender()}})}
-async function fxArcSave(btn){const A=fxArcRead(),m=$('fxaMsg'),err=t=>{m.className='msg err';m.textContent=t};
+/* fxArcOpen: base + arc3 (surgery-day page) + arc6 (replaced by the a6 editor) */
+function fxArcOpen(j){a6Open(j)}
+/* fxArcSave: base + arc3 (archive surgery-day page) */
+async function fxArcSave(btn){if(SURG&&SURG.arc)return arcSave(btn);const A=fxArcRead(),m=$('fxaMsg'),err=t=>{m.className='msg err';m.textContent=t};
   if(!A.name)return err('نام بیمار را بنویسید.');
   const bad=A.imps.find(x=>(x.tRaw||x.b||x.d||x.l||x.dayJ)&&!x.t);if(bad)return err('شماره‌ی دندان «'+(bad.tRaw||'خالی')+'» درست نیست؛ شماره‌ی دو رقمی بین‌المللی بنویسید (مثلاً ۳۶).');
   const bd=A.imps.find(x=>x.dayJ&&!x.day);if(bd)return err('تاریخ «'+bd.dayJ+'» درست نیست؛ مثل ۱۴۰۲/۰۵/۱۰ بنویسید.');
@@ -110,8 +112,6 @@ async function fxArcSave(btn){const A=fxArcRead(),m=$('fxaMsg'),err=t=>{m.classN
     visits:(A.visits||[]).filter(x=>x.day).map(x=>({day:x.day,svc:x.svc,teeth:x.teeth,doc:x.doc,cost:x.cost,paid:x.paid,method:x.method,no:x.no,note:x.note})),imps:A.imps.filter(x=>x.t).map(x=>{const c=(SET.catalog||[]).find(c=>c.b===x.b);return {t:x.t,b:x.b,sys:c?c.sys||'':'',g:c?c.g||'':'',d:x.d,l:x.l,day:x.day,by:x.by}})};
   btn.disabled=true;try{const r=await api('fxArc',{id:A.id||'',arc,by:fxBy()},{timeout:20000});fxClose('fxArcSheet');toast(A.id?'اطلاعات بایگانی ذخیره شد.':'پرونده‌ی کاغذی ثبت شد؛ اسکن پرونده را در «تصاویر» اضافه کنید.');
     FXA=null;try{loadList()}catch(e){}pollQ(true);openFile(r.id,arc.name,A.id?'tl':'img')}catch(e){err(e.message)}finally{btn.disabled=false}}
-function fxArcBar(){const el=$('fxArcBar');if(!el)return;const n=(ARCHIVE||[]).filter(d=>d.arc).length;
-  el.innerHTML=(fxCanFile()?'<button class="btn sm" type="button" id="fxArcNew">+ ورود پرونده‌ی کاغذی</button>':'')+`<button class="chip" type="button" id="fxArcOnly" aria-pressed="${FXARC}">فقط پرونده‌های کاغذی (${fa(n)})</button>`}
 {const _rl=renderList;renderList=function(){try{fxArcBar()}catch(e){}if(!FXARC)return _rl();const all=ARCHIVE;ARCHIVE=all.filter(d=>d.arc);try{return _rl()}finally{ARCHIVE=all}}}
 function fxArcInfo(id,j){const d=j.data||{},a=d.arc;if(!a)return '';const I=(a.imps||[]).map(x=>toothTxt([x.t])+' '+[x.b,x.d&&x.l?x.d+'×'+x.l:'',x.day?jDay(x.day):'',x.by].filter(Boolean).join(' · '));
   return `<div class="fxarcinfo"><b>پرونده‌ی کاغذی (بایگانی)</b>${(d.h||{}).file?' · شماره '+esc(faD(d.h.file)):''}${a.day?' · اولین مراجعه '+esc(jDay(a.day)):''}

@@ -1,7 +1,6 @@
 /* ---------- m12: «تعیین تکلیف مالی» — cheque amounts and due dates are editable, cheques can be added or removed; a total different from the cheque part warns but is saved, and the patient card shows «مغایرت» until the file is settled (owner, 2026-11-11) ---------- */
 const m12St = () => { if (!PC) return null; if (!PC.m12 || PC.m12.src !== PC.chq) PC.m12 = { src: PC.chq, E: (PC.chq || []).reduce((a, x) => a + (Number(x.amount) || 0), 0), L: null }; return PC.m12 };
-{ const _r = pcRows; pcRows = function () { const R = _r.apply(this, arguments); try { const st = m12St(); if (!st) return R; if (!st.L) st.L = R.map(x => ({ o: x, part: x.part || 's', amount: Number(x.amount) || 0, dt: '', man: false })); const iso0 = parseJ(PC.first || '');
-  return st.L.map((x, i) => Object.assign({}, x.o, { part: x.part, amount: x.amount, due: x.man ? (parseJ(x.dt) || '') : (iso0 ? jAddM(iso0, i) : ''), i })) } catch (e) { return R } } }
+/* the edited cheque rows come out of pcRows (fin2) */
 const m12Sum = () => { const st = m12St(); if (!st || !st.L) return { s: 0, E: 0, d: 0 }; const s = st.L.reduce((a, x) => a + (Number(x.amount) || 0), 0); return { s, E: st.E, d: s - st.E } };
 function m12SumUI() { const el = $('m12Sum'); if (!el) return; const { s, E, d } = m12Sum(); el.className = 'm12sum' + (d ? ' warn' : '');
   el.innerHTML = `جمع چک‌ها: <b>${fa(s)}</b> تومان · مبلغ چکی طرح: <b>${fa(E)}</b> تومان` + (d ? `<br>⚠ ${d > 0 ? 'جمع چک‌ها ' + fa(d) + ' تومان بیشتر از مانده است' : 'جمع چک‌ها ' + fa(-d) + ' تومان کمتر از مانده است'}؛ ثبت می‌شود ولی تا تسویه روی کارت بیمار «مغایرت» نشان داده می‌شود.` : '') }

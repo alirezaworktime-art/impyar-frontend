@@ -8,8 +8,7 @@
 try { const i = M11_NB.indexOf('ko'); if (i >= 0) M11_NB.splice(i, 1) } catch (e) { }
 const M57_AT = 'برای All on X فقط برند ایتالیایی یا کره‌ای';
 const m57Tit = root => { try { (root || document).querySelectorAll('.m11off').forEach(b => { if (b.title) b.title = M57_AT }) } catch (e) { } };
-{ const _b = m11Brands; m11Brands = function () { const r = _b.apply(this, arguments); m57Tit($('brandTotals')); return r } }
-{ const _b = pl10BrandSheet; pl10BrandSheet = function () { const r = _b.apply(this, arguments); m57Tit($('pl10BrSh')); return r } }
+/* m57Tit runs at the end of m11Brands (layer.js) and pl10BrandSheet (pl10) */
 /* (2) */
 const M57 = { think: false, sms: null, tabs: [] };
 async function m57SmsNo(force) { if (M57.sms !== null && !force) return M57.sms; try { const j = await api('m57Sms', { op: 'get' }, { prio: 'bg', timeout: 10000 }); M57.sms = String(j.v || '') } catch (e) { if (M57.sms === null) M57.sms = '' } return M57.sms }
