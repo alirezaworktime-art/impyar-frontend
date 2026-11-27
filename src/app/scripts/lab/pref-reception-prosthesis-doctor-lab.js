@@ -5,9 +5,7 @@ const l3Of=id=>QPREF.find(p=>p.id===id);
 (function(){const _a=applyQueue;applyQueue=function(j){if(j&&!j.same&&j.items){QPREF=Array.isArray(j.pref)?j.pref:[];
     if(ROLE==='surgery'){const ids=new Set(QPREF.map(p=>p.id));if(L3SEEN&&QPREF.some(p=>!L3SEEN.has(p.id))){try{beep()}catch(e){}toast('بیمار تازه برای پروتز ارجاع شد.')}L3SEEN=ids}}
   const r=_a.apply(this,arguments);try{if(ROLE==='surgery'&&$('viewPday')&&!$('viewPday').hidden)l3RenderRef();renderTiles()}catch(e){}return r}})();
-/* reception: button on today's prosthesis appointments and in the patient file */
-function l3ApBtn(a,st,n){if(ROLE!=='staff'||!CF_ON||!a.plan||st!=='set'||n!==0||!l3K(a.kind))return '';const p=l3Of(a.plan);
-  return p?`<span class="pill rev">نزد پزشک پروتز</span><button class="btn sm ghost" type="button" data-l3clr="${esc(a.plan)}">لغو ارجاع</button>`:`<button class="btn sm main" type="button" data-l3ref="${esc(a.plan)}" data-aid="${esc(a.id)}">ارجاع به پزشک پروتز</button>`}
+/* reception: in the patient file (the button on today's appointments is apRefBtn, appointments/appt1) */
 (function(){const _p=pfPros;pfPros=function(j,r){let h=_p.apply(this,arguments);
   if(ROLE==='staff'&&CF_ON&&PF){const p=l3Of(PF.id);h=`<div class="l3bar">${p?`<span class="pill rev">امروز نزد پزشک پروتز ارجاع شده${p.by?' · '+esc(p.by):''}</span><button class="btn sm ghost" type="button" data-l3clr="${esc(PF.id)}">لغو ارجاع</button>`:`<button class="btn sm main" type="button" data-l3ref="${esc(PF.id)}">ارجاع به پزشک پروتز</button><small class="note">بیمار بالای کارتابل «پروتز» پزشک می‌آید؛ پزشک دستور کار و اسکن را برای لابراتوار می‌فرستد.</small>`}</div>`+h}
   return h}})();

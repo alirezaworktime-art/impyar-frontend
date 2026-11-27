@@ -3,26 +3,26 @@
 Every page is built from `src/<page>/page.json`: an ordered list of fixed text (the tags), source files and images.
 The order is the order the browser runs the code, and it matters: a later file may extend a function of an earlier one.
 
-## index.html ← `src/app/` (402 files, 2668.6 KB)
+## index.html ← `src/app/` (402 files, 2666.4 KB)
 
 | folder | files | size |
 |---|---|---|
 | `app/assets/` | 2 | 87.0 KB |
 | `app/markup/` | 26 | 74.5 KB |
-| `app/scripts/appointments/` | 6 | 49.7 KB |
+| `app/scripts/appointments/` | 7 | 54.9 KB |
 | `app/scripts/archive/` | 21 | 200.7 KB |
 | `app/scripts/consultant/` | 10 | 76.0 KB |
 | `app/scripts/core/` | 12 | 47.2 KB |
 | `app/scripts/finance/` | 53 | 506.2 KB |
 | `app/scripts/inventory/` | 8 | 131.9 KB |
-| `app/scripts/lab/` | 36 | 452.4 KB |
+| `app/scripts/lab/` | 36 | 452.0 KB |
 | `app/scripts/manager/` | 8 | 58.0 KB |
 | `app/scripts/other-clinics/` | 4 | 53.2 KB |
 | `app/scripts/pdf/` | 7 | 72.6 KB |
 | `app/scripts/plan/` | 19 | 106.5 KB |
 | `app/scripts/prosthesis/` | 20 | 160.3 KB |
 | `app/scripts/reception/` | 9 | 75.4 KB |
-| `app/scripts/surgery/` | 28 | 237.0 KB |
+| `app/scripts/surgery/` | 27 | 229.9 KB |
 | `app/scripts/ui/` | 8 | 51.5 KB |
 | `app/styles/appointments/` | 1 | 2.4 KB |
 | `app/styles/archive/` | 7 | 8.3 KB |
@@ -221,7 +221,7 @@ The order is the order the browser runs the code, and it matters: a later file m
 | 177 | `app/scripts/reception/overview-strip.js` | 2.1 KB |
 | 178 | `app/scripts/surgery/consultant-plain-language-summary-patient.js` | 7.0 KB |
 | 179 | `app/scripts/appointments/appointments-calendar.js` | 8.1 KB |
-| 180 | `app/scripts/surgery/appointment-sheet.js` | 7.0 KB |
+| 180 | `app/scripts/appointments/appointment-sheet.js` | 7.9 KB |
 | 181 | `app/scripts/prosthesis/prosthesis-board.js` | 6.0 KB |
 | 182 | `app/scripts/lab/dental-lab.js` | 3.9 KB |
 | 183 | `app/scripts/finance/patient-file-extra-tabs.js` | 31.0 KB |
@@ -249,7 +249,7 @@ The order is the order the browser runs the code, and it matters: a later file m
 | 205 | `app/scripts/finance/patch-pdf-pdf.js` | 14.5 KB |
 | 206 | `app/scripts/finance/patch-pay3.js` | 6.0 KB |
 | 207 | `app/scripts/reception/patch-tidy.js` | 0.6 KB |
-| 208 | `app/scripts/appointments/patch-flow3.js` | 3.2 KB |
+| 208 | `app/scripts/appointments/patch-flow3.js` | 1.5 KB |
 | 209 | `app/scripts/reception/patch-ux.js` | 14.2 KB |
 | 210 | `app/scripts/finance/pos-which-card-reader-received.js` | 3.7 KB |
 | 211 | `app/scripts/finance/flow4-re-confirm-shows-what.js` | 1.4 KB |
@@ -276,7 +276,7 @@ The order is the order the browser runs the code, and it matters: a later file m
 | 232 | `app/scripts/core/3d-viewer-stl-ply-scans.js` | 15.9 KB |
 | 233 | `app/scripts/lab/manager-lab-staff.js` | 4.5 KB |
 | 234 | `app/scripts/lab/clicks.js` | 2.1 KB |
-| 235 | `app/scripts/lab/pref-reception-prosthesis-doctor-lab.js` | 9.2 KB |
+| 235 | `app/scripts/lab/pref-reception-prosthesis-doctor-lab.js` | 8.8 KB |
 | 236 | `app/scripts/ui/bdrop-click-outside-window-closes.js` | 3.4 KB |
 | 237 | `app/scripts/prosthesis/ponly-prosthesis-only-patients-abutment.js` | 3.9 KB |
 | 238 | `app/scripts/lab/lab3-one-click-uses-existing.js` | 0.1 KB |
@@ -289,7 +289,7 @@ The order is the order the browser runs the code, and it matters: a later file m
 | 245 | `app/scripts/finance/xl3-accountant-s-menu-excel.js` | 25.3 KB |
 | 246 | `app/scripts/inventory/inv3.js` | 24.4 KB |
 | 247 | `app/scripts/lab/lab5-hani-sections-lab-cartable.js` | 50.9 KB |
-| 248 | `app/scripts/appointments/appt1-reception-one-big-button.js` | 8.3 KB |
+| 248 | `app/scripts/appointments/appt1-reception-one-big-button.js` | 7.6 KB |
 | 249 | `app/scripts/surgery/appt2-asks-what-each-purpose.js` | 6.5 KB |
 | 250 | `app/scripts/archive/fx1-file-number-after-surgery.js` | 25.8 KB |
 | 251 | `app/scripts/archive/fx2-archive-stage-filters-per.js` | 17.1 KB |
@@ -315,7 +315,7 @@ The order is the order the browser runs the code, and it matters: a later file m
 | 271 | `app/scripts/core/boot.js` | 0.9 KB |
 | 272 | `app/scripts/archive/ux7-one-suture-field-paper.js` | 1.1 KB |
 | 273 | `app/scripts/ui/ux8-error-prevention-confirm-irreversible.js` | 11.7 KB |
-| 274 | `app/scripts/appointments/bk1-booking-review.js` | 0.9 KB |
+| 274 | `app/scripts/appointments/bk1-booking-review.js` | 0.7 KB |
 | 275 | `app/scripts/archive/arcb1-paper-archive-file-implant.js` | 13.1 KB |
 | 276 | `app/scripts/archive/arc7-paper-files-no-prosthesis.js` | 2.1 KB |
 | 277 | `app/scripts/finance/arc8-paper-files-discount-per.js` | 7.3 KB |

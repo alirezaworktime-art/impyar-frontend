@@ -4722,7 +4722,7 @@ function apptCard(a,o={}){const n=dDiff(a.day,tDay()),st=a.st||'set',can=canAppt
     <div class="meta">${!a.time&&a.st==='set'&&can?'<b class="late">ساعت را تعیین کنید</b> · ':''}${a.by==='خودکار'?'ثبت خودکار از روز جراحی · ':''}${o.date?esc(wDay(a.day)+' '+jDay(a.day))+' · ':''}${a.dur?fa(a.dur)+' دقیقه':''}${a.doc?' · '+esc(a.doc):''}${a.phone?' · '+esc(faD(a.phone)):''}</div>${a.note?`<div class="meta">${esc(a.note)}</div>`:''}</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill kp-${kGrp(a.kind)}">${esc(AKL[a.kind]||a.kind)}</span>${a.onl==='1'?'<span class="pill done">طرح آنلاین دارد</span>':a.onl==='0'?'<span class="pill">بدون طرح آنلاین</span>':''}${stp}</div></div>
     <div class="acts">${st==='set'&&sms&&n>=0&&n<=2?`<a class="btn sm${a.sms?' ghost':''}" href="${sms}" data-asms="${esc(a.id)}">${a.sms?'پیامک دوباره':'پیامک یادآوری'}</a>`:''}${a.phone?`<a class="btn sm ghost" href="tel:${esc(toEn(a.phone))}">تماس</a>`:''}
-      ${st==='set'&&(can||ROLE==='surgery')&&n<=0&&!(a.plan&&SG_K.includes(a.kind))?`<button class="btn sm" data-ast="done" data-aid="${esc(a.id)}" type="button">انجام شد</button>`:''}${st==='set'&&can&&a.plan&&SG_K.includes(a.kind)&&n<=0?`<button class="btn sm" data-tosurg="${esc(a.plan)}" type="button">ارجاع به جراح</button>`:''}${a.owe>0&&ROLE==='staff'&&a.plan&&st==='set'&&SG_K.includes(a.kind)?`<button class="btn sm main" type="button" data-p4rest="${esc(a.plan)}">تعیین تکلیف مالی (${fa(a.owe)} مانده)</button>`:''}${l3ApBtn(a,st,n)}${st!=='cancel'&&ROLE==='staff'?`<button data-ux6plan="1" class="btn sm ghost" data-todoc="${esc(a.plan||'')}" data-tdn="${esc(a.name||'')}" data-tdp="${esc(a.phone||'')}" type="button">طرح درمان دوباره</button>`:''}
+      ${st==='set'&&(can||ROLE==='surgery')&&n<=0&&!(a.plan&&SG_K.includes(a.kind))?`<button class="btn sm" data-ast="done" data-aid="${esc(a.id)}" type="button">انجام شد</button>`:''}${st==='set'&&can&&a.plan&&SG_K.includes(a.kind)&&n<=0?`<button class="btn sm" data-tosurg="${esc(a.plan)}" type="button">ارجاع به جراح</button>`:''}${a.owe>0&&ROLE==='staff'&&a.plan&&st==='set'&&SG_K.includes(a.kind)?`<button class="btn sm main" type="button" data-p4rest="${esc(a.plan)}">تعیین تکلیف مالی (${fa(a.owe)} مانده)</button>`:''}${apRefBtn(a,st,n)}${st!=='cancel'&&ROLE==='staff'?`<button data-ux6plan="1" class="btn sm ghost" data-todoc="${esc(a.plan||'')}" data-tdn="${esc(a.name||'')}" data-tdp="${esc(a.phone||'')}" type="button">طرح درمان دوباره</button>`:''}
       ${moreMenu((st==='set'&&can&&n<=0?`<button class="btn sm ghost" data-ast="noshow" data-aid="${esc(a.id)}" type="button">نیامد</button>`:'')
       +(st==='set'&&can?`<button class="btn sm ghost" data-aedit="${esc(a.id)}" type="button">جابه‌جایی / ویرایش</button><button class="btn sm ghost danger" data-ast="cancel" data-aid="${esc(a.id)}" type="button">لغو نوبت</button>`:'')
       +(st!=='set'&&can?`<button class="btn sm ghost" data-ast="set" data-aid="${esc(a.id)}" type="button">برگرداندن</button>`:'')
@@ -4749,10 +4749,17 @@ function renderCal(){const td=tDay(),cap=Number(SET.cap)||0,days=[...Array(7)].m
 
 /* ---------- appointment sheet ---------- */
 let AP=null;
+var BK1={day:''};   // bk1: the day picked in the booking review (read once by openAppt)
 function docList(){const L=(SET.docs||[]).filter(Boolean);if(!L.length&&SET.doctor)L.push(SET.doctor.split('·')[0].trim());return L}
-function apKindRender(){const G={sg:['sg','cs'],pr:['pr','cp']}[AP.grp];
+/* kinds: in a reception booking mode (appt1: surgery / prosthesis / other) only that mode's kinds; otherwise grouped */
+function apKindRender(){
+  if(AP&&AP.mode&&BKM[AP.mode]){const M=BKM[AP.mode];
+    $('apKind').innerHTML=`<div class="akg bkk"><div class="chips">${M.k.map(k=>`<button type="button" class="chip" data-apk="${k}" aria-pressed="${k===AP.kind}">${esc(BKL[k]||AKL[k]||k)}</button>`).join('')}</div></div><button type="button" class="btn sm ghost" data-apall="1" style="margin-top:6px">نمایش همه‌ی انواع نوبت</button>`;return}
+  const G={sg:['sg','cs'],pr:['pr','cp']}[AP.grp];
   $('apKind').innerHTML=[['جراحی','sg'],['پروتز','pr'],['چکاپ جراحی','cs'],['چکاپ پروتز','cp'],['سایر','ot']].filter(([l,g])=>AP.book?g==='sg':!G||G.includes(g)).map(([l,g])=>`<div class="akg"><small>${l}</small><div class="chips">${AGRP[g].map(k=>`<button type="button" class="chip" data-apk="${k}" aria-pressed="${k===AP.kind}">${AKL[k]}</button>`).join('')}</div></div>`).join('')+(!AP.book&&G?`<button type="button" class="btn sm ghost" data-apall="1" style="margin-top:6px">نمایش همه‌ی انواع نوبت</button>`:'')}
-function openAppt(o={}){const td=tDay();AP=Object.assign({aid:'',plan:'',name:'',phone:'',kind:'surg',day:'',time:'',dur:0,doc:'',note:'',task:'',onl:'',book:0},o);
+/* o.mode (appt1): reception booking mode → its title and kinds; BK1.day (bk1): the day picked in the booking review */
+function openAppt(o){o=o||{};if(BK1.day&&!o.day)o=Object.assign({},o,{day:BK1.day});BK1.day='';
+  const td=tDay();AP=Object.assign({aid:'',plan:'',name:'',phone:'',kind:'surg',day:'',time:'',dur:0,doc:'',note:'',task:'',onl:'',book:0},o);
   if(!AP.dur)AP.dur=aDur(AP.kind);AP.grp=o.grp||(o.kind?apG(o.kind):'')||'all';
   $('apTitle').textContent=AP.aid?'جابه‌جایی / ویرایش نوبت':AP.book?'اخذ نوبت جراحی (بیمار تلفنی)':'نوبت جدید';$('ap_onl').checked=String(AP.onl)==='1';$('apOnlW').hidden=!AGRP.sg.includes(AP.kind);$('apMsg').textContent='';$('apWarn').hidden=true;
   renderApWho();
@@ -4764,7 +4771,8 @@ function openAppt(o={}){const td=tDay();AP=Object.assign({aid:'',plan:'',name:''
   const D=docList();if(AP.doc&&!D.includes(AP.doc))D.push(AP.doc);$('ap_doc').innerHTML='<option value="">—</option>'+D.map(n=>`<option${n===AP.doc||(!AP.doc&&!AP.aid&&D.length===1)?' selected':''}>${esc(n)}</option>`).join('');
   $('ap_note').value=AP.note||'';
   $('apQuick').innerHTML=[['امروز',td],['فردا',dAdd(td,1)],['پس‌فردا',dAdd(td,2)],['یک هفته بعد',dAdd(td,7)],['دو هفته بعد',dAdd(td,14)],['یک ماه بعد',mAdd(td,1)],['سه ماه بعد',mAdd(td,3)]].map(([l,d])=>`<button type="button" class="chip" data-apd="${d}">${l}</button>`).join('');
-  apDayHint();$('apSheet').hidden=false;if(!AP.name)setTimeout(()=>{const q=$('ap_q');if(q)q.focus()},50);if(!listLoaded&&CF_ON)loadList()}
+  apDayHint();$('apSheet').hidden=false;if(!AP.name)setTimeout(()=>{const q=$('ap_q');if(q)q.focus()},50);if(!listLoaded&&CF_ON)loadList();
+  if(o.mode&&AP){AP.mode=o.mode;$('apTitle').textContent=BKM[o.mode].t;apKindRender()}}
 function renderApWho(){const el=$('apWho');
   if(AP.name&&!AP.free){el.innerHTML=`<div class="who"><div><b>${esc(AP.name)}</b>${AP.phone?` <span class="note">${esc(faD(AP.phone))}</span>`:''}</div>${AP.aid||AP.lock?'':'<button class="btn sm ghost" type="button" id="apChg">تغییر بیمار</button>'}</div>`;return}
   if(AP.free){el.innerHTML=`<div class="fields"><label class="f">نام بیمار *<input id="ap_name" value="${esc(AP.name)}"></label><label class="f">موبایل<input id="ap_phone" class="ltr" inputmode="tel" value="${esc(AP.phone)}"></label></div><button class="btn sm ghost" type="button" id="apChg">جستجو در پرونده‌ها</button>`;return}
@@ -6451,16 +6459,6 @@ const APPT_K_OK=['visit','postop','surg','uncover','impr','tryin','deliv','sutur
 let QPAST=[],QPIDLE=[],QLAB=[],QLABN=[];
 const PR_AK={impr:'impr',tryin:'tryin',rabt:'rabt',deliv:'deliv',lab:'tryin',heal:'uncover'};
 const f3Days=d=>{const n=dDiff(tDay(),String(d||'').slice(0,10));return isFinite(n)?n:0};
-function f3Items(R,td){
-  // appointments in the past that were never resolved
-  QPAST.forEach(a=>R.push({pid:a.plan,c:SG_K.includes(a.kind)?'surg':kGrp(a.kind)==='pr'?'pros':'chk',name:a.name,why:`نوبت ${esc(AKL[a.kind]||a.kind)} ${esc(jDay(a.day))}${a.time?' '+faD(a.time):' · بدون ساعت'} · <b class="late">نتیجه ثبت نشده (${fa(f3Days(a.day))} روز پیش)</b>`,w:50,
-    act:`<button class="btn sm main" type="button" data-ast="done" data-aid="${esc(a.id)}">انجام شد</button>`,extra:tel(a.phone)+`<button class="btn sm ghost" type="button" data-ast="noshow" data-aid="${esc(a.id)}">نیامد</button>`}));
-  // prosthesis stage without a booked appointment
-  QPIDLE.forEach(x=>x.stage==='lab'?R.push({pid:x.id,c:'pros',name:x.name,why:`قالب گرفته شده؛ ${fa(x.days)} روز است سفارش لابراتوار ثبت نشده — به پزشک پروتز یادآوری کنید`,w:35+Math.min(x.days,20),act:fileBtn(x.id,x.name,'pros'),extra:tel(x.phone)}):R.push({pid:x.id,c:'pros',name:x.name,why:`${fa(x.days)} روز در مرحله‌ی «${esc(PSTN[x.stage]||x.stage)}» بدون نوبت`,w:35+Math.min(x.days,20),
-    act:`<button class="btn sm main" type="button" data-pbook="${esc(x.id)}" data-pbn="${esc(x.name)}" data-pbp="${esc(x.phone||'')}" data-pbk="${PR_AK[x.stage]||'tryin'}">تعیین نوبت ${esc(AKL[PR_AK[x.stage]]||'')}</button>`,extra:tel(x.phone)+fileBtn(x.id,x.name,'pros')}));
-  // lab orders past their due date
-  QLAB.forEach(l=>R.push({pid:l.plan,c:'pros',name:l.name,why:`کار لابراتوار ${fa(f3Days(l.due))} روز از موعد گذشته · ${esc(LST[l.st]||l.st)}`,w:30+Math.min(f3Days(l.due),20),act:fileBtn(l.plan,l.name,'pros').replace('class="btn sm ghost"','class="btn sm main"'),extra:''}));
-}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-pbook]');if(!t)return;openAppt({plan:t.dataset.pbook,name:t.dataset.pbn,phone:t.dataset.pbp,kind:t.dataset.pbk||'tryin',note:t.dataset.pbnote||''})});
 /* clinic owes: show paid refunds etc. handled in pay3; here: labels for the new task kinds */
 Object.assign(TLBL,{reno:['نیامد؛ نوبت دوباره','بیمار سر نوبت نیامد. تماس بگیرید و نوبت تازه بدهید.'],fol3:['پیگیری سوم (دو ماه بعد)','تماس بگیرید و درباره‌ی تصمیم بیمار بپرسید؛ اگر باز هم تصمیم نگرفت، به «بازگشت بیماران» می‌رود.'],impr:['نوبت قالب‌گیری','ایمپلنت‌ها با هیلینگ کار گذاشته شده و انکاوری لازم ندارند؛ برای قالب‌گیری نوبت بدهید.']});
@@ -7729,9 +7727,7 @@ const l3Of=id=>QPREF.find(p=>p.id===id);
 (function(){const _a=applyQueue;applyQueue=function(j){if(j&&!j.same&&j.items){QPREF=Array.isArray(j.pref)?j.pref:[];
     if(ROLE==='surgery'){const ids=new Set(QPREF.map(p=>p.id));if(L3SEEN&&QPREF.some(p=>!L3SEEN.has(p.id))){try{beep()}catch(e){}toast('بیمار تازه برای پروتز ارجاع شد.')}L3SEEN=ids}}
   const r=_a.apply(this,arguments);try{if(ROLE==='surgery'&&$('viewPday')&&!$('viewPday').hidden)l3RenderRef();renderTiles()}catch(e){}return r}})();
-/* reception: button on today's prosthesis appointments and in the patient file */
-function l3ApBtn(a,st,n){if(ROLE!=='staff'||!CF_ON||!a.plan||st!=='set'||n!==0||!l3K(a.kind))return '';const p=l3Of(a.plan);
-  return p?`<span class="pill rev">نزد پزشک پروتز</span><button class="btn sm ghost" type="button" data-l3clr="${esc(a.plan)}">لغو ارجاع</button>`:`<button class="btn sm main" type="button" data-l3ref="${esc(a.plan)}" data-aid="${esc(a.id)}">ارجاع به پزشک پروتز</button>`}
+/* reception: in the patient file (the button on today's appointments is apRefBtn, appointments/appt1) */
 (function(){const _p=pfPros;pfPros=function(j,r){let h=_p.apply(this,arguments);
   if(ROLE==='staff'&&CF_ON&&PF){const p=l3Of(PF.id);h=`<div class="l3bar">${p?`<span class="pill rev">امروز نزد پزشک پروتز ارجاع شده${p.by?' · '+esc(p.by):''}</span><button class="btn sm ghost" type="button" data-l3clr="${esc(PF.id)}">لغو ارجاع</button>`:`<button class="btn sm main" type="button" data-l3ref="${esc(PF.id)}">ارجاع به پزشک پروتز</button><small class="note">بیمار بالای کارتابل «پروتز» پزشک می‌آید؛ پزشک دستور کار و اسکن را برای لابراتوار می‌فرستد.</small>`}</div>`+h}
   return h}})();
@@ -8588,15 +8584,11 @@ const BKL={surg:'نوبت جراحی',uncover:'نوبت آنکاوری',chks:'چ
 var BKD={items:[],ver:null,at:0,f:'all',busy:0};
 function bkModeOpen(){const s=mkSheet('bkmSheet',`<h3>نوبت‌دهی</h3><p class="note">نوبت برای چه کاری است؟</p><div class="bkm"><button type="button" class="bkmb sg" data-bkm="sg"><b>نوبت‌دهی برای جراحی</b><small>نوبت جراحی · نوبت آنکاوری · چکاپ · کشیدن بخیه</small></button><button type="button" class="bkmb pr" data-bkm="pr"><b>نوبت‌دهی برای پروتز</b><small>قالب‌گیری · امتحان رزین پیچ‌شونده · امتحان رزین اباتمنت · تحویل کار نهایی · سایر</small></button><button type="button" class="bkmb ot" data-bkm="ot"><b>نوبت‌دهی ویزیت و سایر</b><small>ویزیت · پیگیری بعد از جراحی · چکاپ دوره‌ای · چکاپ پروتز · ترمیم پیچ · برداشتن ایمپلنت · دندان نهفته · بافت نرم</small></button></div><div class="btns"><button type="button" class="btn ghost" id="bkmX">بستن</button></div>`);s.hidden=false}
 function bkOpen(m){const M=BKM[m];if(!M)return;$('bkmSheet').hidden=true;openAppt({kind:M.d,mode:m,grp:m})}
-(function(){const _o=openAppt;openAppt=function(o={}){const r=_o.apply(this,arguments);if(o.mode&&AP){AP.mode=o.mode;$('apTitle').textContent=BKM[o.mode].t;apKindRender()}return r}})();
-(function(){const _k=apKindRender;apKindRender=function(){if(!AP||!AP.mode||!BKM[AP.mode])return _k.apply(this,arguments);const M=BKM[AP.mode];
-  $('apKind').innerHTML=`<div class="akg bkk"><div class="chips">${M.k.map(k=>`<button type="button" class="chip" data-apk="${k}" aria-pressed="${k===AP.kind}">${esc(BKL[k]||AKL[k]||k)}</button>`).join('')}</div></div><button type="button" class="btn sm ghost" data-apall="1" style="margin-top:6px">نمایش همه‌ی انواع نوبت</button>`}})();
 /* the referral button on an appointment (reception, on the day of the appointment) */
 const bkRefLbl=k=>AGRP.pr.includes(k)||AGRP.cp.includes(k)||k==='rpr'?'ارجاع برای '+(BKL[k]||AKL[k]||k):'ارجاع جهت '+(k==='chks'?'چکاپ':BKL[k]||AKL[k]||k);
 function apRefBtn(a,st,n){if(ROLE!=='staff'||!CF_ON||st!=='set'||n>0||SG_K.includes(a.kind)||a.kind==='visit'||a.kind==='other')return '';
   if(a.ref)return `<span class="pill rev">ارجاع شد${a.refBy?' · '+esc(a.refBy):''}</span><button class="btn sm ghost" type="button" data-apref="${esc(a.id)}" data-apop="clear" data-plan="${esc(a.plan||'')}">لغو ارجاع</button>`;
   return `<button class="btn sm main" type="button" data-apref="${esc(a.id)}" data-apop="set" data-plan="${esc(a.plan||'')}">${esc(bkRefLbl(a.kind))}</button>`}
-l3ApBtn=function(a,st,n){return apRefBtn(a,st,n)};
 async function apRef(aid,op,plan,b){if(b)b.disabled=true;try{await api('apptRef',{aid,op,id:plan||'',by:USERNAME||ROLE_LBL[ROLE]});toast(op==='clear'?'ارجاع برداشته شد.':'به پزشک ارجاع شد.');BKD.ver=null;await pollQ(true);if(PF&&!$('pfSheet').hidden)refreshFile()}catch(e){alertMsg(e.message)}finally{if(b)b.disabled=false}}
 /* «نوبت‌های داده‌شده»: upcoming appointments by day, then by kind */
 const bkdG=k=>SG_K.includes(k)||k==='uncover'||AGRP.cs.includes(k)?'sg':AGRP.pr.includes(k)||AGRP.cp.includes(k)||k==='rpr'?'pr':'ot';
@@ -10956,8 +10948,6 @@ window.addEventListener('beforeunload',e=>{if(UX8.dirty&&ROLE){e.preventDefault(
 </script>
 <script>/* bk1: booking review */
 BKM.ot={t:'نوبت‌دهی ویزیت و سایر',k:['other','postop','check','chkp','rpr','rmv','tooth','soft'],d:'other'};
-var BK1={day:''};
-(function(){const _o=openAppt;openAppt=function(o){o=o||{};if(BK1.day&&!o.day){o=Object.assign({},o,{day:BK1.day})}BK1.day='';return _o.call(this,o)}})();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-bk1day],[data-bk1v],#bkmX');if(!t)return;
   if(t.id==='bkmX'){BK1.day='';return}
   if(t.dataset.bk1day){e.preventDefault();e.stopPropagation();BK1.day=t.dataset.bk1day;bkModeOpen();return}
