@@ -153,8 +153,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   if(t.dataset.sdrx){rxOpen(t.dataset.sdrx,t.dataset.sdn);return}
   if(t.dataset.sdbk){openAppt({plan:t.dataset.sdbk,name:t.dataset.sdn,phone:t.dataset.sdp,kind:'suture',day:dAdd(tDay(),10),lock:1});return}
   if(t.dataset.sdgo){t.disabled=true;try{const c=SDC[t.dataset.sdgo]||{};await api('discharge',{id:t.dataset.sdgo,care:!!c.care,note:c.note||'',by:$('rc_asst').value||''});toast('بیمار ترخیص شد.');delete SDC[t.dataset.sdgo];pollQ(true)}catch(err){toast(err.message);t.disabled=false}return}});
-/* after a prescription is printed from the discharge list, refresh so the row turns green */
-const _rxOpen=rxOpen;rxOpen=async function(pid,name){await _rxOpen(pid,name);if(ROLE==='staff'){const g=$('rxGo');if(g)g.addEventListener('click',()=>setTimeout(()=>pollQ(true),1500))}};
+/* (the refresh after a printed prescription is merged into rxOpen in reception/p5-online-intake-post-op.js) */
 /* surgery role («پزشک»): today's checkups and uncoverings, recorded with the doctor who did them */
 function renderSurgAppts2(){const el=$('qAppt');if(!el||ROLE!=='surgery')return;
   const A=QAPPT.filter(a=>a.day===tDay()&&a.st==='set').sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);

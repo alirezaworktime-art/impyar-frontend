@@ -29,7 +29,7 @@ function f6RenderStaff(){if(ROLE!=='staff')return;const pi=$('piList');if(!pi)re
 function f6RenderSurg(){if(ROLE!=='surgery')return;const pd=$('pdList');if(!pd)return;let b=$('f6SecS');
   if(!b){b=document.createElement('div');b.id='f6SecS';pd.parentNode.insertBefore(b,pd)}
   b.hidden=!QLABN.length;b.innerHTML=QLABN.length?`<div class="qhead"><h2>سفارش لاب ثبت نشده <small class="note">${fa(QLABN.length)} بیمار</small></h2></div><div class="list">${QLABN.map(x=>f6Row(x,`<button class="btn sm main" type="button" data-l3lab="${esc(x.id)}" data-l3n="${esc(x.name||'')}" data-aid="">ثبت سفارش لابراتوار</button><button class="btn sm ghost" type="button" data-file="${esc(x.id)}" data-fname="${esc(x.name||'')}" data-ftab="pros">پرونده</button>`)).join('')}</div>`:''}
-{const _r=renderPi;renderPi=function(){const r=_r.apply(this,arguments);try{f6RenderStaff()}catch(e){}return r}}
+/* (f6RenderStaff is called from renderPi in reception/patch-walk.js) */
 {const _t=TILES.staff;TILES.staff=()=>_t().map(t=>t.k==='pros'?Object.assign({},t,{n:(t.n||0)+QF6.length}):t)}
 {const _t=TILES.surgery;TILES.surgery=()=>_t().map(t=>t.k==='pros'?Object.assign({},t,{n:(t.n||0)+QLABN.length,s:QLABN.length&&!(t.n)?fa(QLABN.length)+' سفارش لاب ثبت نشده':t.s}):t)}
 /* fix6a: «تحویل شد» while the lab is still making an order asks first */

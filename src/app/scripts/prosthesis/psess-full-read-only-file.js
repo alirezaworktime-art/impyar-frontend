@@ -56,5 +56,5 @@ function l5RenderStaff(){if(ROLE!=='staff')return;const pi=$('piList');if(!pi)re
   const L=$('l5List');b.hidden=!QPSESS.length;L.innerHTML=QPSESS.map(x=>{const lab=x.lid?(x.lno?`سفارش لابراتوار #${faD(x.lno)} رفت`:'سفارش لابراتوار رفت'):x.work==='impr'?'<b class="late">سفارش لابراتوار ثبت نشد</b>':'';
     return `<div class="item"><div class="row1"><div><span class="nm">${esc(x.name)}</span><div class="meta"><b>${esc(L5W[x.work]||x.work||'')}${x.res?(x.res==='ok'?' — تأیید':' — اصلاح'):''}</b> انجام شد${x.by?' · '+esc(x.by):''}${lab?' · '+lab:''}</div>${x.note?`<div class="meta">${esc(x.note)}</div>`:''}</div>${x.next?'<span class="pill done">نوبت بعدی دارد</span>':x.stage==='done'?'<span class="pill done">تحویل شد</span>':'<span class="pill wait">نوبت بعدی لازم</span>'}</div>
       <div class="acts"><button class="btn sm${x.next?' ghost':' main'}" type="button" data-file="${esc(x.id)}" data-fname="${esc(x.name)}" data-ftab="pros">پرونده و نوبت بعدی</button></div></div>`}).join('')}
-(function(){const _r=renderPi;renderPi=function(){const r=_r.apply(this,arguments);try{l5RenderStaff()}catch(e){}return r}})();
+/* (l5RenderStaff is called from renderPi in reception/patch-walk.js) */
 

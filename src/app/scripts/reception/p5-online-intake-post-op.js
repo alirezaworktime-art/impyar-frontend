@@ -46,12 +46,14 @@ function rxDoc(name,items){const ph=SET.phone?esc(faD(SET.phone)):'',d=todayJ();
   <div class="hd"><div><b>${esc(SET.clinic||'')}</b><br><small>${esc(SET.doctor||'')}</small></div><div><small>تاریخ: ${esc(d)}</small><br><small>بیمار: <b>${esc(name)}</b></small></div></div>
   ${items.map(x=>`<h2>${x.kind==='rx'?'℞ ':''}${esc(x.title)}</h2><${x.kind==='rx'?'ol class="rx"':'ul'}>${String(x.text||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</${x.kind==='rx'?'ol':'ul'}>`).join('')}
   ${items.some(x=>x.kind==='rx')?'<div class="sg">مهر و امضای پزشک</div>':''}<div class="ft"><span>${ph?'تلفن کلینیک: '+ph:''}</span><span>در صورت خونریزی شدید، تب یا تورم رو به افزایش تماس بگیرید.</span></div></body></html>`}
+/* rxOpen — p5 base + archive/ui.js (reception: after printing from the discharge list, refresh so the row turns green) */
 async function rxOpen(pid,name){const s=mkSheet('rxSheet',`<h3>دستور بعد از جراحی و نسخه · ${esc(name||'')}</h3><div id="rxPick"><div class="empty">در حال بارگذاری…</div></div><div class="msg" id="rxMsg"></div>
   <div class="btns" style="flex-wrap:wrap"><button class="btn" type="button" id="rxGo">ثبت در پرونده و چاپ</button><button class="btn ghost" type="button" id="rxClose">بستن</button></div>`);s.hidden=false;RX.give={pid,name};
   try{const j=await api('rxGet');RX.tpl=j.tpl;const T=j.tpl;
     $('rxPick').innerHTML=(T.approved?'':'<div class="msg err">پزشک هنوز قالب‌ها را تأیید نکرده؛ از پزشک بخواهید یک بار بخش «نسخه‌ها» را بازبینی و ذخیره کند.</div>')+
       (T.items||[]).map(x=>`<label class="agree rxp"><input type="checkbox" data-rxpick="${esc(x.id)}"${T.approved&&(x.kind==='rx'||/ایمپلنت/.test(x.title))?' checked':''}${T.approved?'':' disabled'}> <span><b>${esc(x.title)}</b> <small class="note">${esc(rxKL[x.kind])}</small></span></label>`).join('');
-    $('rxGo').disabled=!T.approved}catch(e){$('rxPick').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+    $('rxGo').disabled=!T.approved}catch(e){$('rxPick').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+  if(ROLE==='staff'){const g=$('rxGo');if(g)g.addEventListener('click',()=>setTimeout(()=>pollQ(true),1500))}}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.id==='tabRx'){if(dirty&&!$('viewForm').hidden){alertMsg('اول فرم را ذخیره کنید.');return}show('rx');return}
   if(t.id==='rxAdd'){RX.edit.push({id:'',kind:'post',title:'',text:''});renderRx();return}
@@ -144,7 +146,9 @@ const EXPC=[['salary','حقوق و دستمزد'],['rent','اجاره'],['supply
 const PAYM={cash:'نقد',card:'کارت',bank:'واریز بانکی',chq:'چک'};
 const ACC={day:'',from:'',to:''};
 function accInit(){if(!$('ac_day').value)$('ac_day').value=todayJ();if(!$('ae_day').value)$('ae_day').value=todayJ();$('ae_cat').innerHTML=EXPC.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');loadCash();loadAccRep()}
-async function loadCash(){const day=parseJ($('ac_day').value.trim())||tDay();
+/* loadCash — p5 base + ui/ux8 (UX8.cashDay = the day whose totals are on screen; the cash close checks it; ux8 is a later script, so any error here is ignored) */
+async function loadCash(){try{const v=$('ac_day').value.trim();UX8.cashDay=v?parseJ(v):tDay()}catch(e){}
+  const day=parseJ($('ac_day').value.trim())||tDay();
   try{await ensurePos();const j=await api('cashDay',{day}),c=j.closed;ACC.cash=j;
     $('acBox').innerHTML=`<div class="kpis"><div class="kpi"><b>${fa(j.cashIn)}</b><span>دریافت نقدی</span></div><div class="kpi"><b>${fa(j.cardIn)}</b><span>کارتخوان</span></div><div class="kpi"><b>${fa(j.chqSum)}</b><span>${fa(j.chqN)} چک دریافتی</span></div><div class="kpi"><b>${fa(j.cashOut)}</b><span>هزینه‌ی نقدی</span></div></div>
       ${posBreak(j.pays)}<div class="diffbox" style="margin-top:10px">نقد مورد انتظار در صندوق: <b>${money(j.expected)}</b>${c?`<br>صندوق بسته شد: شمرده‌شده <b>${money(c.counted)}</b> · ${c.diff===0?'<b>بدون اختلاف</b>':c.diff>0?'<b>'+money(c.diff)+' بیشتر</b>':'<b class="late">'+money(-c.diff)+' کمتر</b>'} · ${esc(c.by||'')} ${esc(jt(c.at))}${c.note?' · «'+esc(c.note)+'»':''}`:''}</div>

@@ -6,12 +6,14 @@ const tOpenR = (g, h) => TASKS.filter(t => !t.done && renoGrp(t) === g && dDiff(
 /* reception «طرح درمان امروز»: only patients before/at consultation */
 const rOwn = x => ['waiting', 'reviewing', 'consult', 'consulting'].includes(x.queue || '');
 /* prosthesis tile: idle stages and late lab work (same rows the tile counts) */
-function renderPi() { const L = $('piList'); if (!L || ROLE !== 'staff') return; const R = [];
+/* renderPi — patch-walk base + prosthesis/psess (today's prosthesis sessions: l5RenderStaff) + lab/lab7 (lab orders not sent: f6RenderStaff); both extras run on every call, errors ignored */
+function renderPi() { const L = $('piList'); if (L && ROLE === 'staff') { const R = [];
   (QPIDLE || []).forEach(x => R.push({ name: x.name, phone: x.phone, why: x.stage === 'lab' ? `قالب گرفته شده؛ ${fa(x.days)} روز است سفارش لابراتوار ثبت نشده — به پزشک پروتز یادآوری کنید` : `${fa(x.days)} روز در مرحله‌ی «${esc(PSTN[x.stage] || x.stage)}» بدون نوبت`,
     act: (x.stage === 'lab' ? '' : `<button class="btn sm" type="button" data-pbook="${esc(x.id)}" data-pbn="${esc(x.name)}" data-pbp="${esc(x.phone || '')}" data-pbk="${PR_AK[x.stage] || 'tryin'}">تعیین نوبت ${esc(AKL[PR_AK[x.stage]] || '')}</button>`) + fileBtn(x.id, x.name, 'pros') }));
   (QLAB || []).forEach(l => R.push({ name: l.name, why: `کار لابراتوار ${fa(f3Days(l.due))} روز از موعد گذشته · ${esc(LST[l.st] || l.st)}`, act: fileBtn(l.plan, l.name, 'pros') }));
   L.dataset.n = R.length;
   L.innerHTML = R.length ? R.map(r => `<div class="item task kg-pr"><div class="row1"><div><div class="nm">${esc(r.name || '')}</div><div class="meta">${r.why}</div></div></div><div class="acts">${r.phone ? tel(r.phone) : ''}${r.act}</div></div>`).join('') : '<div class="empty">موردی نیست.</div>'; }
+  try { l5RenderStaff(); } catch (e) { } try { f6RenderStaff(); } catch (e) { } }
 /* «برگرداندن انصراف» on a booking task that was closed by bookLost */
 document.addEventListener('click', async e => { const t = e.target.closest && e.target.closest('button[data-bkundo]'); if (!t || t.disabled) return; e.preventDefault(); e.stopImmediatePropagation();
   t.disabled = true; try { await api('bookUndo', { id: t.dataset.bkundo }); toast('انصراف برگردانده شد؛ بیمار دوباره در صف نوبت‌دهی است.'); pollQ(true); } catch (err) { toast(err.message); } finally { t.disabled = false; } }, true);

@@ -46,7 +46,7 @@ function p5NoteHTML(){if(!ROLE||ROLE==='doctor'||$('p5Note'))return '';try{if(lo
     manager:['<b>گزارش تازه:</b> «کار دستیاران به تفکیک دندان» در گزارش‌های مدیریتی، و شمار شکست‌های پایه با تاریخ کاشت دوباره.','<b>بیعانه:</b> مشاور می‌تواند فقط بیعانه بگیرد و مانده را بعداً از پرونده ثبت کند.'],
     accountant:['<b>فاکتور:</b> پیشنهاد فاکتور، کشیدن دندان‌ها را به تفکیک هر دستیار می‌آورد.']};
   const L=T[ROLE]||[];if(!L.length)return '';return `<div class="p5hint" id="p5Note"><b>تغییرهای تازه‌ی سایت (۵ آبان)</b><ul>${L.map(x=>`<li>${x}</li>`).join('')}</ul><button class="btn sm" type="button" id="p5NoteOk">متوجه شدم</button></div>`}
-(function(){const _h=hintHTML;hintHTML=function(){let h='';try{h=_h.apply(this,arguments)||''}catch(e){}return h+p5NoteHTML()}})();
+/* (the one-time notice is added to hintHTML in reception/patch-ux.js) */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#p5NoteOk');if(!t)return;try{localStorage.setItem('p5seen_'+ROLE,'1')}catch(e2){}const n=$('p5Note');if(n)n.remove()});
 /* ---- manager report: work per assistant ---- */
 try{MRR[3][1].push(['asst','کار دستیاران به تفکیک دندان','r',[]]);MRD.asst={k:'asst',t:'کار دستیاران به تفکیک دندان',g:'نوبت‌ها و پرسنل',rg:'r',f:[],p:[]};

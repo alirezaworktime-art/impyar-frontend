@@ -25,7 +25,7 @@ window.addEventListener('click',async e=>{const el=e.target&&e.target.closest&&e
   const who=ux8Who(t);const yes=await uxAsk({title:hit.t,who:who?('بیمار: '+who):'',msg:t._ux8m||hit.m,ok:hit.ok,cancel:'نه، برگرد',danger:hit.danger!==false});
   if(yes){UX8.ok.add(t);if(t.id==='tabOut'){UX8.dirty=false;try{dirty=false}catch(x){}}t.click()}},true);
 /* undo toast: 10 s, and a plain message no longer wipes a live «برگرداندن» button (it goes to a second line) */
-{const _tu=toastUndo;toastUndo=function(text,undo){const r=_tu.apply(this,arguments);const el=$('toast');clearTimeout(el._t);el._ux8u=Date.now()+10000;el._t=setTimeout(()=>{el.hidden=true;el._ux8u=0},10000);return r}}
+/* (the 10 s undo toast is merged into toastUndo in reception/patch-ux.js) */
 /* toast: the second message line under a live undo button is now part of the single definition in pdf/background-send-queue-doctor-never.js */
 /* (2) accuracy: Jalali years outside 1350–1430 are not dates (a Gregorian 2026/11/04 or a typo like 140/8/1) */
 {const _p=parseJ;parseJ=function(s){const r=_p.apply(this,arguments);if(!r)return r;const y=+String(r).slice(0,4);if(y&&(y<1971||y>2052))return '';return r}}
@@ -36,7 +36,7 @@ window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('
   const c=t.closest('.sheet,form,.card,[role=dialog]');if(!c)return;const bad=[...c.querySelectorAll(UX8_AMT)].find(i=>!i.disabled&&i.offsetParent&&fx7AmtBad(i.value));if(!bad)return;
   e.preventDefault();e.stopImmediatePropagation();fx7Mark(bad,true);try{bad.focus()}catch(x){}toast(FX7_AMT_MSG,true)},true);
 /* the cash box closes only the day whose totals are on the screen, and asks with expected vs counted */
-{const _lc=loadCash;loadCash=function(){try{const v=$('ac_day').value.trim();UX8.cashDay=v?parseJ(v):tDay()}catch(e){}return _lc.apply(this,arguments)}}
+/* (UX8.cashDay is set in loadCash in reception/p5-online-intake-post-op.js) */
 UX8_ASK.push({s:'#acClose',t:'بستن صندوق',m:'',ok:'بله، صندوق بسته شود',danger:false,when:t=>{const m=$('acMsg'),v=$('ac_day').value.trim(),d=v?parseJ(v):tDay();
   if(v&&!d){m.className='msg err';m.textContent='تاریخ صندوق درست نیست (مثل ۱۴۰۵/۰۸/۱۵).';t._ux8block=1;return true}
   if(UX8.cashDay&&d!==UX8.cashDay){m.className='msg err';m.textContent='تاریخ عوض شده؛ اول «نمایش» را بزنید تا جمع همان روز دیده شود، بعد ببندید.';t._ux8block=1;return true}
