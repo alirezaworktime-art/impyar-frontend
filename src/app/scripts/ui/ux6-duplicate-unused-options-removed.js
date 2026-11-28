@@ -2,7 +2,7 @@
 var UX6={pay:{},mr:false};
 /* (2) «⏱ حضور» only for a personal account; the manager keeps it (clinic internet setup lives in that sheet) */
 function ux6Att(){try{document.body.classList.toggle('ux6nouser',!!ROLE&&!USERNAME&&ROLE!=='manager')}catch(e){}}
-{const _ar=applyRole;applyRole=function(){const r=_ar.apply(this,arguments);ux6Att();return r}}
+/* (applyRole → ux6Att(): merged into surgery/roles-live-queue-reception.js) */
 {const _as=applySettings;applySettings=function(){const r=_as.apply(this,arguments);ux6Att();return r}}
 /* (4) tiles: no «مالی بیماران» (= بایگانی), no reception «بازگشت بیماران»; «نوبت‌های داده‌شده» becomes the calendar tile;
    manager «داشبورد» + «گزارش‌های مدیریتی» in one tile */
@@ -49,5 +49,5 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 {const _pr=pfPros;pfPros=function(j,r){const h=_pr.apply(this,arguments);try{if(ROLE==='surgery'&&j&&!j.pros){const d=j.data||{},hh=d.h||{},ses=(j.surg&&j.surg.sessions)||[];
   if(!(Number(j.surgN)>0||ses.length||hh.pOnly||j.pOnly||j.arc||d.arc))return h.replace(/<div class="btns"><button class="btn" type="button" data-pnext=[\s\S]*<\/div>$/,'')}}catch(e){}return h}}
 /* the reception form lives in the reception view: open it there when «طرح درمان دوباره» is used from the archive */
-{const _sd=sendToDoctor;sendToDoctor=function(){try{if(ROLE==='staff'&&$('viewRecep').hidden)goTile('plan')}catch(e){}return _sd.apply(this,arguments)}}
+/* (sendToDoctor: merged into surgery/roles-live-queue-reception.js) */
 

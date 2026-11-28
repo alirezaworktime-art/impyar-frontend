@@ -44,7 +44,7 @@ function ex1ImpUI() { const st = $('impStock'); if (!st) return; let w = $('ex1L
   const empty = !st.hidden && /موجود نیست/.test(st.textContent || ''); w.hidden = !empty && !EX1_IMP.loan; $('ex1_loan').checked = !!EX1_IMP.loan; if (!empty && !EX1_IMP.loan) $('ex1_loan').checked = false;
   $('ex1RepW').hidden = IMPRS !== 'fail'; ex1Bind(); document.querySelectorAll('#ex1RepW [data-ex1rep]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.ex1rep) === Number(EX1_IMP.rep)))) }
 { const _o = openImp; openImp = function (k, sid) { const r = _o.apply(this, arguments); try { const m = (SURG && SURG.imp[k]) || {}; EX1_IMP.loan = m.src === 'loan'; EX1_IMP.rep = m.rep === undefined ? 1 : Number(m.rep); ex1ImpUI() } catch (e) { } return r } }
-{ const _s = impStock; impStock = function () { const r = _s.apply(this, arguments); try { ex1ImpUI() } catch (e) { } return r } }
+/* impStock → ex1ImpUI(): merged into surgery/surgery-day.js */
 /* (xlRsBtns also redraws ex1ImpUI: merged into xl-implant-reason-per-fixture.js) */
 function ex1Bind() { document.querySelectorAll('#ex1RepW [data-ex1rep]').forEach(b => { b.onclick = () => { EX1_IMP.rep = Number(b.dataset.ex1rep); ex1ImpUI() } }) }
 document.addEventListener('change', e => { if (e.target && e.target.id === 'ex1_loan') EX1_IMP.loan = e.target.checked });
@@ -61,7 +61,7 @@ function ex1Adj(rec, sessions) { const b = effBrand(rec), P = rec.s; let adj = 0
   adj = Math.round(adj);
   /* pk2 */
   try{(sessions||[]).forEach(ss=>{const S=secFrom(ss.s||{}),im=ss.imp||{};Object.keys(im).forEach(k=>{const m=im[k];if(m&&m.rs==='redo'&&isTooth(k)&&S.imp&&S.imp.sel[k])adj-=pk2N(m.rp)})})}catch(e){}return Math.round(adj) }
-{ const _s = surgActual; surgActual = function (rec, sessions) { const t = _s.apply(this, arguments); try { return Math.max(0, t - ex1Adj(rec, sessions)) } catch (e) { return t } } }
+/* (surgActual − ex1Adj: merged into surgery/surgery-day.js) */
 /* g) replacing a returned / exchanged cheque: the number of the old cheque goes into the note (shown in lists and Excel) */
 /* h) who signs the consent: the patient, or a guardian with name and relation */
 function ex1GuardRead() { if (!F) return; const g = document.querySelector('#sgnSheet [data-ex1g="1"]'); const on = g && g.getAttribute('aria-pressed') === 'true';

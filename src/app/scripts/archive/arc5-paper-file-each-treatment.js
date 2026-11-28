@@ -9,7 +9,7 @@ function arcSecHead(x){const m=arcMeta(x.id),solo=SOLO.includes(x.id);
   const who=solo?`<input class="arcsb" data-arcsb="${x.id}" list="dlSgDoc" placeholder="جراح *" value="${esc(m.by||'')}" aria-label="جراح ${esc(x.t)}">`
     :`<select class="sgas" data-arcsa="${x.id}" aria-label="پزشک انجام‌دهنده ${esc(x.t)}"><option value="">پزشک انجام‌دهنده *</option>${ASSTS().map(n=>`<option value="${esc(n)}"${n===m.asst?' selected':''}>${esc(n)}</option>`).join('')}</select>`;
   return `<span class="arcsh"><input class="arcsd" data-arcsd="${x.id}" placeholder="۱۴۰۲/۰۳/۱۵" value="${esc(m.dayJ||'')}" aria-label="تاریخ ${esc(x.t)}" autocomplete="off">${who}</span>`}
-{const _a=asstSel;asstSel=function(x){if(SURG&&SURG.arc)return arcSecHead(x);return _a.apply(this,arguments)}}
+/* asstSel: the arc5 layer (paper file → arcSecHead) is merged into surgery/form-render.js */
 function arcUncHTML(){const u=SURG.arc.unc||(SURG.arc.unc={n:'',dayJ:'',by:''});
   return `<section class="card" data-sec="${ARCU}"><h2><span class="h2t">آنکاوری</span><span class="arcsh"><input class="arcsd" data-arcud placeholder="۱۴۰۲/۰۳/۱۵" value="${esc(u.dayJ||'')}" aria-label="تاریخ آنکاوری" autocomplete="off"><input class="arcsb" data-arcub list="dlSgDoc" placeholder="پزشک *" value="${esc(u.by||'')}" aria-label="پزشک آنکاوری"></span></h2>
     <label class="f" style="max-width:220px">تعداد آنکاوری<input data-arcun inputmode="numeric" placeholder="۰" value="${u.n?esc(faD(String(u.n))):''}"></label></section>`}

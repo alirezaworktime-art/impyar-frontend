@@ -91,11 +91,11 @@ function tileEmpty(){const host=ROLE==='staff'?$('rAll'):null;document.querySele
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-tile].htile');if(t){goTile(t.dataset.tile);return}
   const n=e.target.closest&&e.target.closest('[data-tnew]');if(n&&ROLE==='staff'){openAppt({kind:n.dataset.tnew,grp:'all'});return}});
 /* wrap the existing navigation so the tiles stay in sync */
-const _applyRole=applyRole;applyRole=function(){_applyRole();try{renderTiles()}catch(e){}};
-const _home=home;home=function(){_home();try{if(!TILE||!tileList().some(t=>t.k===TILE))TILE=TSAVE[ROLE]||'';goTile(TILE||(tileList()[0]||{}).k,{keep:1})}catch(e){console.error(e)}};
+/* applyRole: the tiles layer is merged into surgery/roles-live-queue-reception.js */
+/* home: the tiles layer is merged into surgery/roles-live-queue-reception.js */
 const _show=show;show=function(v){_show(v);try{TILE_HIDE=v==='login';const el=$('tiles');if(el)el.hidden=TILE_HIDE||!ROLE;if(v==='login'){TILE='';delete document.body.dataset.tile}
   if(v==='queue'||v==='recep'){const L=tileList(),want=v==='recep'?(x=>x.view==='recep'):(x=>x.tab==='tabQueue'),cur=L.find(x=>x.k===TILE);if(!cur||!want(cur)){const t=L.find(want);if(t){TILE=t.k;document.body.dataset.tile=TILE;renderTiles();tileEmpty()}}}}catch(e){}};
-const _renderQ=renderQ;renderQ=function(){_renderQ();try{renderTiles();if(ROLE==='staff')renderSd();if(ROLE==='surgery')renderSurgAppts2();tileEmpty()}catch(e){console.error(e)}};
+/* renderQ: the tiles layer is merged into surgery/roles-live-queue-reception.js */
 const _tidySecs=tidySecs;tidySecs=function(){_tidySecs();try{tileEmpty()}catch(e){}};
 const _logout=logout;logout=function(){TILE='';delete document.body.dataset.tile;const el=$('tiles');if(el)el.hidden=true;_logout()};
 /* staff: flatten the reception panes into one column and tag every section with its tile */

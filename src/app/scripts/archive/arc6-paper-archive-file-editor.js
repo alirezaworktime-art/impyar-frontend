@@ -297,8 +297,7 @@ async function fx7aAskName(id,msg){const v=await uxAsk({title:'نام بیمار
     m=/^FORCE\|([\s\S]*)$/.exec(s);
     if(m){const go=await uxConfirm(m[1],'بله، نوبت ثبت شود',false,'هشدار نوبت جراحی');if(!go)throw new Error('نوبت ثبت نشد.');return await _api7(action,Object.assign({},payload,{force:1}),opt)}
     throw e}}}
-/* R8: the plan doctor sees why the consultant sent the plan back */
-{const _qm7=qMeta;qMeta=function(x){const s=_qm7(x);return x&&x.back?s+` · <b class="fx7bk">${esc('↩ برگشت از مشاور: '+x.back)}</b>`:s}}
+/* R8: the plan doctor sees why the consultant sent the plan back (qMeta: merged into surgery/roles-live-queue-reception.js) */
 /* R4: reception «بیمار رفت» on a patient in the plan doctor's / consultant's cartable */
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-fx7left]');if(!t)return;e.preventDefault();e.stopPropagation();
   const id=t.dataset.fx7left,x=(typeof QITEMS!=='undefined'?QITEMS:[]).find(v=>v.id===id)||{},where=['consult','consulting'].includes(x.queue)?'کارتابل مشاور':'کارتابل پزشک طرح درمان';

@@ -2,8 +2,7 @@
 const l4Map=j=>(j&&j.pros&&j.pros.map)||{};
 const l4HasA=j=>Object.values(l4Map(j)).includes('a');
 /* reception */
-(function(){const _r=rcReset;rcReset=function(){const r=_r.apply(this,arguments);const c=$('rc_ponly');if(c)c.checked=false;return r}})();
-(function(){const _e=rcEdit;rcEdit=function(id){const r=_e.apply(this,arguments);const x=QITEMS.find(v=>v.id===id),c=$('rc_ponly');if(c)c.checked=!!(x&&x.pOnly);return r}})();
+/* rcReset / rcEdit «فقط پروتز»: merged into surgery/roles-live-queue-reception.js */
 /* prosthesis doctor: patient info + abutment/pontic on top of the lab order */
 function l4Info(j){const r=fromDoc(PF.id,j.data||{}),h=r.h||{},imp=implantsOf(j),ms=medShort(r.med);let lines=[];try{lines=secLines(r.s||{})}catch(e){}
   const kv=[['نام',h.name],['سن',h.age&&faD(h.age)],['موبایل',h.phone&&faD(h.phone)],['پزشک طرح',h.doc],['پذیرش',h.date]].filter(x=>x[1]);

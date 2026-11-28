@@ -52,7 +52,4 @@ document.addEventListener('input', e => { const i = e.target; if (!i || !i.datas
   const n = el.querySelector('.note'); if (n) n.insertAdjacentHTML('beforebegin', h); else el.insertAdjacentHTML('beforeend', h) } } catch (e) { console.error('m55a set', e) } return r } }
 /* surgery day: an implant placed on a tooth that the plan marks as زایگوما / نازال / تریگوئید is priced with that tariff (not the brand of the fixture),
    so the surgery amount equals the plan and no false difference is made */
-{ const _s = surgActual; surgActual = function (rec, sessions) { let t = _s.apply(this, arguments); try { const P = rec && rec.s && rec.s.imp; if (!P || !P.ip || !P.ip.m43) return t;
-  const b = effBrand(rec), T = {}; (P.sp || []).forEach(r => { if (!r || !r.k || !isTooth(r.k) || T[r.k] !== undefined) return; const ty = m55Ty(r.b); if (!ty) return; T[r.k] = (ty === 'z' || ty === 'n' || ty === 't') ? ty : '' });
-  (sessions || []).forEach(ss => { const sel = ((ss.s || {}).imp || {}).sel, im = ss.imp || {}; const L = Array.isArray(sel) ? sel : Object.keys(sel || {}).filter(k => sel[k]);
-    L.forEach(k => { const ty = T[k]; if (!ty) return; const p = num(P.ip['sp' + ty]); if (!p) return; const g = (im[k] && im[k].g) || b; t += p - num(P.bp[g] || P.bp[b]) }) }) } catch (e) { console.error('m55a surg', e) } return t } }
+/* (surgActual: this layer is merged into surgery/surgery-day.js) */

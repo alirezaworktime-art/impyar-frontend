@@ -14,7 +14,7 @@ function pk1GdAmt(p,gross){const g=pk1GdRaw(p);if(!g||!(gross>0))return 0;return
     const S=T.surg[bk]||0,P=T.pros||0,d=pk1GdAmt(p,S+P),dS=g.m==='p'?Math.min(S,Math.round(S*Math.min(100,g.v)/100)):(S+P?Math.round(d*S/(S+P)):0),dP=Math.min(P,d-dS);
     T.gd={d,dS,dP,w:g.w,why:g.why,brand:bk};BRANDS.forEach(b=>{const s=T.surg[b.k];T.surg[b.k]=Math.max(0,s-(g.m==='p'?Math.min(s,Math.round(s*Math.min(100,g.v)/100)):dS))});T.pros=Math.max(0,P-dP)}}catch(e){}return T}}
 /* the recorded sessions' actual cost: sessions priced without the file-level items, then the guide once and the surgery share of the discount once */
-{const _s=surgActual;surgActual=function(rec,sessions){PK1.off=true;let t;try{t=_s.apply(this,arguments)}finally{PK1.off=false}try{const p=(rec&&rec.pay)||{};const sg=pk1Sgd(p);t+=sg.amt;const T=totals(rec);if(T.gd)t-=T.gd.dS}catch(e){}return Math.max(0,Math.round(t))}}
+/* (surgActual: guide / discount layer merged into surgery/surgery-day.js) */
 /* form block (consultant) */
 function pk1Block(){const p=(F&&F.pay)||{},sg=pk1Sgd(p),g=pk1GdRaw(p),chip=(k,v,on,l)=>`<button type="button" class="chip" data-${k}="${v}" aria-pressed="${on}">${l}</button>`;
   return `<div class="pk1" id="pk1Box"><div class="grp"><span>گاید جراحی (اختیاری)</span><div class="chips" id="pk1Jaw">${chip('pk1j','',!PK1_J[p.sgdj],'ندارد')}${Object.keys(PK1_J).map(k=>chip('pk1j',k,p.sgdj===k,PK1_J[k])).join('')}</div></div>

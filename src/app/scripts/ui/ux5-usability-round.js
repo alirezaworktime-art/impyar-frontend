@@ -42,10 +42,7 @@ new MutationObserver(ms=>{for(const m of ms){const b=m.target;if(!b||!b.dataset|
 new MutationObserver(ms=>{for(const m of ms){const b=m.target&&(m.target.nodeType===1?m.target:m.target.parentElement);const btn=b&&b.closest&&b.closest('[data-armed]');if(btn&&!btn._uxGo&&!btn._uxBusy&&UXARM.test(btn.textContent))uxArmed(btn)}}).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
 
 /* A3: an empty admission or a wrong-looking mobile number asks first (both stay optional — owner rule pa7) */
-(function(){const _rc=rcSend;rcSend=async function(t){try{if(t&&!t._uxOk){const nm=($('rc_name')&&$('rc_name').value||'').trim(),ph=toEn(($('rc_phone')&&$('rc_phone').value)||'').replace(/[\s\-()]/g,'');
-  if(!nm&&!ph){const ok=await uxConfirm('نام و شماره‌ی موبایل خالی است. بیمار بدون نام و بدون شماره به کارتابل پزشک فرستاده شود؟','ارسال بدون نام',false,'بیمار بدون نام');if(!ok){$('rc_name').focus();return}}
-  else if(ph&&!/^(\+98|0098|98)?0?9\d{9}$/.test(ph)){const ok=await uxConfirm('شماره‌ی موبایل «'+faD(ph)+'» درست به نظر نمی‌رسد (باید ۱۱ رقم و با ۰۹ شروع شود). با همین شماره ثبت شود؟','ثبت با همین شماره',false,'شماره‌ی موبایل');if(!ok){$('rc_phone').focus();return}}}}catch(e){}
-  return _rc.apply(this,arguments)}})();
+/* rcSend: this check is merged into surgery/roles-live-queue-reception.js */
 document.addEventListener('input',e=>{const t=e.target;if(!t||t.id!=='rc_phone')return;const ph=toEn(t.value||'').replace(/[\s\-()]/g,'');let m=$('ux2PhW');if(!m){m=document.createElement('small');m.id='ux2PhW';m.className='ux2w';t.insertAdjacentElement('afterend',m)}
   m.textContent=ph&&ph.length>=2&&!/^(\+98|0098|98)?0?9\d{0,9}$/.test(ph)?'شماره‌ی موبایل باید با ۰۹ شروع شود.':ph.length>11&&/^09/.test(ph)?'شماره‌ی موبایل بیشتر از ۱۱ رقم است.':'';t.setAttribute('aria-invalid',m.textContent?'true':'false')});
 

@@ -5,12 +5,7 @@ const ID1_PH = /^09\d{9}$/;
 function id1Hit() { try { const ph = toEn($('rc_phone').value).replace(/\D/g, ''), nm = $('rc_name').value.trim(), nid = toEn($('rc_nid').value).replace(/\D/g, ''); if (!nid && ph.length < 10 && nm.length < 4) return null;
   const all = [...ARCHIVE.map(d => ({ id: d.id, name: d.name, nid: d.nid, phone: d.phone, jalali: d.jalali })), ...QITEMS.filter(x => !ARCHIVE.some(a => a.id === x.id)).map(x => ({ id: x.id, name: x.name, nid: x.nid, phone: x.phone }))];
   return all.find(x => (nid && toEn(x.nid || '') === nid) || (ph.length >= 10 && toEn(x.phone || '').replace(/\D/g, '').endsWith(ph.slice(-10))) || (nm.length >= 4 && String(x.name || '').trim() === nm)) || null } catch (e) { return null } }
-{ const _rs = rcSend; rcSend = async function (t) {
-  const m = $('rcMsg'), ph = toEn(($('rc_phone') || {}).value || '').replace(/\D/g, ''), np = $('rc_nophone') && $('rc_nophone').checked;
-  if (!np && !ID1_PH.test(ph)) { m.className = 'msg err'; m.textContent = 'شماره موبایل بیمار را وارد کنید (۰۹ و ۹ رقم)؛ اگر موبایل ندارد، «موبایل ندارد» را بزنید.'; try { $('rc_phone').focus() } catch (e) { } return }
-  if (!RC_EDIT && !RC_REOPEN) { const h = id1Hit(); if (h) { const same = await uxAsk({ title: 'کد ملی تکراری', msg: `«${h.name}»${h.phone ? ' · ' + faD(h.phone) : ''}${h.jalali ? ' · تأیید ' + h.jalali : ''} قبلاً پرونده دارد. همان بیمار است؟`, ok: 'بله، همان بیمار (پرونده‌ی قبلی)', cancel: 'نه، بیمار جدید' });
-    if (same) { const nm = $('rc_name').value.trim(), p2 = $('rc_phone').value; await sendToDoctor(h.id, h.name || nm, h.phone || p2); const mm = $('rcMsg'); if (mm) { mm.className = 'msg'; mm.textContent = (mm.textContent ? mm.textContent + ' ' : '') + 'پرونده‌ی قبلی باز شد؛ دوباره «ارسال» را بزنید.' } return } } }
-  return _rs.apply(this, arguments) } }
+/* rcSend: the mobile number / duplicate national id checks are merged into surgery/roles-live-queue-reception.js */
 /* ===== cheques: a number for every cheque ===== */
 /* consultant / reception collection sheet: one number per cheque row */
 /* (pcRender: the cheque-number column — merged into finance/fin2.js) */

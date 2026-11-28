@@ -9,11 +9,8 @@ const m9Who = (id, k) => (((SURG.pl9st || {})[id] || {})[k]) || m9A1(id);
 const m9Pen = () => SURG.m9pen || SURG.asst || '';
 function m9Set(id, k, who) { const a1 = m9A1(id); SURG.pl9st = SURG.pl9st || {}; const m = SURG.pl9st[id] = SURG.pl9st[id] || {}; if (!who || who === a1) delete m[k]; else m[k] = who; SURG.st = SURG.st || {}; SURG.st[id] = m }
 const m9Sel = (id, k) => { const s = SURG && SURG.s && SURG.s[id]; return !!(s && ((s.sel && s.sel[k]) || (s.isel && s.isel[k]))) };
-/* no per-section assistant menu / «+» on the surgery day */
-{ const _a = asstSel; asstSel = function (x) { if (x && m9On(x.id)) return ''; return _a.apply(this, arguments) } }
-/* the separate «پزشک هر دندان» row → one short line «کدام پزشک کدام دندان» */
-{ const _p = p5SplitHTML; p5SplitHTML = function (x) { if (!x || !m9On(x.id)) return _p.apply(this, arguments); const U = p5Units(SURG.s[x.id]); if (!U.length) return ''; const w = {}; U.forEach(k => { const n = m9Who(x.id, k) || '—'; (w[n] = w[n] || []).push(p5ULbl(x, k)) });
-  return `<div class="m9who">${Object.keys(w).map(n => `<b style="color:${m9Col(n)}">${esc(n)}</b>: ${esc(w[n].join('، '))}`).join(' — ')}</div>` } }
+/* no per-section assistant menu / «+» on the surgery day: merged into asstSel (surgery/form-render.js) */
+/* the separate «پزشک هر دندان» row → one short line «کدام پزشک کدام دندان»: merged into p5SplitHTML (surgery/pa5-assistant-per-tooth-non.js) */
 /* badge on every chosen tooth / area */
 { const _s = sectionHTML; sectionHTML = function (x) { let h = _s.apply(this, arguments); try { if (!x || !m9On(x.id)) return h;
   h = h.replace(/(<button\b[^>]*>)([\s\S]*?)(<\/button>)/g, (m, o, inner, c) => { const sid = /data-(?:sid|isid)="([^"]+)"/.exec(o), k = /data-(?:k|ik)="([^"]+)"/.exec(o); if (!sid || !k || sid[1] !== x.id || !/aria-pressed="true"/.test(o) || / disabled[\s>=]/.test(o)) return m;
