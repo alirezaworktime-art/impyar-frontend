@@ -67,10 +67,7 @@ const HINTS={staff:['«صف من» یعنی کارهایی که الان با ش
 function hintHTML(){const H=HINTS[ROLE];if(!H)return '';try{if(localStorage.getItem('implantHint:'+ROLE))return ''}catch(e){return ''}
   return `<div class="hintc"><b>راهنمای سریع</b><ul>${H.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="btn sm" type="button" id="hintOk">متوجه شدم</button></div>`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#hintOk');if(!t)return;try{localStorage.setItem('implantHint:'+ROLE,'1')}catch(x){}const c=t.closest('.hintc');if(c)c.remove()});
-{const _r=renderMyQ;renderMyQ=function(){_r();const el=$('myq');if(!el||ROLE==='manager')return;
-  const n=MQ_TOT||el.querySelectorAll('.mqi').length;mqNotify(n);
-  const h=el.querySelector('.mqh');if(h&&!h.querySelector('#sndBtn')){const b=document.createElement('button');b.type='button';b.id='sndBtn';b.className='sndb';b.textContent=SND()?'🔔':'🔕';b.title=SND()?'صدای کار تازه روشن است':'صدای کار تازه خاموش است';h.appendChild(b)}
-  const hi=hintHTML();if(hi&&!el.querySelector('.hintc'))el.insertAdjacentHTML('afterbegin',hi)}}
+/* renderMyQ: this layer (count notice, sound button, quick hint) is merged into surgery/queue.js */
 /* 9. reception form: live ✓/✗ (the previous-file banner already exists: rcDupCheck) */
 function rcLive(){const ni=$('rc_nid'),ph=$('rc_phone');if(!ni||!ph)return;
   const nv=toEn(ni.value).replace(/\D/g,''),pv=toEn(ph.value).replace(/\D/g,'');

@@ -10,7 +10,7 @@ function catFromText(t){const list=[];const nums=v=>String(v||'').split(/[,،\s]
     list.push({g,b:f[1].trim(),sys:(f[2]||'').trim(),d:nums(f[3]),l:nums(f[4]),h:String(f[5]||'').split(/[,،]+/).map(x=>toEn(x).trim()).filter(Boolean)})});
   return err?{err}:{list}}
 const toothTxt=keys=>{const g={};keys.forEach(k=>{(g[k.slice(0,2)]=g[k.slice(0,2)]||[]).push(Number(k[2]))});return ['UR','UL','LR','LL'].filter(q=>g[q]).map(q=>QNAME[q]+': '+g[q].sort((a,b)=>a-b).map(fa).join('، ')).join(' · ')};
-/* one line per used section: what is in it (teeth, counts, options) — used for the plan summary, sessions and the surgery report */
+/* one line per used section: what is in it (teeth, counts, options) — used for the plan summary, sessions and the surgery report. secDesc: base + pl9 (GBR count) */
 function secDesc(S,x){const s=S[x.id];if(!s)return '';const p=[];const on=Object.keys(s.sel).filter(k=>s.sel[k]);
   const th=on.filter(isTooth);if(th.length)p.push(toothTxt(th));
   if(x.cnt)[['U','فک بالا'],['L','فک پایین']].forEach(([j,l])=>{if(num(s.jc[j]))p.push(`${x.cnt==='jaw'?'Full EXT':'تعداد کل'} ${l}: ${fa(num(s.jc[j]))}`)});if(x.both&&num(s.cnt))p.push(`مجموع دو فک: ${fa(num(s.cnt))}`);
@@ -20,7 +20,10 @@ function secDesc(S,x){const s=S[x.id];if(!s)return '';const p=[];const on=Object
   (x.items||[]).forEach(it=>{const q=itemQty(s,it);if(!q)return;if(it.type==='toggle'){p.push(it.l);return}if(it.tn){p.push(`${it.l}: `+Object.keys(s.isel).filter(k=>s.isel[k]&&k.startsWith(it.k+':')).map(k=>{const q=k.split(':')[1],tt=tnTeeth(s,it,q);return tt.length?toothTxt(tt):q}).join('، '));return}if(it.qn){p.push(`${it.l}: `+Object.keys(s.isel).filter(k=>s.isel[k]&&k.startsWith(it.k+':')).map(k=>k.split(':')[1]+' ('+fa(num(s.icnt[k])||1)+' عدد)').join('، '));return}if(it.type==='count')p.push(`${it.l}: ${fa(q)}`);else p.push(`${it.l}: ${Object.keys(s.isel).filter(k=>s.isel[k]&&k.startsWith(it.k+':')).map(k=>k.split(':')[1]).join('، ')}`)});
   if((s.text||'').trim()&&x.text)p.push(`${x.text}: ${s.text.trim()}`);
   if(x.id==='cbct'&&p.length)p.unshift(s.isel['m:ct']?CTTXT:'CBCT');
-  return p.join(' — ')}
+  let t=p.join(' — ');
+  /* + pl9 (consultant/pl9-implant-pontic-never-same.js): GBR units per tooth (an absent section, which returns '' above, never had any) */
+  try { if (x && x.id === 'gbr') { const s = S[x.id] || {}; const L = Object.keys(s.sel || {}).filter(k => s.sel[k] && isTooth(k) && num((s.icnt || {})['gn:' + k]) > 1).map(k => toothTxt([k]) + ': ' + fa(num(s.icnt['gn:' + k])) + ' عدد'); if (L.length) t += (t ? ' — ' : '') + 'تعداد GBR: ' + L.join('، ') } } catch (e) { }
+  return t}
 function secLines(S){return SECTIONS.filter(x=>rowUsed({s:S,brand:'ko',pay:{}},x)).map(x=>({t:x.t,d:secDesc(S,x)||'—'}))}
 const impTxt=m=>m?[m.b,m.sys].filter(Boolean).join(' ')+(m.d||m.l?` · ${m.d?'Ø'+m.d:''}${m.d&&m.l?' × ':''}${m.l?'L'+m.l:''}`:'')+(m.ht?` · ${({heal:'اباتمنت',chl:'کاستومایز هیلینگ'}[m.ht]||'کاور')}${m.hs?' '+m.hs:''}`:'')+(m.rs&&m.rs!=='new'?' · '+XL_RS[m.rs]:''):'';
 /* what is still left of the plan after the sessions already recorded */
@@ -38,15 +41,28 @@ function remainingS(planS,sessions){const R=secFrom(secDoc(planS));const done=(s
 function sessionStart(planS,sessions){const R=remainingS(planS,sessions),need={};
   SECTIONS.forEach(x=>{if(!x.cnt)return;const r=R[x.id];['U','L'].forEach(j=>{const n=num(r.jc[j]);if(n){(need[x.id]=need[x.id]||{})[j]=n}});if(x.both&&num(r.cnt))(need[x.id]=need[x.id]||{}).B=num(r.cnt);r.jc={U:'',L:''};r.cnt=''});
   return {R,need}}
-/* actual cost of the recorded sessions: plan tariffs and the patient's brand; each implant priced by its own brand's group */
-function surgActual(rec,sessions){const b=effBrand(rec),P=rec.s;let tot=0;
+/* actual cost of the recorded sessions. surgActual: the layers in run order (each one works on the amount of the one before):
+   base — plan tariffs and the patient's brand; each implant priced by its own brand's group (PL11_IOG is on only while it runs: pl11, finance/pl11-reception-beside-part-surgery.js);
+   ex1 (finance/ex1.js) — minus the re-implant adjustment ex1Adj, never below 0 (on an error: the base amount); PK1.off is on during base + ex1;
+   pk1 (plan/pk1-consultant-form-clinic-doctor.js) — + surgical guide, − the general discount of the surgery part, rounded, never below 0;
+   m31 (surgery/m31-before-surgery-part-goes.js) — + «سایر درمان‌ها» of every session;
+   m55a (plan/m55a-implant-row-plan-form.js) — a tooth marked زایگوما / نازال / تریگوئید in the plan is priced with that tariff */
+function surgActual(rec,sessions){let t;PK1.off=true;try{let t0;PL11_IOG = !!(rec && rec.s && rec.s._io);try{const b=effBrand(rec),P=rec.s;let tot=0;
   (sessions||[]).forEach(ss=>{const S=secFrom(ss.s||{});SECTIONS.forEach(x=>{S[x.id].price=P[x.id].price;S[x.id].bp={...P[x.id].bp};S[x.id].ip={...P[x.id].ip}});
     const T=totals({s:S,brand:b,pay:rec.pay});let t=T.surg[b]+T.pros;
     const impRow=rowTotals({s:S,brand:b},SEC.imp).brand[b];let imp=0;const im=ss.imp||{};
     Object.keys(S.imp.sel).filter(k=>S.imp.sel[k]&&isTooth(k)).forEach(k=>{const g=(im[k]&&im[k].g)||b;imp+=num(P.imp.bp[g]||P.imp.bp[b])});
     ['U','L'].forEach(j=>imp+=num(S.imp.jc[j])*num(P.imp.bp[b]));
     tot+=t-impRow+imp});
-  return tot}
+  t0=tot}finally{PL11_IOG = false}
+  try { t = Math.max(0, t0 - ex1Adj(rec, sessions)) } catch (e) { t = t0 }}finally{PK1.off=false}
+  try{const p=(rec&&rec.pay)||{};const sg=pk1Sgd(p);t+=sg.amt;const T=totals(rec);if(T.gd)t-=T.gd.dS}catch(e){}t=Math.max(0,Math.round(t));
+  try{(sessions||[]).forEach(ss=>{t+=m31SesOth(ss)})}catch(e){}
+  try { const P = rec && rec.s && rec.s.imp; if (P && P.ip && P.ip.m43) {
+  const b = effBrand(rec), T = {}; (P.sp || []).forEach(r => { if (!r || !r.k || !isTooth(r.k) || T[r.k] !== undefined) return; const ty = m55Ty(r.b); if (!ty) return; T[r.k] = (ty === 'z' || ty === 'n' || ty === 't') ? ty : '' });
+  (sessions || []).forEach(ss => { const sel = ((ss.s || {}).imp || {}).sel, im = ss.imp || {}; const L = Array.isArray(sel) ? sel : Object.keys(sel || {}).filter(k => sel[k]);
+    L.forEach(k => { const ty = T[k]; if (!ty) return; const p = num(P.ip['sp' + ty]); if (!p) return; const g = (im[k] && im[k].g) || b; t += p - num(P.bp[g] || P.bp[b]) }) }) } } catch (e) { console.error('m55a surg', e) }
+  return t}
 
 function openSurg(x){const d=x.data||{};const rec=fromDoc(x.id,d);if(!rec.h.name)Object.assign(rec.h,{name:x.name,nid:x.nid,phone:x.phone,age:x.age});
   const sg=x.surg||{sessions:[]},prev=sg.sessions||[];
@@ -103,9 +119,11 @@ function catOpts(){return catM().map((c,i)=>`<option value="${i}">${esc(c.b+(c.s
 function impSync(){const ci=$('imp_cat').value,c=catM()[ci];const man=!c;$('impManW').hidden=!man;
   const sel=(S,I,vals,v)=>{const has=c&&vals&&vals.length;S.hidden=!has;I.hidden=!!has;if(has){S.innerHTML='<option value="">—</option>'+vals.map(x=>`<option ${String(v)===String(x)?'selected':''}>${esc(x)}</option>`).join('')+'<option value="__">سایر…</option>';if(v&&!vals.includes(v)){S.value='__';I.hidden=false}}const bx=$(S.id+'C');if(bx){bx.hidden=!has;bx.innerHTML=has?vals.map(x=>`<button type="button" class="chip rc" data-rcs="${S.id}" data-v="${esc(x)}" aria-pressed="${S.value===String(x)}">${esc(x)}</button>`).join('')+`<button type="button" class="chip rc" data-rcs="${S.id}" data-v="__" aria-pressed="${S.value==='__'}" style="font-size:.72rem">سایر</button>`:''}};
   sel($('imp_dS'),$('imp_d'),c&&c.d,$('imp_d').value);const dv=impVal($('imp_dS'),$('imp_d')),LL=catLens(c,dv);if(c&&LL&&$('imp_l').value&&!LL.includes($('imp_l').value))$('imp_l').value='';sel($('imp_lS'),$('imp_l'),LL,$('imp_l').value);sel($('imp_hS'),$('imp_hs'),c&&c.h,$('imp_hs').value);impStock()}
-function impStock(){const el=$('impStock');if(!el)return;const ci=$('imp_cat').value,c=catM()[ci];const b=c?c.b:$('imp_b').value,sys=c?c.sys:$('imp_sys').value,d=impVal($('imp_dS'),$('imp_d')),l=impVal($('imp_lS'),$('imp_l'));
-  if(!INV.loaded||!b||!d||!l){el.hidden=true;return}const i=INV.items.find(x=>x.kind==='fix'&&sysKey(x.b,x.sys)===sysKey(b,sys)&&nk(x.d)===nk(d)&&nk(x.l)===nk(l));const q=i?Number(i.qty)||0:0;
-  el.hidden=false;el.style.color=q>0?'':'var(--bad)';el.textContent=q>0?`موجودی انبار برای این سایز: ${fa(q)} عدد (با ثبت جلسه یکی کم می‌شود)`:'این سایز در انبار موجود نیست؛ با ثبت جلسه موجودی منفی می‌شود و انباردار باخبر می‌شود.'}
+/* impStock: base + ex1 e/f (finance/ex1.js: loan fixture / early failure controls under the stock line; also when there is nothing to show) */
+function impStock(){const el=$('impStock');if(el){const ci=$('imp_cat').value,c=catM()[ci];const b=c?c.b:$('imp_b').value,sys=c?c.sys:$('imp_sys').value,d=impVal($('imp_dS'),$('imp_d')),l=impVal($('imp_lS'),$('imp_l'));
+  if(!INV.loaded||!b||!d||!l){el.hidden=true}else{const i=INV.items.find(x=>x.kind==='fix'&&sysKey(x.b,x.sys)===sysKey(b,sys)&&nk(x.d)===nk(d)&&nk(x.l)===nk(l));const q=i?Number(i.qty)||0:0;
+  el.hidden=false;el.style.color=q>0?'':'var(--bad)';el.textContent=q>0?`موجودی انبار برای این سایز: ${fa(q)} عدد (با ثبت جلسه یکی کم می‌شود)`:'این سایز در انبار موجود نیست؛ با ثبت جلسه موجودی منفی می‌شود و انباردار باخبر می‌شود.'}}
+  try { ex1ImpUI() } catch (e) { }}
 function openImp(k,sid){IMPK=k;IMPSID=sid||'imp';const m=Object.assign({},SURG.imp[k]||{});const cat=catM();
   /* default brand: the plan's brand group (All on X is always Italian); the last brand picked in this session if it is in that group */
   if(!m.b){const g=IMPSID==='aox'?(SURG.rec.brand==='ko'?'ko':'it'):(GRPN[SURG.rec.brand]?SURG.rec.brand:'');const lc=cat[SURG.lastCat];
@@ -171,7 +189,8 @@ async function surgCommit(t){if(!SURG||!SGP)return;const m=$('srMsg');const {ses
 
 /* finished surgery: downloads (assistant) and settlement (consultant) */
 let SD=null;
-function openDone(rec,sg,settle){SD={rec,sg};const d=(sg.actual||0)-(sg.planned||0)-(sg.settledDiff||0);
+/* openDone: base + m31 (surgery/m31-before-surgery-part-goes.js: «سایر درمان‌ها» of the sessions) + m50a (finance/m50a.js: M50 reset first; reception settlement form) */
+function openDone(rec,sg,settle){M50 = null;SD={rec,sg};const d=(sg.actual||0)-(sg.planned||0)-(sg.settledDiff||0);
   $('sdTitle').textContent=(settle?'تسویه‌ی اختلاف · ':'جراحی ثبت شد · ')+(rec.h.name||'');
   const imps=[];(sg.sessions||[]).forEach(ss=>Object.keys(ss.imp||{}).forEach(k=>imps.push(toothTxt([k])+' — '+impTxt(ss.imp[k]))));
   $('sdBody').innerHTML=(settle?`<div class="diffbox">هزینه‌ی اعلام‌شده: <b>${fa(sg.planned||0)}</b> تومان<br>هزینه‌ی کارهای انجام‌شده: <b>${fa(sg.actual||0)}</b> تومان<br>${sg.settledDiff?'قبلاً تسویه‌شده: <b>'+fa(sg.settledDiff)+'</b> تومان<br>':''}${d>0?`بیمار باید <b>${fa(d)}</b> تومان بیشتر بپردازد.`:d<0?`<b>${fa(-d)}</b> تومان کمتر از مبلغ اعلام‌شده است؛ بیمار بستانکار است.`:'اختلافی نیست.'}</div>`+(d>0?stFormHTML(d):d<0?rfFormHTML(-d):''):
@@ -179,7 +198,9 @@ function openDone(rec,sg,settle){SD={rec,sg};const d=(sg.actual||0)-(sg.planned|
     (settle?(sg.sessions||[]).map(ss=>{const ll=secLines(secFrom(ss.s||{}));return `<p class="note"><b>جلسه ${fa(ss.n||0)} · ${esc(ss.jalali||'')}</b><br>${ll.map(l=>esc(l.t+': '+l.d)).join('<br>')}</p>`}).join(''):'')+
     (imps.length?`<p class="note"><b>ایمپلنت‌ها:</b><br>${imps.map(esc).join('<br>')}</p>`:'');
   $('sdSettle').textContent=d>0?'ثبت تسویه':'تأیید تسویه';ST={k:'',d,n:1,first:'',bank:''};stRender();
-  $('sdRx').hidden=!!settle||!CF_ON||(ROLE!=='surgery'&&ROLE!=='doctor');$('sdSettle').hidden=!settle;$('sdNoteW').hidden=!settle;$('sd_note').value='';$('sdMsg').textContent='';$('sgDone').hidden=false}
+  $('sdRx').hidden=!!settle||!CF_ON||(ROLE!=='surgery'&&ROLE!=='doctor');$('sdSettle').hidden=!settle;$('sdNoteW').hidden=!settle;$('sd_note').value='';$('sdMsg').textContent='';$('sgDone').hidden=false;
+  try{const L=[];(sg.sessions||[]).forEach(ss=>(Array.isArray(ss.oth)?ss.oth:[]).forEach(o=>L.push(`<li>جلسه‌ی ${fa(ss.n||0)}: <b>${esc(o.t)}</b>${o.amt?' — '+fa(o.amt)+' تومان':''}</li>`)));const b=$('sdBody');if(L.length&&b&&!b.querySelector('.m31d'))b.insertAdjacentHTML('beforeend',`<div class="m31d"><h4 style="margin:8px 0 2px">سایر درمان‌ها</h4><ul class="rvl">${L.join('')}</ul></div>`)}catch(e){}
+  try { if (settle && ROLE === 'staff' && ST && ST.d > 0) m50Mount() } catch (e) { console.error('m50a settle', e) }}
 function openSettle(x){const rec=fromDoc(x.id,x.data||{});if(!rec.h.name)rec.h.name=x.name;openDone(rec,x.surg||{},true)}
 async function surgRecord(id){const j=await api('get',{id});const r=fromDoc(id,j.data||{});['status','jalali'].forEach(k=>{if(j[k])r[k]=j[k]});return {r,sg:j.surg||{sessions:[]},settle:j.settle}}
 

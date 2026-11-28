@@ -23,6 +23,8 @@ function renderList(){const q=toEn($('q').value.trim()).toLowerCase();const el=$
     ${d.settle==='pending'&&ROLE==='consultant'?`<button class="btn sm" data-settle="${esc(d.id)}" type="button">تسویه اختلاف</button>`:''}</div></div>`).join('')+(more>0?`<button class="btn ghost" type="button" data-lmore="1" style="width:100%;margin-top:8px">نمایش ${fa(Math.min(300,more))} پرونده‌ی دیگر (${fa(more)} مانده) — یا نام را جستجو کنید</button>`:'')}
 async function loadList(){try{const j=await api('list');ARCHIVE=j.items||[];listLoaded=true;if(!$('viewList').hidden)renderList()}
   catch(e){$('list').innerHTML=`<div class="empty">بایگانی بارگذاری نشد: ${esc(e.message)}</div>`}}
+/* fetchRecord: base + q8 (finance/q8-patient-pdf-surgery-table.js: the payments, read with a second «get» as before) */
 async function fetchRecord(id){const j=await api('get',{id});const r=fromDoc(id,j.data||{});if(j.surg)r.surg=j.surg;if(j.sign)r.sign=j.sign;
-  ['status','jalali','emailStatus','emailError','pdfName','edits'].forEach(k=>{if(j[k]!==undefined&&j[k]!=='')r[k]=j[k]});return r}
+  ['status','jalali','emailStatus','emailError','pdfName','edits'].forEach(k=>{if(j[k]!==undefined&&j[k]!=='')r[k]=j[k]});
+  try{const j=await api('get',{id});if(j&&Array.isArray(j.pays))r.pays=j.pays}catch(e){}return r}
 

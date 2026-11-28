@@ -23,8 +23,8 @@ TILES.oclin=()=>{const d=OC.d,td=tDay(),tw=d?d.works.filter(w=>w.day===td):[],so
   if(dirty&&!$('viewForm').hidden)return;TILE=t.k;TSAVE[ROLE]=TILE;try{localStorage.setItem('implantTile',JSON.stringify(TSAVE))}catch(e){}document.body.dataset.tile=TILE;
   OC.seg=ROLE==='accountant'&&OC.seg&&OC.seg!=='add'?OC.seg:t.oseg;show('oc');renderTiles();if(!opt.keep)window.scrollTo(0,0);ocRender();ocLoadSoft()}})();
 (function(){const _s=showExtra;showExtra=function(v){_s(v);const el=$('viewOc');if(el)el.hidden=v!=='oc'}})();
-(function(){const _h=home;home=function(){if(ROLE!=='oclin')return _h();show('oc');const k=(TSAVE&&TSAVE.oclin)||'add';goTile(k)}})();
-(function(){const _p=pollQ;pollQ=function(f){if(ROLE==='oclin')return Promise.resolve();return _p(f)}})();
+/* home for «oclin»: merged into surgery/roles-live-queue-reception.js */
+/* pollQ for «oclin»: merged into surgery/roles-live-queue-reception.js */
 function ocSegBar(){if(ROLE!=='accountant')return '';return `<div class="seg oc-seg" role="tablist">${[['rep','کارکرد و درآمد'],['pay','دریافتی‌ها و چک‌ها'],['add','ثبت کار'],['cl','کلینیک‌ها و تعرفه‌ها']].map(([k,l])=>`<button type="button" data-ocseg="${k}" aria-pressed="${OC.seg===k}">${l}</button>`).join('')}</div>`}
 function ocRender(){const el=$('ocRoot');if(!el||$('viewOc').hidden)return;const d=OC.d;
   if(!d){el.innerHTML=ocSegBar()+'<div class="card"><p class="note">در حال بارگذاری…</p></div>';return}

@@ -4,7 +4,7 @@
 const PL11_K = ['rc_ponly', 'rc_ionly', 'rc_oonly'];
 document.addEventListener('change', e => { const t = e.target; if (!t || !PL11_K.includes(t.id) || !t.checked) return; PL11_K.forEach(id => { if (id !== t.id && $(id)) $(id).checked = false }) }, true);
 { const _a = api; api = function (action, payload) { try { if (['queueAdd', 'queueUpdate', 'queueReopen'].includes(action) && payload && payload.patient && $('rc_ionly') && ROLE === 'staff') { payload.patient.iOnly = $('rc_ionly').checked ? 1 : 0; payload.patient.oOnly = $('rc_oonly').checked ? 1 : 0 } } catch (e) { } return _a.apply(this, arguments) } }
-{ const _e = rcEdit; rcEdit = function (id) { const r = _e.apply(this, arguments); try { const x = QITEMS.find(v => v.id === id) || {}; if ($('rc_ionly')) $('rc_ionly').checked = !!x.iOnly; if ($('rc_oonly')) $('rc_oonly').checked = !!x.oOnly } catch (e) { } return r } }
+/* rcEdit «فقط ایمپلنت» / «سایر»: merged into surgery/roles-live-queue-reception.js */
 { const _r = rcReset; rcReset = function () { const r = _r.apply(this, arguments); try { ['rc_ionly', 'rc_oonly'].forEach(id => { if ($(id)) $(id).checked = false }) } catch (e) { } return r } }
 /* «فقط ایمپلنت»: no prosthesis part in the plan (crowns on implants, crowns, All on X / overdenture prosthesis) */
 const pl11Mark = (S, on) => { if (S && typeof S === 'object') try { Object.defineProperty(S, '_io', { value: !!on, enumerable: false, configurable: true, writable: true }) } catch (e) { } };
@@ -12,7 +12,7 @@ const pl11MarkAll = r => { if (!r || !r.h) return; const on = !!r.h.iOnly; pl11M
 { const _f = fromDoc; fromDoc = function () { const r = _f.apply(this, arguments); try { pl11MarkAll(r) } catch (e) { } return r } }
 let PL11_IOG = false;
 { const _r = rowTotals; rowTotals = function (r, x) { const o = _r.apply(this, arguments); try { if ((r && r.s && r.s._io) || PL11_IOG) { o.pros = 0; if (x && x.pros) o.flat = 0 } } catch (e) { } return o } }
-{ const _s = surgActual; surgActual = function (rec) { PL11_IOG = !!(rec && rec.s && rec.s._io); try { return _s.apply(this, arguments) } finally { PL11_IOG = false } } }
+/* (surgActual: the PL11_IOG flag around the base is merged into surgery/surgery-day.js) */
 /* tag + «فقط اوردنچر» layout in the plan form */
 let PL11_SHOW = false;
 function pl11Form() { if (!F || !F.h) return; pl11MarkAll(F); const io = !!F.h.iOnly, oo = !!F.h.oOnly, sn = $('staffNote'); let t = $('pl11Tag');

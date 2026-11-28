@@ -2,15 +2,24 @@
 let ROLE='',LROLE='staff',QV='',QITEMS=[],QSEEN=null,QTIMER=null,QBUSY=false,RC_EDIT=null,RC_REOPEN=null,BACK_TO_Q=false;
 const QPOLL=CF_ON?3000:5000;
 const ROLE_LBL={staff:'منشی',doctor:'پزشک طرح درمان',consultant:'مشاور',surgery:'پزشک',inventory:'انباردار',lab:'لابراتوار',manager:'مدیر',accountant:'حسابدار'};
-function applyRole(){document.body.dataset.role=ROLE||'';try{$('attBtn').hidden=!ROLE||!CF_ON}catch(e){}document.querySelectorAll('#nav [data-role]').forEach(b=>b.hidden=!b.dataset.role.split(' ').includes(ROLE)||(['tabInv','tabCal','tabPros','tabLab','tabDash','tabPday','tabWb','tabAcc','tabRx','tabFin'].includes(b.id)&&!CF_ON));$('undBtn').hidden=true;$('whoami').textContent=ROLE?(USERNAME?USERNAME+' · ':'')+(ROLE_LBL[ROLE]||'')+(SET.clinic?' · '+SET.clinic:''):'';$('qTitle').textContent=ROLE==='consultant'?'کارتابل مشاور':ROLE==='surgery'?'بیماران ارجاع‌شده برای جراحی':'بیماران در صف انتظار'}
-function home(){if(ROLE==='lab'){show('lab');return}if(ROLE==='accountant'){show('fin');return}if(ROLE==='manager'){show('dash');return}if(ROLE==='inventory'){show('inv');renderInv();pollInv(true);return}if(ROLE==='staff'){show('recep');rcReset()}else show('queue');renderQ();pollQ(false);if(CF_ON&&(ROLE==='doctor'||ROLE==='consultant'))pollInv(true)}
+/* applyRole: base + archive/ui.js (tiles) + ux6 (ui/ux6-duplicate-unused-options-removed.js: «no user name» class). Still wrapped later by lf1, m42 and m54a. */
+function applyRole(){document.body.dataset.role=ROLE||'';try{$('attBtn').hidden=!ROLE||!CF_ON}catch(e){}document.querySelectorAll('#nav [data-role]').forEach(b=>b.hidden=!b.dataset.role.split(' ').includes(ROLE)||(['tabInv','tabCal','tabPros','tabLab','tabDash','tabPday','tabWb','tabAcc','tabRx','tabFin'].includes(b.id)&&!CF_ON));$('undBtn').hidden=true;$('whoami').textContent=ROLE?(USERNAME?USERNAME+' · ':'')+(ROLE_LBL[ROLE]||'')+(SET.clinic?' · '+SET.clinic:''):'';$('qTitle').textContent=ROLE==='consultant'?'کارتابل مشاور':ROLE==='surgery'?'بیماران ارجاع‌شده برای جراحی':'بیماران در صف انتظار';
+  try{renderTiles()}catch(e){}ux6Att()}
+/* home: base + archive/ui.js (open the role's tile) + surgery/queue.js («صف من» tile first) + finance/oc1-surgeon-s-work-other.js (role «oclin»);
+   the two tile parts run after every branch of the base. lab/lf1-lab-feedback-ir-project.js still wraps it (its roles live in a later script). */
+function home(){if(ROLE==='oclin'){show('oc');const k=(TSAVE&&TSAVE.oclin)||'add';goTile(k);return}
+  if(MQ_HOME[ROLE]){TILE=TSAVE[ROLE]&&TSAVE[ROLE]!=='q'&&tileList().some(t=>t.k===TSAVE[ROLE])?TSAVE[ROLE]:'q'}
+  if(ROLE==='lab'){show('lab')}else if(ROLE==='accountant'){show('fin')}else if(ROLE==='manager'){show('dash')}else if(ROLE==='inventory'){show('inv');renderInv();pollInv(true)}else{if(ROLE==='staff'){show('recep');rcReset()}else show('queue');renderQ();pollQ(false);if(CF_ON&&(ROLE==='doctor'||ROLE==='consultant'))pollInv(true)}
+  try{if(!TILE||!tileList().some(t=>t.k===TILE))TILE=TSAVE[ROLE]||'';goTile(TILE||(tileList()[0]||{}).k,{keep:1})}catch(e){console.error(e)}
+  try{if(ROLE==='manager'){mqInit();goTile('q',{keep:1})}}catch(e){console.error(e)}}
 let AC=null;function beep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime;[0,0.18].forEach((d,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=i?1046:784;g.gain.setValueAtTime(0.0001,t+d);g.gain.exponentialRampToValueAtTime(0.25,t+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.16);o.connect(g).connect(AC.destination);o.start(t+d);o.stop(t+d+0.17)})}catch(e){}}
 function startPoll(){stopPoll();if(FS_ON){fsListen();return}QTIMER=setInterval(()=>pollQ(false),QPOLL)}
 function stopPoll(){if(QTIMER)clearInterval(QTIMER);QTIMER=null;if(FS_ON)fsStopListen()}
 let LAST_ACT=Date.now(),LAST_POLL=0;['pointerdown','keydown','touchstart','wheel'].forEach(e=>addEventListener(e,()=>{const idle=Date.now()-LAST_ACT>QIDLE;LAST_ACT=Date.now();if(idle)pollQ(false)},{passive:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ROLE)pollQ(false)});
 const QIDLE=15*60*1000;
-async function pollQ(force){if(ROLE==='inventory'||ROLE==='lab'||ROLE==='accountant')return;if(!ROLE||QBUSY)return;if(!force){if(document.hidden)return;if(Date.now()-LAST_ACT>QIDLE&&Date.now()-LAST_POLL<30000)return}LAST_POLL=Date.now();if(FS_ON&&FS_UNSUB.length){fsRebuild(ROLE);return}QBUSY=true;
+/* pollQ: base + oc1 (finance/oc1-surgeon-s-work-other.js: role «oclin» never polls). Still wrapped later by lf1. */
+async function pollQ(force){if(ROLE==='oclin')return;if(ROLE==='inventory'||ROLE==='lab'||ROLE==='accountant')return;if(!ROLE||QBUSY)return;if(!force){if(document.hidden)return;if(Date.now()-LAST_ACT>QIDLE&&Date.now()-LAST_POLL<30000)return}LAST_POLL=Date.now();if(FS_ON&&FS_UNSUB.length){fsRebuild(ROLE);return}QBUSY=true;
   try{const j=await api('queue',{ver:force?'':QV,qh:force?'':QH},{prio:'poll'});if(j&&j.qh)QH=j.qh;setLive(true);applyQueue(j);if(j&&j.sv&&SV&&j.sv!==SV){SV=j.sv;api('ping',{},{prio:'bg'}).then(p=>{if(p.settings)applySettings(p.settings)}).catch(()=>{})}if(j&&j.sv)SV=j.sv}
   catch(e){if(e.message!=='aborted')setLive(false)}finally{QBUSY=false}}
 const NEWQ={doctor:'waiting',consultant:'consult',surgery:'surgery'};
@@ -45,7 +54,8 @@ function waitPill(x){const q=x.queue;if(!((q==='waiting'&&ROLE!=='consultant')||
 setInterval(()=>{try{if((ROLE==='doctor'||ROLE==='consultant')&&!$('viewQueue').hidden&&!document.hidden)renderQ()}catch(e){}},60000);
 function qPill(x){if(ROLE==='consultant'&&x.settle==='pending'){const d=x.surg&&((x.surg.diff||0)-(x.surg.settledDiff||0))||0;return `<span class="pill settle">تسویه اختلاف ${d>0?'+':'−'}${fa(Math.abs(d))}</span>`}
   const l=QLBL[x.queue]||['draft',x.queue];return `<span class="pill ${l[0]}">${l[1]}</span>`}
-function qMeta(x){return [x.age?'سن '+faD(x.age):'',x.city?x.city:'',x.phone?faD(x.phone):'',x.nid?'کد ملی '+faD(x.nid):'',ROLE==='surgery'?'در جراحی از ساعت '+qTime(x.surgAt):'پذیرش '+qTime(x.queuedAt),ROLE==='surgery'&&x.surgN?fa(x.surgN)+' جلسه ثبت شده':'',x.asst&&ROLE!=='surgery'?'توسط '+x.asst:''].filter(Boolean).map(esc).join(' · ')}
+/* qMeta: base + arc6 R8 (archive/arc6-paper-archive-file-editor.js: why the consultant sent the plan back) */
+function qMeta(x){const s=[x.age?'سن '+faD(x.age):'',x.city?x.city:'',x.phone?faD(x.phone):'',x.nid?'کد ملی '+faD(x.nid):'',ROLE==='surgery'?'در جراحی از ساعت '+qTime(x.surgAt):'پذیرش '+qTime(x.queuedAt),ROLE==='surgery'&&x.surgN?fa(x.surgN)+' جلسه ثبت شده':'',x.asst&&ROLE!=='surgery'?'توسط '+x.asst:''].filter(Boolean).map(esc).join(' · ');return x&&x.back?s+` · <b class="fx7bk">${esc('↩ برگشت از مشاور: '+x.back)}</b>`:s}
 function renderSurgQ(){const now=QITEMS.filter(x=>x.queue==='surgery'),wait=QITEMS.filter(x=>x.wait&&x.queue!=='surgery');
   const card=(x,i,w)=>`<button type="button" class="qitem${FRESH.has(x.id)?' fresh':''}" data-qopen="${esc(x.id)}">
       <div class="row1"><div>${i!=null?`<span class="qn">${fa(i+1)}</span>`:''}<span class="nm">${esc(x.name)}</span></div>${w?`<span class="pill">${x.jalali?'تأیید '+esc(x.jalali):'تأییدشده'}</span>`:qPill(x)}</div>
@@ -54,8 +64,10 @@ function renderSurgQ(){const now=QITEMS.filter(x=>x.queue==='surgery'),wait=QITE
   $('qWaitW').hidden=!wait.length;const q=toEn($('qS').value.trim()).toLowerCase();
   const rows=wait.filter(x=>!q||String(x.name||'').toLowerCase().includes(q)||toEn(x.nid||'').includes(q)||toEn(x.phone||'').includes(q)).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
   $('qWait').innerHTML=rows.length?rows.slice(0,q?60:30).map(x=>card(x,null,true)).join('')+(rows.length>(q?60:30)?`<p class="note">${fa(rows.length-(q?60:30))} بیمار دیگر؛ برای پیدا کردن، نام را جستجو کنید.</p>`:''):'<div class="empty">بیماری با این مشخصات پیدا نشد.</div>'}
+/* renderQ: base + archive/ui.js (tiles, reception / surgery side cards) + surgery/queue.js («صف من» home tile); both added parts run after
+   every branch of the base (the surgery and «a:» branches used to return early). finance/save-every-cheque-needs-amount.js still wraps it (window.renderQ). */
 function renderQ(){try{renderKpi()}catch(e){}try{renderConx();renderSurgAppts();renderRecepAppts()}catch(e){console.error(e)}
-  if(ROLE==='surgery'){const b=$('qBadge'),w=QITEMS.filter(x=>x.queue==='surgery').length;b.hidden=!w;b.textContent=fa(w);renderSurgQ();document.title=(w?`(${fa(w)}) `:'')+'کارتابل جراحی · طرح درمان ایمپلنت';return}
+  if(ROLE==='surgery'){const b=$('qBadge'),w=QITEMS.filter(x=>x.queue==='surgery').length;b.hidden=!w;b.textContent=fa(w);renderSurgQ();document.title=(w?`(${fa(w)}) `:'')+'کارتابل جراحی · طرح درمان ایمپلنت'}else{
   $('qWaitW').hidden=true;
   const active=QITEMS.filter(x=>x.queue!=='done'&&!SENDING.has(x.id));
   const b=$('qBadge');const w=QITEMS.filter(x=>x.queue===NEWQ[ROLE]&&!SENDING.has(x.id)).length;b.hidden=!w;b.textContent=fa(w);
@@ -70,21 +82,29 @@ function renderQ(){try{renderKpi()}catch(e){}try{renderConx();renderSurgAppts();
     const TA=[];
     if(!G.some(g=>g[0]===RQF))RQF='all';
     $('rChips').innerHTML=G.map(([k,l,n])=>`<button type="button" class="chip" data-rqf="${k}" aria-pressed="${RQF===k}">${esc(l)} <b>${fa(n)}</b></button>`).join('')+(Object.keys(os).length?`<span class="chip static">در مراحل دیگر: ${Object.keys(os).map(k=>(QLBL[k]||[0,'سایر'])[1]+' '+fa(os[k])).join(' · ')}</span>`:'');
-    if(RQF.startsWith('a:')){const A=TA.filter(a=>a.kind===RQF.slice(2)).sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));$('rList').innerHTML=A.map(a=>apptCard(Object.assign({},a))).join('')||'<div class="empty">موردی نیست.</div>';return}
+    if(RQF.startsWith('a:')){const A=TA.filter(a=>a.kind===RQF.slice(2)).sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));$('rList').innerHTML=A.map(a=>apptCard(Object.assign({},a))).join('')||'<div class="empty">موردی نیست.</div>'}else{
     const QV=RQF==='all'?OWN:OWN.filter(x=>((x.queue==='reviewing'?'waiting':x.queue)||'none')===RQF.slice(2));
     $('rList').innerHTML=QV.length?QV.map((x,i)=>`<div class="item"><div class="row1"><div><span class="qn">${fa(i+1)}</span><span class="nm">${esc(x.name)}</span>${pdfIco(x.id,x.name)}
       <div class="meta">${qMeta(x)}</div>${x.note?`<div class="meta">${esc(x.note)}</div>`:''}</div>${qPill(x)}</div>
-      ${['waiting','reviewing','consult','consulting'].includes(x.queue)?`<div class="acts">${x.queue==='waiting'?`<button class="btn sm ghost" data-qedit="${esc(x.id)}" type="button">ویرایش</button><button class="btn sm ghost" data-qdel="${esc(x.id)}" type="button">حذف از صف</button>`:''}<button class="btn sm ghost" data-fx7left="${esc(x.id)}" type="button">بیمار رفت</button></div>`:''}</div>`).join(''):'<div class="empty">امروز بیماری در مرحله‌ی طرح درمان نیست. بیماران جراحی‌شده و صف نوبت‌دهی در کاشی‌های خودشان هستند.</div>'}}
+      ${['waiting','reviewing','consult','consulting'].includes(x.queue)?`<div class="acts">${x.queue==='waiting'?`<button class="btn sm ghost" data-qedit="${esc(x.id)}" type="button">ویرایش</button><button class="btn sm ghost" data-qdel="${esc(x.id)}" type="button">حذف از صف</button>`:''}<button class="btn sm ghost" data-fx7left="${esc(x.id)}" type="button">بیمار رفت</button></div>`:''}</div>`).join(''):'<div class="empty">امروز بیماری در مرحله‌ی طرح درمان نیست. بیماران جراحی‌شده و صف نوبت‌دهی در کاشی‌های خودشان هستند.</div>'}}}
+  try{renderTiles();if(ROLE==='staff')renderSd();if(ROLE==='surgery')renderSurgAppts2();tileEmpty()}catch(e){console.error(e)}
+  try{mqInit();if(document.body.dataset.tile==='q')renderMyQ();renderTiles()}catch(e){console.error(e)}}
 let RQF='all';
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-rqf]');if(!t)return;RQF=t.dataset.rqf;renderQ()});
 const RCF=['name','nid','date','phone','age','asst','city','ref','note'];
 function fillRecep(v){const el=$('rc_asst');if(!el)return;const L=(SET.recep||[]).filter(Boolean);const cur=v!==undefined?v:el.value;
   el.innerHTML=`<option value="">${L.length?'— انتخاب پذیرنده —':'— فهرست پذیرنده‌ها در تنظیمات وارد نشده —'}</option>`+L.map(n=>`<option${n===cur?' selected':''}>${esc(n)}</option>`).join('')+(cur&&!L.includes(cur)?`<option selected>${esc(cur)}</option>`:'');
   if(!cur){let last='';try{last=localStorage.getItem('implantRecep')||''}catch(e){}if(L.includes(last))el.value=last}}
+/* rcReset: base + ponly (prosthesis/ponly-prosthesis-only-patients-abutment.js: clear «فقط پروتز»). Still wrapped later by pl11 and ex1. */
 function rcReset(){RC_EDIT=null;RC_REOPEN=null;RC_INTAKE='';fillRecep();RC_MED=blankMed();renderMed('rc');const keep=$('rc_asst').value;RCF.forEach(k=>$('rc_'+k).value='');$('rc_asst').value=keep;$('rc_date').value=jalali(new Date()).slash;
-  $('rcTitle').textContent='پذیرش بیمار';$('rcSend').textContent='ارسال به کارتابل پزشک';$('rcCancel').hidden=true}
+  $('rcTitle').textContent='پذیرش بیمار';$('rcSend').textContent='ارسال به کارتابل پزشک';$('rcCancel').hidden=true;
+  const c=$('rc_ponly');if(c)c.checked=false}
 /* reception: send any patient to the doctor's inbox (existing plan is reopened; plan in surgery → new plan) */
-async function sendToDoctor(pid,name,phone){if(ROLE!=='staff')return;rcReset();let note='';
+/* sendToDoctor: base + ux6 (ui/ux6-duplicate-unused-options-removed.js: open the reception tile first) + ux8 (ui/ux8-error-prevention-confirm-irreversible.js:
+   a half-filled admission form asks before it is cleared); run order: ux8 question, ux6 tile, base */
+async function sendToDoctor(pid,name,phone){try{if(ROLE==='staff'&&!RC_EDIT&&((($('rc_name')||{}).value||'').trim()||(($('rc_phone')||{}).value||'').trim())){const ok=await uxAsk({title:'فرم پذیرش نیمه‌کاره',msg:'فرم پذیرش «'+($('rc_name').value.trim()||$('rc_phone').value.trim())+'» هنوز ارسال نشده و پاک می‌شود. ادامه می‌دهید؟',ok:'بله، پاک شود',cancel:'نه، برگرد',danger:true});if(!ok)return}}catch(e){}
+  try{if(ROLE==='staff'&&$('viewRecep').hidden)goTile('plan')}catch(e){}
+  if(ROLE!=='staff')return;rcReset();let note='';
   if(pid){try{const j=await api('get',{id:pid},{timeout:12000});const q=j.queue||'',d=j.data||{},h=d.h||{};
       if(['waiting','reviewing','consult','consulting'].includes(q)){toast((h.name||name||'این بیمار')+' همین الان در کارتابل است.');return}
       RCF.forEach(k=>{if(!['asst','date','note'].includes(k)&&h[k]!=null)$('rc_'+k).value=h[k]});if(!$('rc_name').value)$('rc_name').value=name||'';
@@ -97,9 +117,24 @@ async function sendToDoctor(pid,name,phone){if(ROLE!=='staff')return;rcReset();l
   $('rcTitle').textContent=RC_REOPEN?'ارسال دوباره به کارتابل پزشک':'ارسال به کارتابل پزشک';$('rcSend').textContent='ارسال به کارتابل پزشک';$('rcCancel').hidden=false;
   $('rcMsg').className='msg';$('rcMsg').textContent=note;$('rcSheet').hidden=false}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-todoc]');if(!t)return;e.preventDefault();e.stopPropagation();sdOpen(t.dataset.todoc,t.dataset.tdn,t.dataset.tdp)},true);
-function rcEdit(id){const x=QITEMS.find(v=>v.id===id);if(!x)return;RC_EDIT=id;RC_REOPEN=null;RC_MED=medNorm(x.med);renderMed('rc');fillRecep(x.asst||'');RCF.forEach(k=>{if(k!=='asst')$('rc_'+k).value=x[k]||''});
+/* rcEdit: base + ponly («فقط پروتز») + pl11 (finance/pl11-reception-beside-part-surgery.js: «فقط ایمپلنت» / «سایر») + pk3 (plan/pk3-notes-date-author-recipient.js:
+   notes panel); the three added parts also run when the patient is not in the queue */
+function rcEdit(id){const x=QITEMS.find(v=>v.id===id);if(x){RC_EDIT=id;RC_REOPEN=null;RC_MED=medNorm(x.med);renderMed('rc');fillRecep(x.asst||'');RCF.forEach(k=>{if(k!=='asst')$('rc_'+k).value=x[k]||''});
   $('rcTitle').textContent='ویرایش بیمار در صف';$('rcSend').textContent='ذخیره‌ی تغییرات';$('rcCancel').hidden=false;$('rcMsg').textContent='';$('rcSheet').hidden=false}
-async function rcSend(t){const m=$('rcMsg'),p={};RCF.forEach(k=>p[k]=$('rc_'+k).value.trim());p.med=medNorm(RC_MED);p.pOnly=$('rc_ponly')&&$('rc_ponly').checked?1:0;p.nophone=$('rc_nophone')&&$('rc_nophone').checked?1:0;
+  {const x=QITEMS.find(v=>v.id===id),c=$('rc_ponly');if(c)c.checked=!!(x&&x.pOnly)}
+  try { const x = QITEMS.find(v => v.id === id) || {}; if ($('rc_ionly')) $('rc_ionly').checked = !!x.iOnly; if ($('rc_oonly')) $('rc_oonly').checked = !!x.oOnly } catch (e) { }
+  try{const m=$('rcMsg');const old=document.querySelector('#rcSheet .pk3n');if(old)old.remove();if(m&&RC_EDIT===id){m.insertAdjacentHTML('beforebegin',pk3Panel(id,'reg',{name:($('rc_name')||{}).value||''}));pk3Fill(document.querySelector('#rcSheet .pk3n'))}}catch(e){}}
+/* rcSend: base + id1 (other-clinics/id1-patient-identity-cheques.js: mobile number required unless «موبایل ندارد», duplicate national id → the old file)
+   + ux5 A3 (ui/ux5-usability-round.js: an empty or odd-looking admission asks first); run order: id1, ux5, base */
+async function rcSend(t){{
+  const m = $('rcMsg'), ph = toEn(($('rc_phone') || {}).value || '').replace(/\D/g, ''), np = $('rc_nophone') && $('rc_nophone').checked;
+  if (!np && !ID1_PH.test(ph)) { m.className = 'msg err'; m.textContent = 'شماره موبایل بیمار را وارد کنید (۰۹ و ۹ رقم)؛ اگر موبایل ندارد، «موبایل ندارد» را بزنید.'; try { $('rc_phone').focus() } catch (e) { } return }
+  if (!RC_EDIT && !RC_REOPEN) { const h = id1Hit(); if (h) { const same = await uxAsk({ title: 'کد ملی تکراری', msg: `«${h.name}»${h.phone ? ' · ' + faD(h.phone) : ''}${h.jalali ? ' · تأیید ' + h.jalali : ''} قبلاً پرونده دارد. همان بیمار است؟`, ok: 'بله، همان بیمار (پرونده‌ی قبلی)', cancel: 'نه، بیمار جدید' });
+    if (same) { const nm = $('rc_name').value.trim(), p2 = $('rc_phone').value; await sendToDoctor(h.id, h.name || nm, h.phone || p2); const mm = $('rcMsg'); if (mm) { mm.className = 'msg'; mm.textContent = (mm.textContent ? mm.textContent + ' ' : '') + 'پرونده‌ی قبلی باز شد؛ دوباره «ارسال» را بزنید.' } return } } } }
+  try{if(t&&!t._uxOk){const nm=($('rc_name')&&$('rc_name').value||'').trim(),ph=toEn(($('rc_phone')&&$('rc_phone').value)||'').replace(/[\s\-()]/g,'');
+  if(!nm&&!ph){const ok=await uxConfirm('نام و شماره‌ی موبایل خالی است. بیمار بدون نام و بدون شماره به کارتابل پزشک فرستاده شود؟','ارسال بدون نام',false,'بیمار بدون نام');if(!ok){$('rc_name').focus();return}}
+  else if(ph&&!/^(\+98|0098|98)?0?9\d{9}$/.test(ph)){const ok=await uxConfirm('شماره‌ی موبایل «'+faD(ph)+'» درست به نظر نمی‌رسد (باید ۱۱ رقم و با ۰۹ شروع شود). با همین شماره ثبت شود؟','ثبت با همین شماره',false,'شماره‌ی موبایل');if(!ok){$('rc_phone').focus();return}}}}catch(e){}
+  const m=$('rcMsg'),p={};RCF.forEach(k=>p[k]=$('rc_'+k).value.trim());p.med=medNorm(RC_MED);p.pOnly=$('rc_ponly')&&$('rc_ponly').checked?1:0;p.nophone=$('rc_nophone')&&$('rc_nophone').checked?1:0;
   if((SET.recep||[]).length&&!p.asst){m.className='msg err';m.textContent='پذیرنده را انتخاب کنید.';return}try{if(p.asst)localStorage.setItem('implantRecep',p.asst)}catch(e){}
   t.disabled=true;m.className='msg';m.textContent='در حال ارسال…';
   try{if(RC_EDIT)await api('queueUpdate',{id:RC_EDIT,patient:p});else if(RC_REOPEN)await api('queueReopen',{id:RC_REOPEN,patient:p});else{if(!t.dataset.nid)t.dataset.nid=uuid();await api('queueAdd',{id:t.dataset.nid,patient:Object.assign({},p,{prev:RC_PREV||''}),intake:RC_INTAKE||''});RC_PREV=null;delete t.dataset.nid;RC_INTAKE=''}

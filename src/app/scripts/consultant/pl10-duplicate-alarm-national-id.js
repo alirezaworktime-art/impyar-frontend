@@ -5,9 +5,7 @@
 id1Hit = function () { try { const nid = toEn(($('rc_nid') || {}).value || '').replace(/\D/g, ''); if (!nid) return null;
   const all = [...ARCHIVE.map(d => ({ id: d.id, name: d.name, nid: d.nid, phone: d.phone, jalali: d.jalali })), ...QITEMS.filter(x => !ARCHIVE.some(a => a.id === x.id)).map(x => ({ id: x.id, name: x.name, nid: x.nid, phone: x.phone }))];
   return all.find(x => x.id !== RC_EDIT && toEn(x.nid || '').replace(/\D/g, '') === nid) || null } catch (e) { return null } };
-/* (2) All on X lower jaw: only Plus fixtures */
-{ const _m = aoxMix; aoxMix = function (s, j) { if (j === 'L') { const N = jawN(s, j); return { N, z: 0, t: 0, n: 0, p: N } } return _m.apply(this, arguments) } }
-{ const _h = aoxMixHTML; aoxMixHTML = function (x) { let h = _h.apply(this, arguments); try { const i = h.indexOf('<div class="mix"><b>فک پایین'); if (i >= 0) { const j = h.indexOf('<div class="mix">', i + 5), end = j >= 0 ? j : h.indexOf('<p class="note">', i); const blk = h.slice(i, end), k = blk.indexOf('</div>', blk.indexOf('<div class="mixr">')) + 6; h = h.slice(0, i) + blk.slice(0, k) + '<p class="note pl10lo">فک پایین فقط پایه‌ی پلاس.</p></div>' + h.slice(end) } } catch (e) { } return h } }
+/* (2) All on X lower jaw: only Plus fixtures (aoxMix / aoxMixHTML: merged into surgery/form-render.js) */
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mx]'); if (t && /^L:/.test(t.dataset.mx)) { e.preventDefault(); e.stopImmediatePropagation() } }, true);
 /* (3) consultant form: Enter confirms the field and moves to the next one */
 document.addEventListener('keydown', e => { if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.isComposing || ROLE !== 'consultant') return; const t = e.target, R = $('viewForm'); if (!R || R.hidden || !t || !R.contains(t) || !t.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit])')) return;

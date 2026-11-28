@@ -26,4 +26,4 @@ function q8Receipts(r){try{if(typeof OC3!=='undefined'&&OC3&&OC3.pdf)return null
     L.push('جمع دریافتی: '+fa(dep+cash+ok)+' تومان'+(wait?' + '+fa(wait)+' چک در جریان':''))}
   else{const rcv=num((r.pay||{}).rcv);if(rcv>0)L.push('بیعانه‌ی روز مشاوره: '+fa(rcv)+' تومان'+((r.pay||{}).via?' ('+({cash:'اسکناس',pos:'کارتخوان',xfer:'کارت‌به‌کارت / واریز'})[r.pay.via]+')':''))}
   if(!L.length)return null;return textBlock('دریافتی‌ها از بیمار',L)}catch(e){return null}}
-{const _f=fetchRecord;fetchRecord=async function(id){const r=await _f.apply(this,arguments);try{const j=await api('get',{id});if(j&&Array.isArray(j.pays))r.pays=j.pays}catch(e){}return r}}
+/* fetchRecord (payments): merged into surgery/archive.js */
