@@ -1,7 +1,6 @@
 /* ux7: one suture field for the paper file */
 (function(){const SUTOF=S=>(S&&S.lines||[]).map(l=>l.sut).find(Boolean)||'';
 {const _f=a6From;a6From=function(){const r=_f.apply(this,arguments);try{r.sut=SUTOF(r)}catch(e){}return r}}
-{const _n=a6NewLine;a6NewLine=function(){const l=_n.apply(this,arguments);try{if(A6)l.sut=A6.sut||''}catch(e){}return l}}
 {const _s=a6Save;a6Save=function(){try{if(A6)A6.lines.forEach(l=>{l.sut=A6.sut||''})}catch(e){}return _s.apply(this,arguments)}}
 document.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('[data-a6sutf]');if(!t||!A6)return;e.preventDefault();e.stopPropagation();const v=t.dataset.a6sutf;A6.sut=A6.sut===v?'':v;A6.lines.forEach(l=>{l.sut=A6.sut});A6.dirty=true;
   t.closest('.chips').querySelectorAll('[data-a6sutf]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.a6sutf===A6.sut)))},true);

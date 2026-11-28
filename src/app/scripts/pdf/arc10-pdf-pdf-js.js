@@ -28,19 +28,13 @@ const a10Rows = l => { if (l.k !== 'imp') return [{ lab: a6Lab(l) + (l.k === 'sg
   if (!ks.length) return [{ lab: a6Lab(l), n: 0, p: 0, a: 0 }];
   return ks.map(g => { const t = G[g], br = [...new Set(t.map(k => ((l.imp || {})[k] || {}).b).filter(Boolean))], p = g ? arbPr(l, g) : 0;
     return { lab: a6Lab(l) + ' — ' + (g ? (ARB_GL[g] || g) : 'بدون برند') + (br.length ? ' (' + br.join('، ') + ')' : '') + ' — ' + toothTxt(t), n: t.length, p, a: t.length * p } }) };
-a6TabHTML = function (C) { const rows = A6.lines.slice().sort((a, b) => String(a.day).localeCompare(String(b.day))).flatMap(l => a10Rows(l).map(r => `<tr><td>${esc(l.dayJ || '')}</td><td>${esc(r.lab)}</td><td>${esc(l.doc || '')}</td><td>${fa(r.n)} × ${fa(r.p)}</td><td>${fa(r.a)}</td></tr>`)).join('');
-  return `<table class="a6ct a9ct"><thead><tr><th>تاریخ</th><th>شرح درمان</th><th>نام پزشک</th><th>تعداد × تعرفه</th><th>مبلغ کل</th></tr></thead><tbody>${rows || '<tr><td colspan="5">هنوز درمانی وارد نشده.</td></tr>'}</tbody><tfoot><tr><td colspan="4">هزینه‌ی کل</td><td>${fa(C.cost)}</td></tr></tfoot></table>` };
 /* (3) a doctor change refreshes the table at once */
 ['change', 'input'].forEach(ev => document.addEventListener(ev, e => { const t = e.target; if (t && t.matches && t.matches('#a6Root [data-a6f="doc"]')) setTimeout(() => { try { a6MoneyLite() } catch (x) { } }, 0) }));
 /* (4) pontic + uncover: «پزشک کلینیک» only */
-{ const _n = a6NewLine; a6NewLine = function (k) { const l = _n.apply(this, arguments); if (l && A10_LOCK[k]) l.doc = ARC_DOC; return l } }
 { const _l = a6Line; a6Line = function (l) { if (l && A10_LOCK[l.k]) l.doc = ARC_DOC; let h = _l.apply(this, arguments); if (!l || !A10_LOCK[l.k]) return h;
   try { h = h.replace(/<select data-a6f="doc"[^>]*>[\s\S]*?<\/select>/, `<select data-a6f="doc" data-l="${l.id}" disabled title="فقط پزشک کلینیک"><option selected>${esc(ARC_DOC)}</option></select>`) } catch (e) { } return h } }
 /* (6) doctor list: the settings list + the accounting doctors, same name written two ways shown once (accounting spelling wins); fetched again on every open */
 const a10Nm = s => String(s || '').replace(/[‌\s.]/g, '').replace(/^(دکتر|د)/, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک');
-a6Docs = function (cur) { const L = [], seen = new Set(), add = d => { d = String(d || '').trim(); const k = a10Nm(d); if (!d || seen.has(k)) return; seen.add(k); L.push(d) };
-  (A6D || []).forEach(add); arcDocs().forEach(add); add(ARC_DOC); if (cur && !L.includes(cur)) L.push(cur); return L };
-{ const _o = a6Open; a6Open = function () { A6D = null; return _o.apply(this, arguments) } }
 /* (5) notes for the next departments, at the end of the form */
 function a10Clean(M) { return (M || []).map(m => ({ t: String(m.t || '').trim(), to: (m.to || []).filter(k => A10T[k]) })).filter(m => m.t) }
 function ARC10_MSG() { if (!A6) return ''; const M = A6.msgs = A6.msgs && A6.msgs.length ? A6.msgs : [{ t: '', to: [] }];
@@ -48,7 +42,6 @@ function ARC10_MSG() { if (!A6) return ''; const M = A6.msgs = A6.msgs && A6.msg
     <div class="chips" role="group" aria-label="برای کدام بخش">${Object.keys(A10T).map(k => `<button type="button" class="chip" data-a10to="${k}" data-a10i="${i}" aria-pressed="${(m.to || []).includes(k)}">${A10T[k]}</button>`).join('')}${M.length > 1 ? `<button type="button" class="chip a10x" data-a10x="${i}">حذف</button>` : ''}</div></div>`).join('')}
     <div class="btns"><button type="button" class="btn sm ghost" id="a10Add">+ توضیح دیگر</button></div></div>` }
 function a10Mount() { const ta = document.querySelector('#a6Root [data-a6h="note"]'), sec = ta && ta.closest('section'); if (!sec) return; const o = $('a10Msg'); if (o) o.remove(); sec.insertAdjacentHTML('beforeend', ARC10_MSG()) }
-{ const _r = a6Render; a6Render = function () { const r = _r.apply(this, arguments); try { a10Mount() } catch (e) { } return r } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-a10to],[data-a10x],#a10Add'); if (!t || !A6) return; e.preventDefault(); e.stopPropagation(); A6.dirty = true;
   if (t.id === 'a10Add') { A6.msgs.push({ t: '', to: [] }); a10Mount(); const n = document.querySelector(`[data-a10t="${A6.msgs.length - 1}"]`); if (n) n.focus(); return }
   if (t.dataset.a10x) { A6.msgs.splice(Number(t.dataset.a10x), 1); a10Mount(); return }

@@ -34,35 +34,20 @@ function m2Sync() { if (!A6) return; const S = A6, only = m2Only();
         (c.teeth || []).forEach(t => { const m = (c.imp || {})[t]; if (m && m.f && p.imp[t]) p.imp[t].f = 1 }); } }
   } catch (e) {}
   return S } }
-{ const _r = a6Render; a6Render = function () { try { m2Sync() } catch (e) {} const r = _r.apply(this, arguments);
-  try { const R = $('a6Root'), g = R && R.querySelector('section.card .a6g2'); if (g && !R.querySelector('.m2only')) { const o = m2Only();
-      g.insertAdjacentHTML('afterend', `<div class="grp m2only"><span>نوع درمان بیمار</span><div class="chips" role="radiogroup" aria-label="نوع درمان">${Object.entries(M2_ONLY).map(([k, t]) => `<button type="button" class="chip" role="radio" data-m2only="${k}" aria-pressed="${o === k}" aria-checked="${o === k}">${t}</button>`).join('')}</div>${o === 'i' ? '<small class="note">بخش‌های پروتز (مراحل پروتز، روکش، روکش موقت، سهم پروتز All on X و اوردنچر) بسته است و مرحله‌ها تا آنکاوری است.</small>' : o === 'p' ? '<small class="note">بخش‌های جراحی بسته است؛ برند و سایز ایمپلنت اختیاری است، از انبار کم نمی‌شود و مرحله‌ها از قالب‌گیری است.</small>' : ''}</div>`) } } catch (e) {}
-  return r } }
 /* the treatment list: rules of the chosen kind */
-{ const _b = a6ListBtns; a6ListBtns = function () { if (!A6 || !A6.lines.some(l => l.ax)) return _b.apply(this, arguments); const keep = A6.lines; A6.lines = keep.filter(l => !l.ax); try { return _b.apply(this, arguments) } finally { A6.lines = keep } } }
-{ const _b = a6ListBtns; a6ListBtns = function () { const o = m2Only(), N = o === 'i' ? M2_NO_I : o === 'p' ? M2_NO_P : null; if (!N) return _b.apply(this, arguments);
-  const was = A6CAT.map(x => x.hid); A6CAT.forEach(x => { if (N[x.k]) x.hid = 1 }); try { return _b.apply(this, arguments) } finally { A6CAT.forEach((x, i) => { x.hid = was[i] }) } } }
-/* stage choices */
-{ const _o = a6StOpts; a6StOpts = function () { let h = _o.apply(this, arguments); const o = m2Only(); if (!o) return h;
-  const d = document.createElement('select'); d.innerHTML = h; [...d.options].forEach(x => { const ok = o === 'i' ? M2_ST_I.includes(x.value) : !M2_ST_P0.includes(x.value); if (!ok) x.remove() });
-  if (A6 && ![...d.options].some(x => x.value === A6.stage) && d.options[0]) { A6.stage = d.options[0].value; A6.type = (typeof A7_TYPE !== 'undefined' && A7_TYPE[A6.stage]) || 'fix' }
-  [...d.options].forEach(x => { x.selected = A6 && x.value === A6.stage; if (x.selected) x.setAttribute('selected', ''); else x.removeAttribute('selected') }); return d.innerHTML } }
+/* two layers in one: (1) a marker-only file hides the treatments of the other kind (A6CAT hid flags, restored after), (2) the companion
+   lines (l.ax) are left out of the list while it is drawn */
+{ const _b = a6ListBtns; a6ListBtns = function () { const o = m2Only(), N = o === 'i' ? M2_NO_I : o === 'p' ? M2_NO_P : null; let was = null; if (N) { was = A6CAT.map(x => x.hid); A6CAT.forEach(x => { if (N[x.k]) x.hid = 1 }) }
+  try { if (!A6 || !A6.lines.some(l => l.ax)) return _b.apply(this, arguments); const keep = A6.lines; A6.lines = keep.filter(l => !l.ax); try { return _b.apply(this, arguments) } finally { A6.lines = keep } }
+  finally { if (N) A6CAT.forEach((x, i) => { x.hid = was[i] }) } } }
 /* the «پایه ایمپلنت» panel never shows the companions */
-{ const _p = a6Panel; a6Panel = function (k) { if (k !== 'imp' || !A6) return _p.apply(this, arguments); const keep = A6.lines; const own = keep.filter(l => !l.ax);
-  if (!own.some(l => l.k === 'imp' || l.k === 'reimp')) return ''; A6.lines = own; try { return _p.apply(this, arguments) } finally { A6.lines = keep } } }
-{ const _p = a6Panel; a6Panel = function (k) { let h = _p.apply(this, arguments); if (!M2_AX[k]) return h;
+/* two layers in one: (1) the implant panel draws without the companion lines (empty when only those are left), (2) All on X / overdenture:
+   the tariff line of the panel head */
+{ const _p = a6Panel; a6Panel = function (k) { let h; if (k !== 'imp' || !A6) h = _p.apply(this, arguments); else { const keep = A6.lines; const own = keep.filter(l => !l.ax);
+  if (!own.some(l => l.k === 'imp' || l.k === 'reimp')) h = ''; else { A6.lines = own; try { h = _p.apply(this, arguments) } finally { A6.lines = keep } } }
+  if (!M2_AX[k]) return h;
   return h.replace(/(<h3>[^<]*<small>)[^<]*(<\/small>)/, `$1تعرفه‌ی پروتز ${fa((A6C[k].p({}) || 0))} تومان ${k === 'aox' ? 'برای هر پایه' : 'برای هر فک'} + ایمپلنت‌ها با تعرفه‌ی برندشان$2`) } }
 /* one All on X / overdenture session */
-{ const _l = a6Line; a6Line = function (l) { if (!l || !M2_AX[l.k]) return _l.apply(this, arguments); try { m2Sync() } catch (e) {} let h = _l.apply(this, arguments); try {
-  const o = m2Only(), money = a6Money0(), G = arbGroups(l), miss = o === 'p' ? [] : arbMiss(l), u = m2Units(l), uL = l.k === 'aox' ? 'پایه' : 'فک';
-  h = h.replace(/<p class="note a6tn">[\s\S]*?<\/p>/, `<p class="note a6tn">${l.teeth.length ? 'پایه‌ها: ' + esc(toothTxt(l.teeth)) + ' · ' + fa(l.teeth.length) + ' ایمپلنت' + (l.k === 'ovd' ? ' · ' + fa(u) + ' فک' : '') : 'دندان‌های پایه را بزنید'}</p>`);
-  const chips = l.teeth.length && o !== 'p' ? `<div class="arbl">${l.teeth.map(t => { const m = (l.imp || {})[t] || {}, ok = m.b && m.d && m.l; return `<button type="button" class="arbc${ok ? '' : ' bad'}" data-arbt="${t}" data-l="${l.id}"><b>${esc(toothTxt([t]))}</b> ${ok ? esc(m.b) + ' · ' + faD(String(m.d)) + '×' + faD(String(m.l)) : 'برند و سایز را بزنید'}</button>` }).join('')}</div>${miss.length ? '<p class="note arbm">برای ' + fa(miss.length) + ' پایه برند و سایز ثبت نشده؛ روی آن بزنید.</p>' : ''}` : '';
-  const ip = money && o !== 'p' ? Object.keys(G).filter(Boolean).sort((a, b) => ARB_GO.indexOf(a) - ARB_GO.indexOf(b)).map(g => { const p = arbPr(l, g), d = arbDef(g); return `<label class="f">تعرفه‌ی ایمپلنت ${ARB_GL[g]} (هر عدد، تومان)<input data-arbgp="${g}" data-l="${l.id}" inputmode="numeric" class="price" value="${esc(fmtInput(String(p)))}"><small class="a6def">${fa(G[g].length)} عدد = <b data-arbga="${l.id}-${g}">${fa(G[g].length * p)}</b>${p !== d ? ' · پیش‌فرض ' + fa(d) + ' <button type="button" class="lnk" data-arbdef="' + g + '" data-l="' + l.id + '">برگرداندن</button>' : ''}</small></label>` }).join('') : '';
-  if (o === 'i') h = h.replace(/<label class="f">تعرفه‌ی هر واحد \(تومان\)[\s\S]*?<\/b><\/div>/, '');
-  else h = h.replace('تعرفه‌ی هر واحد (تومان)', 'تعرفه‌ی پروتز هر ' + uL + ' (تومان)').replace(/(<div class="a6amt"><span>)مبلغ(<\/span>)/, '$1پروتز (' + fa(u) + ' ' + uL + ')$2');
-  const tot = money ? `<div class="m2tot"><span>ایمپلنت‌ها <b data-m2ia="${l.id}">${fa(m2ImpAmt(l))}</b></span><span>پروتز <b data-m2pa="${l.id}">${fa(o === 'i' ? 0 : a6Amt(l))}</b></span><span>مبلغ این جلسه <b data-m2ta="${l.id}">${fa(m2ImpAmt(l) + (o === 'i' ? 0 : a6Amt(l)))}</b></span></div>` : '';
-  h = h.replace('<div class="a6sut">', `${chips}${ip ? '<div class="arbp">' + ip + '</div>' : ''}${tot}<div class="a6sut">`);
-  } catch (e) {} return h } }
 function m2Tot() { if (!A6) return; for (const l of A6.lines.filter(x => M2_AX[x.k])) { const o = m2Only(), i = m2ImpAmt(l), p = o === 'i' ? 0 : a6Amt(l);
   const s = (k, v) => { const e = document.querySelector(`[data-${k}="${l.id}"]`); if (e) e.textContent = fa(v) }; s('m2ia', i); s('m2pa', p); s('m2ta', i + p) } }
 document.addEventListener('input', () => { try { if (A6 && !$('viewArc6').hidden) m2Tot() } catch (e) {} });
@@ -82,19 +67,28 @@ window.addEventListener('click', e => { const t = e.target && e.target.closest &
 /* ---- «فیل اولیه» (owner 2026-11-10): per tooth, in the brand / size window of «پایه ایمپلنت», All on X and overdenture; its tariff is a box of the session (default = the brand tariff) ---- */
 const m3F = (l, t) => !!(((l && l.imp) || {})[t] || {}).f;
 const m3Nf = l => (l.teeth || []).filter(t => m3F(l, t)).length;
-{ const _o = arbOpen; arbOpen = function (l, t) { const r = _o.apply(this, arguments); try { if (ARB.p) { ARB.p.f = m3F(l, t); ARB.p.orig = (l.imp || {})[t]; ARB.p.m3 = 1; arbDraw() } } catch (e) {} return r } }
-{ const _d = arbDraw; arbDraw = function () { const r = _d.apply(this, arguments); try { const s = $('arbSh'), P = ARB.p; if (s && P && !s.querySelector('[data-m3f]')) { const m = s.querySelector('#arbMsg');
-    if (m) m.insertAdjacentHTML('beforebegin', `<div class="arbg m3row"><span>وضعیت</span><div class="chips"><button type="button" class="chip" data-m3f="0" aria-pressed="${!P.f}">کاشت موفق</button><button type="button" class="chip" data-m3f="1" aria-pressed="${!!P.f}">فیل اولیه</button></div></div>`) } } catch (e) {} return r } }
 document.addEventListener('pointerdown', e => { const b = e.target && e.target.closest && e.target.closest('[data-m3f]'); if (!b || !ARB.p) return; e.preventDefault(); ARB.p.f = b.dataset.m3f === '1'; b.closest('.chips').querySelectorAll('[data-m3f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))) }, true);
 document.addEventListener('keydown', e => { const b = e.target && e.target.closest && e.target.closest('[data-m3f]'); if (!b || !ARB.p || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); ARB.p.f = b.dataset.m3f === '1'; b.closest('.chips').querySelectorAll('[data-m3f]').forEach(x => x.setAttribute('aria-pressed', String(x === b))) }, true);
-{ const _c = arbClose; arbClose = function () { try { const P = ARB.p; if (P && P.m3) { const l = a6L(P.lid), m = l && l.imp && l.imp[P.t]; if (m && m !== P.orig) { if (P.f) m.f = 1; else delete m.f } } } catch (e) {} return _c.apply(this, arguments) } }
 /* tooth buttons say «فیل اولیه»; a tariff box for the failed ones */
-{ const _l = a6Line; a6Line = function (l) { let h = _l.apply(this, arguments); if (!l || !(l.k === 'imp' || M2_AX[l.k])) return h; try {
+/* two layers in one: (1) an All on X / overdenture session (m2Sync first): base chips, implant tariffs per brand group, totals;
+   (2) the initial-failure marks on the tooth buttons and the tariff box for the failed fixtures (implant lines too) */
+{ const _l = a6Line; a6Line = function (l) { let h;
+  if (!l || !M2_AX[l.k]) h = _l.apply(this, arguments);
+  else { try { m2Sync() } catch (e) {} h = _l.apply(this, arguments); try {
+  const o = m2Only(), money = a6Money0(), G = arbGroups(l), miss = o === 'p' ? [] : arbMiss(l), u = m2Units(l), uL = l.k === 'aox' ? 'پایه' : 'فک';
+  h = h.replace(/<p class="note a6tn">[\s\S]*?<\/p>/, `<p class="note a6tn">${l.teeth.length ? 'پایه‌ها: ' + esc(toothTxt(l.teeth)) + ' · ' + fa(l.teeth.length) + ' ایمپلنت' + (l.k === 'ovd' ? ' · ' + fa(u) + ' فک' : '') : 'دندان‌های پایه را بزنید'}</p>`);
+  const chips = l.teeth.length && o !== 'p' ? `<div class="arbl">${l.teeth.map(t => { const m = (l.imp || {})[t] || {}, ok = m.b && m.d && m.l; return `<button type="button" class="arbc${ok ? '' : ' bad'}" data-arbt="${t}" data-l="${l.id}"><b>${esc(toothTxt([t]))}</b> ${ok ? esc(m.b) + ' · ' + faD(String(m.d)) + '×' + faD(String(m.l)) : 'برند و سایز را بزنید'}</button>` }).join('')}</div>${miss.length ? '<p class="note arbm">برای ' + fa(miss.length) + ' پایه برند و سایز ثبت نشده؛ روی آن بزنید.</p>' : ''}` : '';
+  const ip = money && o !== 'p' ? Object.keys(G).filter(Boolean).sort((a, b) => ARB_GO.indexOf(a) - ARB_GO.indexOf(b)).map(g => { const p = arbPr(l, g), d = arbDef(g); return `<label class="f">تعرفه‌ی ایمپلنت ${ARB_GL[g]} (هر عدد، تومان)<input data-arbgp="${g}" data-l="${l.id}" inputmode="numeric" class="price" value="${esc(fmtInput(String(p)))}"><small class="a6def">${fa(G[g].length)} عدد = <b data-arbga="${l.id}-${g}">${fa(G[g].length * p)}</b>${p !== d ? ' · پیش‌فرض ' + fa(d) + ' <button type="button" class="lnk" data-arbdef="' + g + '" data-l="' + l.id + '">برگرداندن</button>' : ''}</small></label>` }).join('') : '';
+  if (o === 'i') h = h.replace(/<label class="f">تعرفه‌ی هر واحد \(تومان\)[\s\S]*?<\/b><\/div>/, '');
+  else h = h.replace('تعرفه‌ی هر واحد (تومان)', 'تعرفه‌ی پروتز هر ' + uL + ' (تومان)').replace(/(<div class="a6amt"><span>)مبلغ(<\/span>)/, '$1پروتز (' + fa(u) + ' ' + uL + ')$2');
+  const tot = money ? `<div class="m2tot"><span>ایمپلنت‌ها <b data-m2ia="${l.id}">${fa(m2ImpAmt(l))}</b></span><span>پروتز <b data-m2pa="${l.id}">${fa(o === 'i' ? 0 : a6Amt(l))}</b></span><span>مبلغ این جلسه <b data-m2ta="${l.id}">${fa(m2ImpAmt(l) + (o === 'i' ? 0 : a6Amt(l)))}</b></span></div>` : '';
+  h = h.replace('<div class="a6sut">', `${chips}${ip ? '<div class="arbp">' + ip + '</div>' : ''}${tot}<div class="a6sut">`);
+  } catch (e) {} }
+  if (!l || !(l.k === 'imp' || M2_AX[l.k])) return h; try {
   (l.teeth || []).filter(t => m3F(l, t)).forEach(t => { h = h.replace(new RegExp(`(<button type="button" class="arbc[^"]*" data-arbt="${t}" data-l="${l.id}">[\\s\\S]*?)</button>`), '$1 <i class="m3f">فیل اولیه</i></button>') });
   const nf = m3Nf(l); if (nf && a6Money0() && !(M2_AX[l.k] && m2Only() === 'p')) { const box = `<label class="f m3fp">تعرفه‌ی ایمپلنت فیل اولیه (هر عدد، تومان)<input data-m3fp="${l.id}" inputmode="numeric" class="price" placeholder="مثل تعرفه‌ی برند" value="${l.fp != null && l.fp !== '' ? (+l.fp === 0 ? '0' : esc(fmtInput(String(l.fp)))) : ''}"><small class="a6def">${fa(nf)} عدد فیل اولیه${l.fp != null && l.fp !== '' ? '' : ' — خالی = همان تعرفه‌ی برند'}</small></label>`;
     if (h.includes('<div class="a6amt"><span>مبلغ</span><b data-arbamt')) h = h.replace('<div class="a6amt"><span>مبلغ</span><b data-arbamt', box + '<div class="a6amt"><span>مبلغ</span><b data-arbamt'); else h = h.replace('<div class="m2tot">', box + '<div class="m2tot">') } } catch (e) {} return h } }
 document.addEventListener('input', e => { const i = e.target; if (!i || !i.dataset || !i.dataset.m3fp || !A6) return; const l = a6L(i.dataset.m3fp); if (!l) return; const raw = toEn(i.value).replace(/[^\d]/g, ''); l.fp = raw === '' ? '' : Number(raw); i.value = raw === '' ? '' : +raw === 0 ? '0' : fmtInput(i.value); A6.dirty = true;
   try { m2Sync() } catch (x) {} const a = document.querySelector(`[data-arbamt="${l.id}"]`); if (a) a.textContent = fa(arbAmt(l)); try { m2Tot() } catch (x) {} try { a6MoneyLite() } catch (x) {} });
 /* file box and PDF */
-{ const _b = arbBr; arbBr = function (l, html) { const s = _b.apply(this, arguments); try { const F = (l.teeth || []).filter(t => m3F(l, t)); if (!F.length || !s) return s; const add = ' — فیل اولیه: ' + toothTxt(F); return html ? s.replace(/\)$/, esc(add) + ')') : s.replace(/\)$/, add + ')') } catch (e) { return s } } }
 { const _a = api; api = function (action, payload) { try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) payload.arc.lines = (payload.arc.lines || []).map(x => { const l = A6.lines.find(y => y.id === x.id); return l && l.fp != null && l.fp !== '' && m3Nf(l) ? Object.assign({}, x, { fp: l.fp }) : x }) } catch (e) {} return _a.apply(this, arguments) } }

@@ -38,7 +38,10 @@ const a6Day=at=>at?tDay(new Date(at)):'';/* arc8: a text date */
 const a6Lab=l=>l.k==='pros'||(l.k==='imp'&&+l.ri>0)?a13Lab(l):l.k==='oth'?(l.txt||'سایر'):(A6C[l.k]||{}).t||l.k;
 const a6Amt=l=>num(l.n)*num(l.price);
 function a6Meta(){if(A6D)return Promise.resolve(A6D);return api('arc6Meta').then(j=>{A6D=(j.docs||[]).filter(Boolean);return A6D}).catch(()=>{A6D=null;return arcDocs()})}
-function a6Docs(cur){const L=[...new Set([...(A6D&&A6D.length?A6D:arcDocs()),ARC_DOC])];if(cur&&!L.includes(cur))L.push(cur);return L}
+/* a6Docs — pdf/arc10 replaced the first archive/arc6 version: the settings list + the accounting doctors, a name written two ways shown once
+   (a10Nm, in pdf/arc10); a6Open empties A6D so the list is fetched again on every open */
+function a6Docs(cur) { const L = [], seen = new Set(), add = d => { d = String(d || '').trim(); const k = a10Nm(d); if (!d || seen.has(k)) return; seen.add(k); L.push(d) };
+  (A6D || []).forEach(add); arcDocs().forEach(add); add(ARC_DOC); if (cur && !L.includes(cur)) L.push(cur); return L }
 /* lines of an older paper file (arc3–arc5 sessions + fx2 visits), priced with the tariffs stored in each session */
 const A6MAP={ext:'ext',imp:'imp',gbr:'gbr1',alv:'alv1',pon:'pon',surg:'tn1',sub:'sub',aox:'aox',vip:'vip',crw:'crw',ram:'ram',ovd:'ovd',fgg:'fgg',tmp:'tmp',cbct:'cbct',anes:'anes'};
 function a6Legacy(j){const d=j.data||{},a=d.arc||{},sg=j.surg||{},L=[];
@@ -69,8 +72,19 @@ function a6From(j){const d=j?j.data||{}:{},h=d.h||{},a=d.arc||{},v6=!!a.v6;
     return {id:p.id,day:a6Day(p.at),dayJ:jDay(a6Day(p.at)),amount:String(p.amount||''),meth:m,pos:p.pos||'',acct:m==='xfer'&&FIN1_ACC.includes(b)?b:'',bank:m==='chq'?b:'',no:p.no||'',due:p.due||'',dueJ:p.due?jDay(p.due):'',note:a6NoteOf(p.note)}});
   return S}
 const a6NoteOf=n=>{n=String(n||'');const m=/^پرداخت قبلی \([^)]*\)(?: — (.*))?$/.exec(n);return m?(m[1]||''):n};
-function a6Open(j){Promise.all([a6Meta(),ensurePos()]).catch(()=>{}).then(()=>{A6=a6From(j);A6.back=['list','queue','recep'].find(v=>{const el=$('view'+v[0].toUpperCase()+v.slice(1));return el&&!el.hidden})||'list';
-  const pf=$('pfSheet');if(pf&&!pf.hidden)pf.hidden=true;show('arc6');a6Render();window.scrollTo(0,0)})}
+/* a6Open — layers: archive/arc6 base + finance/arc9 (no pending radiographs) + pdf/arc10 (the doctor list is fetched again)
+   + surgery/what-unsaved m4 (offers to restore an unsaved draft of this file) + archive/m51a (the repeated-file check starts again) */
+function a6Open(j){M51.told = {}; M51.key = ''; M51.res = null;
+  A6D = null;
+  A9.pend = [];
+  Promise.all([a6Meta(),ensurePos()]).catch(()=>{}).then(()=>{A6=a6From(j);A6.back=['list','queue','recep'].find(v=>{const el=$('view'+v[0].toUpperCase()+v.slice(1));return el&&!el.hidden})||'list';
+  const pf=$('pfSheet');if(pf&&!pf.hidden)pf.hidden=true;show('arc6');a6Render();window.scrollTo(0,0)});
+  const key = M4A6 + ROLE + ':' + ((j && j.id) || 'new');
+  setTimeout(async () => { try { const x = JSON.parse(localStorage.getItem(key) || 'null'); if (!x || !A6 || m4A6Key(A6) !== key) return; if (Date.now() - x.at > 7 * 864e5) { localStorage.removeItem(key); return }
+    const up = j && j.updatedAt ? Date.parse(j.updatedAt) : 0; if (up && up > x.at) { localStorage.removeItem(key); return }
+    const ok = await uxConfirm('پیش‌نویس ذخیره‌نشده‌ی این پرونده (' + (x.when || '') + ') روی این دستگاه پیدا شد. بازیابی شود؟ (انصراف = پیش‌نویس پاک شود)', 'بازیابی', false, 'اطلاعات موقت');
+    if (!ok) { localStorage.removeItem(key); return } const s = x.s || {}; for (const k in s) { const v = s[k]; A6[k] = v && v.__set ? new Set(v.__set) : v } A6.dirty = true; a6Render(); toast('پیش‌نویس پرونده بازیابی شد؛ برای ثبت «ذخیره» را بزنید.') } catch (e) {} }, 900);
+  m51Later(1200)}
 {const _s=show;show=function(v){const r=_s.apply(this,arguments);const el=$('viewArc6');if(el)el.hidden=v!=='arc6';return r}}
 {const _t=ttlNow;ttlNow=function(){const el=$('viewArc6');if(el&&!el.hidden)return 'پرونده‌ی جا مانده';return _t.apply(this,arguments)}}
 /* reception: a clear entry in its own tiles */
@@ -100,13 +114,22 @@ function a6Group(g){const K=A6CAT.filter(x=>x.g===g);
   return `<section class="card a6p a6grp" data-a6p="${g}"><h3>${esc(A6G[g])}</h3><div class="chips" role="group" aria-label="${esc(A6G[g])}">${K.map(x=>{const n=A6.lines.filter(l=>l.k===x.k).length;return `<button type="button" class="chip" data-a6lv="${x.k}" aria-pressed="${A6.op.has(x.k)}">${esc(x.t)}${n?' ✓':''}</button>`}).join('')}</div>
    ${K.filter(x=>A6.op.has(x.k)).map(x=>a6Panel(x.k)).join('')}</section>`}
 const a6Money0=()=>['staff','consultant','accountant','manager'].includes(ROLE);
-function a6Calc(){const S=A6,cost=S.lines.reduce((s,l)=>s+a6Amt(l),0),pa=p=>{const v=p.m==='p'?Math.round(cost*Math.min(100,Number(toEn(String(p.v)).replace(/[^\d.]/g,''))||0)/100):num(p.v);return v};
+/* a6Calc — the money of a paper file. Layers: archive/arcb1 (implants priced per brand group; replaced the arc6 version) + finance/arc8
+   (the per-line discounts are synced first) + finance/m41 (the same arithmetic as the server) + finance/m41b (earlier payments above the cost after
+   discount: the patient in credit, unless settled or a remaining debt is given) */
+function a6Calc(){try { a8Sync() } catch (e) { }
+  const S=A6,cost=S.lines.reduce((s,l)=>s+arbAmt(l),0),pa=p=>{const v=p.m==='p'?Math.round(cost*Math.min(100,Number(toEn(String(p.v)).replace(/[^\d.]/g,''))||0)/100):num(p.v);return v};
   const dc=pa(S.disc.c),dd=pa(S.disc.d),net=cost-dc-dd,j=S.j||{},rf=(j.refunds||[]).filter(x=>x.st==='paid').reduce((a,x)=>a+num(x.amount),0);
   const other=(j.pays||[]).filter(p=>p.kind!=='arc'&&p.st!=='del').reduce((a,p)=>a+(p.st==='ok'||(p.kind==='chq'&&p.st==='wait')?num(p.amount):0),0);
   const arcP=S.pays.reduce((a,p)=>a+num(p.amount),0),paid=arcP+other-rf,rem=S.rem===''?null:num(S.rem),imp=S.settled?Math.max(0,net-paid):rem!=null?Math.max(0,net-paid-rem):0;
-  return {cost,dc,dd,net,arcP,other,paid,imp,bal:net-imp-paid}}
+  const C={cost,dc,dd,net,arcP,other,paid,imp,bal:net-imp-paid};
+  try{const S=A6,rem=S.rem===''||S.rem==null?null:num(S.rem),want=C.paid+(!S.settled&&rem!=null?rem:0),vt=Math.max(C.net-C.imp,want>C.net?want:0);C.m41over=vt-(C.net-C.imp);C.bal=vt-C.paid}catch(e){}
+  try{const S=A6;if(!S.settled&&(S.rem===''||S.rem==null)){C.m41over=0;C.bal=C.net-C.imp-C.paid}}catch(e){}
+  return C}
+/* a6MoneyHTML — layers: archive/arc6 base + finance/arc8 (per-treatment discounts: the file-level discount inputs become their sum) + finance/m41
+   (what «remaining debt» means; the amount added to the file) + finance/m41b (the patient in credit). Each hint calls a6Calc() again. */
 function a6MoneyHTML(){const C=a6Calc(),S=A6,dm=(w)=>{const p=S.disc[w];return `<div class="a6dr"><span>${w==='c'?'تخفیف سهم کلینیک':'تخفیف سهم پزشک'}</span><div class="seg" role="group"><button type="button" data-a6dm="${w}" data-m="p" aria-pressed="${p.m==='p'}">درصد</button><button type="button" data-a6dm="${w}" data-m="a" aria-pressed="${p.m!=='p'}">مبلغ</button></div><input data-a6dv="${w}" inputmode="numeric" value="${esc(p.v===''||p.v==null?'':p.m==='p'?faD(String(p.v)):fmtInput(String(p.v)))}" placeholder="${p.m==='p'?'٪':'تومان'}" aria-label="${w==='c'?'تخفیف سهم کلینیک':'تخفیف سهم پزشک'}"><b>${fa(w==='c'?C.dc:C.dd)}</b></div>`};
-  return `<h2>هزینه‌ها، تخفیف و پرداخت‌ها</h2>${S.warn?`<div class="banner info">${esc(S.warn)}</div>`:''}
+  let h=`<h2>هزینه‌ها، تخفیف و پرداخت‌ها</h2>${S.warn?`<div class="banner info">${esc(S.warn)}</div>`:''}
    <div id="a6Tab">${a6TabHTML(C)}</div>${ARC9_GD()}
    <div class="a6disc">${dm('c')}${dm('d')}<div class="a6dr a6dt"><span>تخفیف کل</span><b>${fa(C.dc+C.dd)}</b></div></div>
    <div class="a6sum"><span>هزینه پس از تخفیف</span><b>${fa(C.net)} تومان</b></div>
@@ -117,9 +140,19 @@ function a6MoneyHTML(){const C=a6Calc(),S=A6,dm=(w)=>{const p=S.disc[w];return `
    <div class="a6bal"><label class="a6ck"><input type="checkbox" id="a6Set"${S.settled?' checked':''}> حساب تسویه است (مانده صفر)</label>
     <label class="f">مانده‌ی بدهی طبق پرونده (تومان)<input id="a6Rem" inputmode="numeric" class="price" value="${esc(S.rem===''?'':fmtInput(S.rem))}" placeholder="خالی = حساب از روی هزینه و پرداخت‌ها"${S.settled?' disabled':''}></label></div>
    <div class="a6sum"><span>جمع پرداخت‌ها</span><b>${fa(C.paid)}</b></div><div class="a6sum imp"${C.imp?'':' hidden'}><span>تسویه‌ی قبلی طبق پرونده</span><b>${fa(C.imp)}</b></div>
-   <div class="a6sum big${C.bal>0?' warn':''}"><span>مانده‌ی بیمار</span><b>${fa(Math.max(0,C.bal))} تومان${C.bal<0?' · بستانکار '+fa(-C.bal):''}</b></div>`}
-function a6TabHTML(C){const rows=A6.lines.slice().sort((a,b)=>String(a.day).localeCompare(String(b.day))).map(l=>`<tr><td>${esc(a6Lab(l))}</td><td>${esc(l.dayJ||'')}</td><td>${fa(num(l.n))} × ${fa(num(l.price))}</td><td>${fa(a6Amt(l))}</td></tr>`).join('');
-  return `<table class="a6ct"><thead><tr><th>درمان</th><th>تاریخ</th><th>تعداد × تعرفه</th><th>مبلغ (تومان)</th></tr></thead><tbody>${rows||'<tr><td colspan="4">هنوز درمانی وارد نشده.</td></tr>'}</tbody><tfoot><tr><td colspan="3">هزینه‌ی کل</td><td>${fa(C.cost)}</td></tr></tfoot></table>`}
+   <div class="a6sum big${C.bal>0?' warn':''}"><span>مانده‌ی بیمار</span><b>${fa(Math.max(0,C.bal))} تومان${C.bal<0?' · بستانکار '+fa(-C.bal):''}</b></div>`;
+  try { if (a8Any() || !(num((A6.disc.c || {}).v) || num((A6.disc.d || {}).v))) h = h.replace(/<div class="seg" role="group"><button type="button" data-a6dm="(c|d)"[\s\S]*?<\/div><input data-a6dv="\1"[^>]*>/g, '<span class="a8sum">جمع تخفیف درمان‌ها</span>') } catch (e) { }
+  try{const C=a6Calc(),S=A6;
+    const hint=`<p class="m41hint">«مانده‌ی بدهی طبق پرونده» یعنی بدهی‌ای که <b>بعد از پرداخت‌های بالا</b> هنوز مانده است. اگر بیمار همه را پرداخته، این خانه را خالی بگذارید و «حساب تسویه است» را بزنید.${S.rem!==''&&S.rem!=null&&!S.lines.length?' برای ذخیره، اول درمان‌های پرونده را وارد کنید.':''}${C.m41over>0?' جمع هزینه‌ی درمان‌های واردشده '+fa(C.m41over)+' تومان کمتر از «پرداخت‌ها + مانده» است؛ همین مقدار به جمع پرونده اضافه می‌شود.':''}</p>`;
+    h=h.replace('<div class="a6sum"><span>جمع پرداخت‌ها</span>',hint+'<div class="a6sum"><span>جمع پرداخت‌ها</span>')}catch(e){}
+  try{const C=a6Calc();if(C.bal<0){
+    const hint=`<p class="m41hint" id="m41bCr">پرداخت‌ها ${fa(-C.bal)} تومان بیشتر از هزینه پس از تخفیف است؛ بیمار همین مقدار <b>بستانکار</b> ثبت می‌شود و در درمان بعدی از بدهی او کم می‌شود.</p>`;
+    h=h.replace('<div class="a6sum"><span>جمع پرداخت‌ها</span>',hint+'<div class="a6sum"><span>جمع پرداخت‌ها</span>')}}catch(e){}
+  return h}
+/* a6TabHTML — the cost table: the plan/reopening m16 version (rows by kind and tariff, m16Rows) is the one in use; it replaced
+   finance/layer m15, pdf/arc10 and finance/arc9, which replaced the arc6 version and its archive/arcb1 wrapper */
+function a6TabHTML(C) { const rows = A6.lines.slice().sort((a, b) => String(a.day).localeCompare(String(b.day))).flatMap(l => m16Rows(l).map(r => `<tr><td>${esc(l.dayJ || '')}</td><td>${esc(r.lab)}</td><td>${esc(l.doc || '')}</td><td>${fa(r.n)} × ${fa(r.p)}</td><td>${fa(r.a)}</td></tr>`)).join('');
+  return `<table class="a6ct a9ct"><thead><tr><th>تاریخ</th><th>شرح درمان</th><th>نام پزشک</th><th>تعداد × تعرفه</th><th>مبلغ کل</th></tr></thead><tbody>${rows || '<tr><td colspan="5">هنوز درمانی وارد نشده.</td></tr>'}</tbody><tfoot><tr><td colspan="4">هزینه‌ی کل</td><td>${fa(C.cost)}</td></tr></tfoot></table>` }
 function a6PayRow(p){const pos=(POSL||[]).filter(x=>Number(x.active)||x.id===p.pos);
   return `<div class="a6pr" data-p="${p.id}"><label class="f">تاریخ *<input data-a6pf="dayJ" data-p="${p.id}" data-jd="1" data-anc="${esc(A6.last.day||'')}" placeholder="۱۴۰۲/۰۳/۱۵" value="${esc(p.dayJ||'')}" autocomplete="off"></label>
    <label class="f">مبلغ (تومان) *<input data-a6pf="amount" data-p="${p.id}" inputmode="numeric" class="price" value="${esc(p.amount?fmtInput(p.amount):'')}"></label>
@@ -128,10 +161,29 @@ function a6PayRow(p){const pos=(POSL||[]).filter(x=>Number(x.active)||x.id===p.p
    ${p.meth==='pos'?`<label class="f">کدام کارتخوان *<select data-a6pf="pos" data-p="${p.id}"><option value="">انتخاب کنید</option>${pos.map(x=>`<option value="${esc(x.id)}"${x.id===p.pos?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:''}
    ${p.meth==='chq'?`<label class="f">شماره چک<input data-a6pf="no" data-p="${p.id}" inputmode="numeric" value="${esc(p.no||'')}"></label><label class="f">سررسید<input data-a6pf="dueJ" data-p="${p.id}" data-jd="1" placeholder="۱۴۰۲/۰۵/۱۰" value="${esc(p.dueJ||'')}" autocomplete="off"></label><label class="f">بانک<input data-a6pf="bank" data-p="${p.id}" value="${esc(p.bank||'')}"></label>`:''}
    <label class="f">توضیح<input data-a6pf="note" data-p="${p.id}" value="${esc(p.note||'')}"></label><button type="button" class="btn sm ghost danger" data-a6pdel="${p.id}">حذف</button></div>`}
-function a6StOpts(){let o=fxStOpts(A6.type,A6.stage);const P=FX_PATH[A6.type]||FX_PATH.fix;if(P.includes('heal'))o=o.replace('<option value="imprw"',`<option value="sut"${A6.stage==='sut'?' selected':''}>منتظر کشیدن بخیه</option><option value="imprw"`);return o}
+/* a6StOpts — the stage list. Layers: archive/arc7 (one list, A7_ST; replaced the arc6 version) + prosthesis/m2 (a marker-only file: only the
+   stages of that kind; may move A6.stage to the first one left) + archive/m29 (the two sub-stages) */
+function a6StOpts(){const cur=A6?A6.stage:'';let h=A7_ST.map(([k,l])=>`<option value="${k}"${k===cur?' selected':''}>${esc(l)}</option>`).join('');
+  const o = m2Only(); if (o) {
+  const d = document.createElement('select'); d.innerHTML = h; [...d.options].forEach(x => { const ok = o === 'i' ? M2_ST_I.includes(x.value) : !M2_ST_P0.includes(x.value); if (!ok) x.remove() });
+  if (A6 && ![...d.options].some(x => x.value === A6.stage) && d.options[0]) { A6.stage = d.options[0].value; A6.type = (typeof A7_TYPE !== 'undefined' && A7_TYPE[A6.stage]) || 'fix' }
+  [...d.options].forEach(x => { x.selected = A6 && x.value === A6.stage; if (x.selected) x.setAttribute('selected', ''); else x.removeAttribute('selected') }); h = d.innerHTML }
+  try{h+=`<optgroup label="مراحل فرعی (مرحله‌ی اصلی درمان عوض نمی‌شود)">${Object.keys(M29_SUB).map(k=>`<option value="${k}"${A6.stage===k?' selected':''}>${M29_SUB[k]}</option>`).join('')}</optgroup>`}catch(e){}
+  return h}
+/* a6DueDef — layers: archive/arc6 base + finance/layer m15 (after an uncover the impression follow-up defaults to two weeks later) */
 function a6DueDef(){const last=A6.lines.map(l=>l.day).filter(Boolean).sort().pop()||tDay(),st=A6.stage,ko=A6.lines.some(l=>l.k==='imp'&&arcG(l.b)==='ko');
-  if(!['unc','imprw','sut'].includes(st))return {d:'',clamp:false};let d=st==='sut'?dAdd(last,14):mAdd(last,st==='unc'&&ko?4:3);const clamp=d<tDay();if(clamp)d=tDay();return {d,clamp}}
-function a6Render(){const R=$('a6Root');if(!R||!A6)return;const S=A6,keys=[];
+  if(!['unc','imprw','sut'].includes(st))return {d:'',clamp:false};let d=st==='sut'?dAdd(last,14):mAdd(last,st==='unc'&&ko?4:3);const clamp=d<tDay();if(clamp)d=tDay();
+  try { if (A6 && A6.stage === 'imprw') { const u = A6.lines.filter(l => l.k === 'unc' && l.day).map(l => l.day).sort().pop(); if (u) { let d = dAdd(u, 14); const clamp = d < tDay(); if (clamp) d = tDay(); return { d, clamp } } } } catch (e) { }
+  return {d,clamp}}
+/* a6Render — layers: archive/arc6 base + finance/m34 (forget the shown tab of a removed session) + prosthesis/m2 (m2Sync first; the
+   treatment-kind chips) + archive/arc11 (re-implant lines open the implant card; uncover months) + pdf/arc10 (notes for the next departments)
+   + prosthesis/arc13 (prosthesis teeth: base / pontic). The parts after the form also run when the editor is not on screen.
+   prosthesis/m43d (it needs its local fill()) and archive/m51a still wrap it. */
+function a6Render(){
+  try { if (A6) for (const g of Object.keys(M34A)) { const sib = A6.lines.filter(x => x.k === 'imp' && m34G(x) === g); if (!sib.length) delete M34A[g] } } catch (e) {}
+  try { m2Sync() } catch (e) {}
+  if(A6&&A6.lines&&A6.lines.some(l=>l.k==='reimp'))A6.op.add('imp');
+  const R=$('a6Root');if(R&&A6){const S=A6,keys=[];
   A6CAT.forEach(x=>{const key=x.g||x.k;if(!keys.includes(key)&&S.op.has(key))keys.push(key)});
   const docs=a6Docs(S.doc),mo=a6Money0(),cat=[...new Set((SET.catalog||[]).map(c=>c.b).filter(Boolean))];
   R.innerHTML=`<datalist id="a6Br">${cat.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>
@@ -157,11 +209,25 @@ function a6Render(){const R=$('a6Root');if(!R||!A6)return;const S=A6,keys=[];
   </div>
   <nav class="a6lst a6lft" aria-label="پروتز و سایر"><b class="a6lh2">پروتز و سایر</b>${a6ListBtns('L')}</nav></div>`;
   a6DueUpd()}
+  try { a10Mount() } catch (e) { }
+  try{a11Unc()}catch(e){}
+  try{(A6&&A6.lines||[]).filter(l=>l.k==='pros').forEach(l=>{const pt=l.pt||{};document.querySelectorAll(`.a13ch [data-a6t][data-l="${l.id}"]`).forEach(b=>{const t=b.dataset.a6t,on=l.teeth.includes(t);b.classList.toggle('a13pa',on&&pt[t]!=='p');b.classList.toggle('a13pp',on&&pt[t]==='p');b.title=on?(pt[t]==='p'?'پونتیک':'پایه'):''})})}catch(e){}
+  try { const R = $('a6Root'), g = R && R.querySelector('section.card .a6g2'); if (g && !R.querySelector('.m2only')) { const o = m2Only();
+      g.insertAdjacentHTML('afterend', `<div class="grp m2only"><span>نوع درمان بیمار</span><div class="chips" role="radiogroup" aria-label="نوع درمان">${Object.entries(M2_ONLY).map(([k, t]) => `<button type="button" class="chip" role="radio" data-m2only="${k}" aria-pressed="${o === k}" aria-checked="${o === k}">${t}</button>`).join('')}</div>${o === 'i' ? '<small class="note">بخش‌های پروتز (مراحل پروتز، روکش، روکش موقت، سهم پروتز All on X و اوردنچر) بسته است و مرحله‌ها تا آنکاوری است.</small>' : o === 'p' ? '<small class="note">بخش‌های جراحی بسته است؛ برند و سایز ایمپلنت اختیاری است، از انبار کم نمی‌شود و مرحله‌ها از قالب‌گیری است.</small>' : ''}</div>`) } } catch (e) {}}
 function a6DueUpd(){const i=$('a6Due');if(!i||!A6)return;if(!A6.dueTouched){const x=a6DueDef();A6.dueJ=x.d?jDay(x.d):'';i.value=A6.dueJ;const hh=$('a6DueH');if(hh)hh.textContent=x.clamp?'تاریخ پیش‌فرض (از آخرین درمان) گذشته بود؛ امروز گذاشته شد. تاریخ درست را بزنید.':'پیش‌فرض از تاریخ آخرین درمان'}}
 function a6MoneyUpd(){const m=$('a6Money');if(!m||!A6)return;const f=document.activeElement,fid=f&&f.closest&&f.closest('#a6Money')?(f.dataset.a6dv?'[data-a6dv="'+f.dataset.a6dv+'"]':f.id?'#'+f.id:f.dataset.a6pf?`[data-a6pf="${f.dataset.a6pf}"][data-p="${f.dataset.p}"]`:''):'',ss=fid&&f.selectionStart;
   m.innerHTML=a6MoneyHTML();if(fid){const n=m.querySelector(fid);if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}}
 const a6L=id=>A6.lines.find(l=>l.id===id),a6Pp=id=>A6.pays.find(p=>p.id===id);
-function a6NewLine(k){const c=A6C[k],last=A6.lines.filter(l=>l.k===k).pop()||{};const l={id:a6Id('l'),k,dayJ:A6.last.dayJ||'',day:A6.last.day||'',doc:last.doc||A6.last.doc||'',teeth:[],n:c.m==='t'?0:'',price:0,sut:'',txt:'',imp:{},b:last.b||''};l.price=c.p(l)||0;A6.lines.push(l);return l}
+/* a6NewLine — layers: archive/arc6 base + archive/ux7 (one suture field) + finance/arc9 (pontic / uncover doctor; the guide scan) + pdf/arc10
+   (the locked doctor) + prosthesis/arc13 (prosthesis steps; the re-implant flag) + archive/m29 (implant failure) + prosthesis/m43d (Essix / denture; PMMA steps) */
+function a6NewLine(k){const c=A6C[k],last=A6.lines.filter(l=>l.k===k).pop()||{};const l={id:a6Id('l'),k,dayJ:A6.last.dayJ||'',day:A6.last.day||'',doc:last.doc||A6.last.doc||'',teeth:[],n:c.m==='t'?0:'',price:0,sut:'',txt:'',imp:{},b:last.b||''};l.price=c.p(l)||0;A6.lines.push(l);
+  try{if(A6)l.sut=A6.sut||''}catch(e){}
+  try { if (l && (k === 'pon' || k === 'unc') && !l.doc) l.doc = ARC_DOC; /* (1) */ if (l && k === 'sgd') { l.scan = 'U'; l.n = 1 } } catch (e) { }
+  if (l && A10_LOCK[k]) l.doc = ARC_DOC;
+  if(l&&k==='pros'){l.n=1;l.ty='';l.pt={};l.redo=false;l.cem='';l.price=0}if(l&&k==='imp')l.ri=0;
+  try{if(l&&k==='ifail'){l.price=0;l.rm=''}}catch(e){}
+  try{if(l&&(k==='esx'||k==='dnt')){l.scan='U';l.n=1;l.teeth=[]}if(l&&k==='pros'){l.m43new=1;l.pm=0}}catch(e){}
+  return l}
 /* ---- events ---- */
 document.addEventListener('click',e=>{const R=$('a6Root');if(!A6||!R||!R.contains(e.target))return;const t=e.target.closest('button');if(!t)return;const d=t.dataset;
   if(d.a6k){const k=d.a6k;if(A6.op.has(k))A6.op.delete(k);else{A6.op.add(k);if(!A6G[k]&&!A6.lines.some(l=>l.k===k)){a6NewLine(k);A6.dirty=true}}a6Render();if(A6.op.has(k)){const s=R.querySelector(`[data-a6p="${k}"]`);if(s)s.scrollIntoView({behavior:'smooth',block:'nearest'})}return}
@@ -198,10 +264,12 @@ function a6Input(e){const R=$('a6Root'),i=e.target;if(!A6||!R||!R.contains(i))re
   if(i.id==='a6Stage'){A6.stage=i.value;A6.dirty=true;if(e.type==='change')a6Render();return}
   if(i.id==='a6Due'){A6.dueJ=i.value.trim();A6.dueTouched=true;A6.dirty=true;return}}
 /* light refresh of the money summary while typing (keeps the focused field) */
-function a6MoneyLite(){const m=$('a6Money');if(!m)return;const C=a6Calc();m.querySelectorAll('.a6sum b,.a6dr b').forEach(()=>{});
+/* a6MoneyLite — layers: archive/arc6 base + finance/gd2 (the whole-file discount amount, also without the money card) */
+function a6MoneyLite(){const m=$('a6Money');if(m){const C=a6Calc();m.querySelectorAll('.a6sum b,.a6dr b').forEach(()=>{});
   const tb=$('a6Tab');if(tb)tb.innerHTML=a6TabHTML(C);
   const dr=m.querySelectorAll('.a6disc .a6dr b');if(dr[0])dr[0].textContent=fa(C.dc);if(dr[1])dr[1].textContent=fa(C.dd);if(dr[2])dr[2].textContent=fa(C.dc+C.dd);
   const sm=m.querySelectorAll('.a6sum b');if(sm[0])sm[0].textContent=fa(C.net)+' تومان';if(sm[1])sm[1].textContent=fa(C.paid);const im=m.querySelector('.a6sum.imp b');if(im){im.textContent=fa(C.imp);im.parentNode.hidden=!C.imp}const big=m.querySelector('.a6sum.big b');if(big)big.textContent=fa(Math.max(0,C.bal))+' تومان'+(C.bal<0?' · بستانکار '+fa(-C.bal):'')}
+  try { const o = $('a9gdo'); if (o) o.textContent = fa(a9GdAmt()) } catch (e) { }}
 document.addEventListener('input',a6Input);document.addEventListener('change',a6Input);
 /* ---- save ---- */
 async function a6Save(btn,ack){const S=A6,m=$('a6Msg'),td=tDay();ack=ack||{};
@@ -234,14 +302,6 @@ async function a6Save(btn,ack){const S=A6,m=$('a6Msg'),td=tDay();ack=ack||{};
     if(s.startsWith('A6FILE|')){const p=s.split('|');if(await uxAsk({title:'شماره پرونده‌ی تکراری',msg:'شماره پرونده‌ی کاغذی '+faD(p[1])+' قبلاً برای «'+(p[2]||'بیمار دیگر')+'» ثبت شده است. باز هم ثبت شود؟',ok:'بله، ثبت شود',cancel:'نه، اصلاح می‌کنم'}))return a6Save(btn,Object.assign(ack,{ackFile:1}));return}
     if(s.startsWith('A6TOT|')){const p=s.split('|');if(await uxAsk({title:'تغییر مبلغ بیمار',msg:'با این تغییرها هزینه‌ی خالص بیمار از '+fa(num(p[1]))+' به '+fa(num(p[2]))+' تومان تغییر می‌کند. ذخیره شود؟',ok:'بله، ذخیره شود',cancel:'نه'}))return a6Save(btn,Object.assign(ack,{ackTotal:num(p[2])}));return}
     m.className='msg err';m.textContent=s}}
-/* ---- patient file: the paper-file box ---- */
-{const _i=fxArcInfo;fxArcInfo=function(id,j){const d=j.data||{},a=d.arc;if(!a||!a.v6)return _i.apply(this,arguments);const h=d.h||{},mo=a6Money0()&&a.cost!=null,can=['staff','consultant','accountant'].includes(ROLE);
-  const L=(a.lines||[]).slice().sort((x,y)=>String(x.day).localeCompare(String(y.day)));
-  return `<div class="fxarcinfo a6info"><b>پرونده‌ی کاغذی (بایگانی)</b>${h.pfile?' · شماره‌ی کاغذی '+esc(faD(h.pfile)):''}${a.day?' · اولین درمان '+esc(jDay(a.day)):''}
-   <table class="fx2vt"><thead><tr><th>تاریخ</th><th>درمان</th><th>دندان / تعداد</th><th>پزشک</th>${mo?'<th>تعرفه</th><th>مبلغ</th>':''}</tr></thead><tbody>${L.map(l=>`<tr><td>${esc(jDay(l.day))}</td><td>${esc(a6Lab(l))}${l.k==='imp'||l.k==='sub'||l.k==='reimp'?arbBr(l,1):''}</td><td>${l.teeth&&l.teeth.length?esc(toothTxt(l.teeth)):fa(l.n)}</td><td>${esc(l.doc||'')}</td>${mo?`<td>${fa(l.price||0)}</td><td>${fa(l.amt||0)}</td>`:''}</tr>`).join('')}</tbody>
-   ${mo?`<tfoot><tr><td colspan="5">هزینه‌ی کل${a.dc||a.dd?' · تخفیف کلینیک '+fa(a.dc)+' / پزشک '+fa(a.dd)+' · پس از تخفیف '+fa(a.net):''}${a.imp?' · تسویه‌ی قبلی طبق پرونده '+fa(a.imp):''}${a.settled?' · حساب تسویه است':''}</td><td>${fa(a.cost)}</td></tr></tfoot>`:''}</table>
-   ${(L.find(l=>l.sut)||{}).sut?'<p>بخیه: '+esc(A6SUT[(L.find(l=>l.sut)||{}).sut]||'')+'</p>':''}${a.other?'<p>درمان‌های دیگر: '+esc(a.other)+'</p>':''}${a.note?'<p>توضیح: '+esc(a.note)+'</p>':''}
-   <small>ثبت ${esc(jt(a.at))}${a.by?' · '+esc(a.by):''}${a.upd?' · ویرایش '+esc(jt(a.upd))+(a.updBy?' · '+esc(a.updBy):''):''}</small>${can?` <button class="btn sm ghost" type="button" data-fxarced="${esc(id)}">ویرایش پرونده‌ی جا مانده</button>`:''}</div>`}}
 /* the accountant edits the money of a paper file from its file too */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-fxarced]');if(!t||ROLE!=='accountant')return;e.preventDefault();e.stopPropagation();if(PF&&PF.j&&PF.id===t.dataset.fxarced)fxArcOpen(PF.j)},true);
 /* ---- «مالی بیماران» / payments tab: payment date (an earlier date is an earlier payment, not today's cash box) ---- */
@@ -279,9 +339,6 @@ B.push(ffTitle('درمان‌های انجام‌شده'));
   const urls=pages.map(p=>p.cv.toDataURL('image/jpeg',0.82));
   return new Blob([jpegPDF(urls.map(u=>({jpg:dataUrlBytes(u),w:PW,h:PH})))],{type:'application/pdf'})}
 /* ---- calendar: quick year / month, opens at the last date used, no phone keyboard ---- */
-{const _d=fx2DpDraw;fx2DpDraw=function(){_d.apply(this,arguments);const S=FX2DP;if(!S||!S.el)return;const P=jParts(S.anc),Y=jParts(tDay())[0],ys=[];for(let y=Y;y>=Y-40;y--)ys.push(y);
-  const bar=document.createElement('div');bar.className='fx2dps';bar.innerHTML=`<select data-dpys aria-label="سال">${ys.map(y=>`<option value="${y}"${y===P[0]?' selected':''}>${faD(String(y))}</option>`).join('')}</select><select data-dpms aria-label="ماه">${JMN.map((n,i)=>`<option value="${i+1}"${i+1===P[1]?' selected':''}>${n}</option>`).join('')}</select>${S.inp&&S.inp.readOnly&&S.inp.dataset.a6ro?'<button type="button" data-dpkb="1">تایپ تاریخ</button>':''}`;
-  S.el.insertBefore(bar,S.el.firstChild)}}
 document.addEventListener('change',e=>{const t=e.target;if(!FX2DP||!t.closest||!t.closest('.fx2dp'))return;const s=FX2DP.el;const y=Number(s.querySelector('[data-dpys]').value),m=Number(s.querySelector('[data-dpms]').value);const d=parseJ(y+'/'+m+'/1');if(d){FX2DP.anc=d;fx2DpDraw();fx2DpPlace()}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.fx2dp [data-dpkb]');if(!b||!FX2DP)return;e.preventDefault();e.stopImmediatePropagation();const i=FX2DP.inp;i.readOnly=false;i.removeAttribute('inputmode');delete i.dataset.a6ro;fx2DpClose();i.focus()},true);
 document.addEventListener('pointerdown',e=>{const t=e.target;if(e.pointerType!=='touch'||!fx2IsDate(t)||t.dataset.a6ro!==undefined||document.activeElement===t)return;t.readOnly=true;t.setAttribute('inputmode','none');t.dataset.a6ro='1'},true);

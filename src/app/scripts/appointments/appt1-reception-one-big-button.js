@@ -24,9 +24,6 @@ function bkdRender(){const L=$('bkdList');if(!L)return;const td=tDay(),A=BKD.ite
 (function(){const _t=TILES.staff;TILES.staff=()=>{const L=_t();const i=L.findIndex(t=>t.k==='surg');L.splice(i+1,0,{k:'bkd',c:'chk',l:'نوبت‌های داده‌شده',s:'به تفکیک روز و نوع کار',n:bkdCount(),view:'recep'});return L}})();
 TILE_HD.staff.surg='نوبت‌دهی';TILE_HD.staff.bkd='نوبت‌های داده‌شده (روزهای آینده)';
 (function(){const _g=goTile;goTile=function(k){const r=_g.apply(this,arguments);try{if(ROLE==='staff'&&TILE==='bkd'){bkdLoad(true);bkdRender()}}catch(e){}return r}})();
-(function(){const _h=tileHead;tileHead=function(){_h.apply(this,arguments);if(ROLE!=='staff')return;const h=document.querySelector('.tilehd');if(!h)return;
-  if(TILE==='surg'){const a=h.querySelector('.acts');if(a)a.innerHTML='<button class="btn main bkbig" type="button" data-rfab="book">📅 نوبت‌دهی</button>'}
-  if(TILE==='bkd'){const a=h.querySelector('.acts');if(a)a.innerHTML='<button class="btn sm" type="button" data-rfab="book">📅 نوبت‌دهی</button><button class="btn sm ghost" type="button" data-bkdre="1">به‌روزرسانی</button>'}}})();
 /* the prosthesis doctor's day view: today only the referred appointments */
 (function(){const _l=loadPday;loadPday=async function(){const r=await _l.apply(this,arguments);try{if(ROLE==='surgery'&&PD&&PD.appts){const td=tDay();PD.appts=PD.appts.filter(a=>a.day!==td||a.ref||l3Of(a.plan)||a.st==='done');renderPday()}}catch(e){}return r}})();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-bkm],#bkmX,[data-apref],[data-bkdf],[data-bkdre]');if(!t)return;

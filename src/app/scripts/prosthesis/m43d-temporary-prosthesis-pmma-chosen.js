@@ -62,7 +62,6 @@ const jn=l=>l.scan==='B'?2:1;
 const stepN=l=>A13_TEETH[l.ty]?(l.teeth||[]).length:l.ty==='essix'?(l.scan==='B'?2:l.scan?1:0):1;
 const stepDef=l=>{if(!l||!l.ty||l.redo)return 0;return PRT('pr_'+l.ty)*stepN(l)};
 try{A6C.pros.p=l=>stepDef(l)}catch(e){}
-{const _n=a6NewLine;a6NewLine=function(k){const l=_n.apply(this,arguments);try{if(l&&(k==='esx'||k==='dnt')){l.scan='U';l.n=1;l.teeth=[]}if(l&&k==='pros'){l.m43new=1;l.pm=0}}catch(e){}return l}}
 {const _f=a6From;a6From=function(){const S=_f.apply(this,arguments);try{(S.lines||[]).forEach(l=>{if(isJ(l)){l.scan=JW[l.scan]?l.scan:(num(l.n)>=2?'B':'U');l.n=jn(l)}if(l.k==='pros')l.pm=1})}catch(e){}return S}}
 const chips=(l,v)=>`<div class="chips" role="group">${['U','L','B'].map(s=>`<button type="button" class="chip" data-m43scan="${s}" data-l="${l.id}" aria-pressed="${v===s}">${JW[s]}</button>`).join('')}</div>`;
 {const _l=a6Line;a6Line=function(l){let h=_l.apply(this,arguments);try{

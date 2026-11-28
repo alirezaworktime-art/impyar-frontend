@@ -23,10 +23,5 @@ let T=0;const later=()=>{clearTimeout(T);T=setTimeout(()=>{try{tick()}catch(e){c
 addEventListener('scroll',later,{passive:true});addEventListener('resize',later);
 const start=()=>{new MutationObserver(later).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','disabled']});later()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-/* paper file: the same arithmetic as the server */
-try{const _c=a6Calc;a6Calc=function(){const C=_c.apply(this,arguments);try{const S=A6,rem=S.rem===''||S.rem==null?null:num(S.rem),want=C.paid+(!S.settled&&rem!=null?rem:0),vt=Math.max(C.net-C.imp,want>C.net?want:0);C.m41over=vt-(C.net-C.imp);C.bal=vt-C.paid}catch(e){}return C};
-  const _m=a6MoneyHTML;a6MoneyHTML=function(){let h=_m.apply(this,arguments);try{const C=a6Calc(),S=A6;
-    const hint=`<p class="m41hint">«مانده‌ی بدهی طبق پرونده» یعنی بدهی‌ای که <b>بعد از پرداخت‌های بالا</b> هنوز مانده است. اگر بیمار همه را پرداخته، این خانه را خالی بگذارید و «حساب تسویه است» را بزنید.${S.rem!==''&&S.rem!=null&&!S.lines.length?' برای ذخیره، اول درمان‌های پرونده را وارد کنید.':''}${C.m41over>0?' جمع هزینه‌ی درمان‌های واردشده '+fa(C.m41over)+' تومان کمتر از «پرداخت‌ها + مانده» است؛ همین مقدار به جمع پرونده اضافه می‌شود.':''}</p>`;
-    h=h.replace('<div class="a6sum"><span>جمع پرداخت‌ها</span>',hint+'<div class="a6sum"><span>جمع پرداخت‌ها</span>')}catch(e){}return h}}catch(e){}
 window.m41={tick};
 })();

@@ -5,7 +5,6 @@ function ttlNow(){if(!ROLE||!$('viewLogin').hidden)return 'طرح درمان ا�
   let t=null;try{t=tileList().find(x=>x.k===TILE)}catch(e){}
   return t?t.l:(ROLE_LBL&&ROLE_LBL[ROLE]?'کارتابل '+ROLE_LBL[ROLE]:'طرح درمان ایمپلنت')}
 function ttlSet(){const el=document.querySelector('.appbar .brand h1');if(!el)return;const v=ttlNow();if(el.textContent!==v)el.textContent=v}
-{const _rt=renderTiles;renderTiles=function(){const r=_rt.apply(this,arguments);ttlSet();return r}}
 {const _sh=show;show=function(){const r=_sh.apply(this,arguments);setTimeout(ttlSet,0);return r}}
 setInterval(ttlSet,1500);
 /* ttl1: a field with a suggestion list (doctor, city, service…) shows the whole list again when tapped: the current value
@@ -17,5 +16,4 @@ document.addEventListener('focusout',e=>{const i=e.target;if(!i||i.tagName!=='IN
 /* ttl1: after «خروج» nothing of the last login stays on the sign-in page (tiles, «همه‌ی بخش‌ها», name, attendance) */
 function ttlLoginClean(){['tiles','ux2TT','attBtn','nav'].forEach(id=>{const el=$(id);if(el)el.hidden=true});const w=$('whoami');if(w)w.textContent='';document.querySelectorAll('.tilehd').forEach(x=>x.remove());try{TILE='';UX2.role=''}catch(e){}ttlSet()}
 {const _sh2=show;show=function(v){const r=_sh2.apply(this,arguments);if(v==='login')ttlLoginClean();return r}}
-{const _rt2=renderTiles;renderTiles=function(){if(!ROLE){ttlLoginClean();return}return _rt2.apply(this,arguments)}}
 

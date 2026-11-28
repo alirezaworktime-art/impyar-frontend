@@ -61,12 +61,14 @@ async function fx2CalRender(){const host=$('rAll'),box=$('fx2Cal');if(!box||!hos
   let grid='';if(m==='week'){const D=[];for(let i=0;i<7;i++)D.push(dAdd(from,i));grid=`<div class="fx2g wk">${D.map(d=>day(d,0)).join('')}</div>`}
   else{const s0=weekStart(from),D=[];for(let d=s0;d<=to||D.length%7;d=dAdd(d,1))D.push(d);grid=`<div class="fx2wh">${['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'].map(x=>`<span>${x}</span>`).join('')}</div><div class="fx2g mo">${D.map(d=>day(d,3)).join('')}</div>`}
   box.innerHTML=`<div class="fx2nav"><button class="btn sm ghost" type="button" data-fx2nav="-1" aria-label="قبلی">‹ قبلی</button><b>${esc(title)}</b><button class="btn sm ghost" type="button" data-fx2nav="1" aria-label="بعدی">بعدی ›</button><button class="btn sm ghost" type="button" data-fx2nav="0">امروز</button><small>${fa(A.length)} نوبت${T.length?' · '+fa(T.length)+' کار':''}</small></div>${grid}${cv2Panel(st,m,from,to,A,T)}${def.tk.length&&to>dAdd(td,60)?'<p class="note">کارهای بیشتر از ۶۰ روز بعد اینجا نمی‌آیند.</p>':''}`}
-{const _th=tileHead;tileHead=function(){_th();try{fx2Head()}catch(e){console.error('fx2',e)}}}
-function fx2Head(){const host=$('rAll');document.body.removeAttribute('data-fx2cal');const old=$('fx2Cal');if(old)old.remove();if(ROLE!=='staff'||!host||!FX2T[TILE])return;
-  const h=host.querySelector('.tilehd');if(!h)return;const m=(FX2CV[TILE]||{}).m||'list',a=h.querySelector('.acts');
+/* fx2Head — layers: archive/fx2 base + ui/ux6 (ux6Cv, also when there is no head) */
+function fx2Head(){const host=$('rAll');document.body.removeAttribute('data-fx2cal');const old=$('fx2Cal');if(old)old.remove();
+  const h=ROLE==='staff'&&host&&FX2T[TILE]?host.querySelector('.tilehd'):null;
+  if(h){const m=(FX2CV[TILE]||{}).m||'list',a=h.querySelector('.acts');
   if(a&&!a.querySelector('.fx2cv'))a.insertAdjacentHTML('afterbegin',`<span class="seg fx2cv" role="group" aria-label="نمایش">${[['list','فهرست'],['week','هفته'],['month','ماه']].map(([k,l])=>`<button type="button" data-fx2cv="${k}" aria-pressed="${m===k}">${l}</button>`).join('')}</span>`);
   /* cv1: */if(a)a.querySelectorAll('[data-fx2cv]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fx2cv===m)));
-  if(m==='list')return;document.body.dataset.fx2cal='1';const c=document.createElement('div');c.id='fx2Cal';c.className='fx2cal';c.innerHTML='<div class="empty">در حال بارگذاری تقویم…</div>';h.after(c);fx2CalRender()}
+  if(m!=='list'){document.body.dataset.fx2cal='1';const c=document.createElement('div');c.id='fx2Cal';c.className='fx2cal';c.innerHTML='<div class="empty">در حال بارگذاری تقویم…</div>';h.after(c);fx2CalRender()}}
+  try{ux6Cv()}catch(e){}}
 function fx2Set(o){FX2CV[TILE]=Object.assign({},FX2CV[TILE]||{},o);try{localStorage.setItem('implantFx2Cv',JSON.stringify(FX2CV))}catch(e){}fx2Head()}
 /* ---- 4. Jalali date picker on every date field ---- */
 var FX2DP=null;
@@ -76,11 +78,16 @@ function fx2DpClose(){if(FX2DP&&FX2DP.el)FX2DP.el.remove();FX2DP=null}
 function fx2DpOpen(inp){const cur=parseJ(inp.value||'');if(!(FX2DP&&FX2DP.inp===inp)){fx2DpClose();const el=document.createElement('div');el.className='fx2dp';el.setAttribute('role','dialog');el.setAttribute('aria-label','انتخاب تاریخ');document.body.appendChild(el);FX2DP={inp,el,anc:cur||tDay(),sel:cur};fx2DpDraw();fx2DpPlace()}
   try{if(FX2DP&&FX2DP.inp===inp&&!parseJ(inp.value||'')&&inp.dataset.anc&&/^\d{4}-\d{2}-\d{2}$/.test(inp.dataset.anc)){FX2DP.anc=inp.dataset.anc;fx2DpDraw();fx2DpPlace()}}catch(e){}}
 function fx2DpPlace(){if(!FX2DP)return;const r=FX2DP.inp.getBoundingClientRect(),el=FX2DP.el,Z=(window.ZM?ZM():1),w=(el.offsetWidth||290)*Z,h=(el.offsetHeight||320)*Z;let top=r.bottom+6,left=r.right-w;if(left<6)left=6;if(left+w>innerWidth-6)left=innerWidth-w-6;if(top+h>innerHeight-6&&r.top-h-6>6)top=r.top-h-6;el.style.top=(top+scrollY)/Z+'px';el.style.left=(left+scrollX)/Z+'px'}
+/* fx2DpDraw — layers: archive/fx2 base + archive/arc6 (year / month selects, «type the date») + manager/m6 (the clear button) */
 function fx2DpDraw(){const S=FX2DP,[f,t]=jMonth(S.anc),P=jParts(S.anc),td=tDay(),s0=weekStart(f),D=[];for(let d=s0;d<=t||D.length%7;d=dAdd(d,1))D.push(d);
   S.el.innerHTML=`<div class="fx2dpn"><button type="button" data-dpn="1" aria-label="ماه بعد">‹</button><b>${JMN[P[1]-1]} ${faD(String(P[0]))}</b><button type="button" data-dpn="-1" aria-label="ماه قبل">›</button></div>
    <div class="fx2dpy"><button type="button" data-dpy="-1">سال قبل</button><button type="button" data-dpt="1">امروز</button><button type="button" data-dpy="1">سال بعد</button></div>
    <div class="fx2dpw">${['ش','ی','د','س','چ','پ','ج'].map(x=>`<span>${x}</span>`).join('')}</div>
-   <div class="fx2dpg">${D.map(d=>d<f||d>t?'<span></span>':`<button type="button" data-dpd="${d}" class="${d===td?'td ':''}${d===S.sel?'sel':''}" aria-label="${esc(jDay(d))}">${fa(jParts(d)[2])}</button>`).join('')}</div>`}
+   <div class="fx2dpg">${D.map(d=>d<f||d>t?'<span></span>':`<button type="button" data-dpd="${d}" class="${d===td?'td ':''}${d===S.sel?'sel':''}" aria-label="${esc(jDay(d))}">${fa(jParts(d)[2])}</button>`).join('')}</div>`
+  {const S=FX2DP;if(S&&S.el){const P=jParts(S.anc),Y=jParts(tDay())[0],ys=[];for(let y=Y;y>=Y-40;y--)ys.push(y);
+  const bar=document.createElement('div');bar.className='fx2dps';bar.innerHTML=`<select data-dpys aria-label="سال">${ys.map(y=>`<option value="${y}"${y===P[0]?' selected':''}>${faD(String(y))}</option>`).join('')}</select><select data-dpms aria-label="ماه">${JMN.map((n,i)=>`<option value="${i+1}"${i+1===P[1]?' selected':''}>${n}</option>`).join('')}</select>${S.inp&&S.inp.readOnly&&S.inp.dataset.a6ro?'<button type="button" data-dpkb="1">تایپ تاریخ</button>':''}`;
+  S.el.insertBefore(bar,S.el.firstChild)}}
+  try { const y = FX2DP && FX2DP.el.querySelector('.fx2dpy'); if (y && !y.querySelector('[data-dpc]')) y.insertAdjacentHTML('beforeend', '<button type="button" data-dpc="1">پاک کردن</button>') } catch (e) {}}
 function fx2DpPick(d){const S=FX2DP;if(!S)return;S.inp.value=jDay(d);S.inp.dispatchEvent(new Event('input',{bubbles:true}));S.inp.dispatchEvent(new Event('change',{bubbles:true}));fx2DpClose()}
 const fx2JAdd=(d,mo)=>{const P=jParts(d);let y=P[0],m=P[1]+mo;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return parseJ(y+'/'+m+'/1')||d};
 document.addEventListener('focusin',e=>{const t=e.target;if(fx2IsDate(t))fx2DpOpen(t)});
