@@ -69,6 +69,6 @@ function ex1GuardRead() { if (!F) return; const g = document.querySelector('#sgn
   if (!name.trim()) { $('sgnMsg').className = 'msg err'; $('sgnMsg').textContent = 'نام ولی / قیم را بنویسید.'; return false }
   F.h.guard = { name: name.trim().slice(0, 80), rel: rel.trim().slice(0, 40) }; return true }
 function ex1GuardBind() { document.querySelectorAll('#sgnSheet [data-ex1g]').forEach(t => { t.onclick = () => { document.querySelectorAll('#sgnSheet [data-ex1g]').forEach(b => b.setAttribute('aria-pressed', String(b === t))); const w = $('ex1GW'); if (w) w.hidden = t.dataset.ex1g !== '1' } }) }
-{ const _o = openSign; openSign = function () { const r = _o.apply(this, arguments); try { ex1GuardBind(); const g = F && F.h && F.h.guard; document.querySelectorAll('#sgnSheet [data-ex1g]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ex1g === '1') === !!g))); const w = $('ex1GW'); if (w) { w.hidden = !g; $('ex1_gname').value = g ? g.name || '' : ''; $('ex1_grel').value = g ? g.rel || '' : '' } } catch (e) { } return r } }
+/* openSign: the guardian chips are set in its single definition (consultant/consent-signature.js) */
 { const _c = consentSign; consentSign = function (r, sig, meta) { const o = _c.apply(this, arguments); const g = r && r.h && r.h.guard; if (!g || !g.name) return o;
   return { h: o.h + 34, draw(cx, top) { T(cx, 'امضاکننده: ولی / قیم بیمار — ' + g.name + (g.rel ? ' (' + g.rel + ')' : ''), C.R, top + 24, { s: 19, w: 700 }); o.draw(cx, top + 34) } } } }

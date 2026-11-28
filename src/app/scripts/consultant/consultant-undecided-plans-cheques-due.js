@@ -11,10 +11,32 @@ function renderConx(){const w=$('conxW');w.hidden=ROLE!=='consultant'||!CF_ON;if
   $('folList').innerHTML=rows.length?rows.join(''):`<div class="empty">${QUND.length?'امروز پیگیری‌ای سررسید نشده.':'طرح تأییدنشده‌ای در انتظار نیست. اگر بیمار تصمیم نگرفت، در فرم «تصمیم نگرفت» را بزنید.'}</div>`;
   const b=$('undAll');b.hidden=!QUND.length;b.textContent=UND_ALL?'فقط پیگیری‌های امروز':`همه‌ی تصمیم‌نگرفته‌ها (${fa(QUND.length)})`}
 function openUndecided(mode){UN={why:'',mode:mode||''};const L=UN.mode==='lost';$('unTitle').textContent=L?'بیمار پشیمان شد و رفت':'بیمار می‌خواهد فکر کند';$('unNote').textContent=L?'طرح ذخیره و انصراف بیمار ثبت می‌شود.':'طرح ذخیره می‌شود و از کارتابل بیرون می‌رود. یک هفته و چهار هفته‌ی بعد در «پیگیری‌ها»ی پذیرش یادآوری می‌شود تا با بیمار تماس بگیرند.';$('unGo').textContent=L?'ثبت انصراف':'ثبت و پیگیری بعداً';$('unWhy').innerHTML=UN_WHY.map(w=>`<button type="button" class="chip" data-unw="${w}" aria-pressed="false">${w}</button>`).join('');$('un_note').value='';$('unMsg').textContent='';$('unSheet').hidden=false}
-async function sendUndecided(t){const m=$('unMsg');if(!UN.why){m.className='msg err';m.textContent='دلیل را انتخاب کنید.';return}t.disabled=true;if(!t.dataset.sid)t.dataset.sid=uuid();
+/* sendUndecided = one definition of its former patch layers, in their run order (outermost first):
+   m57a (consultant/m57a.js): M57.think is on while saving, so buildPDF adds the SMS block to the «think» PDF;
+   m17 (pdf/not-saved-no-pdf.js): after a successful save the plan PDF downloads (not when the save did not happen);
+   fx3 (finance/fx3-payment-warning-reason-collection.js): the reason «استعلام قیمت» stores F.quote before the save;
+   base: the save itself. M57, m57SmsNo and FX3QW come from those files and are read only when the button is clicked.
+   The m57a and m17 parts run only once their file has run (flags M57_SU, M17_SU set where their layer used to be installed). */
+async function sendUndecided(t){
+  const m57 = typeof M57_SU !== 'undefined', m17 = typeof M17_SU !== 'undefined';
+  /* m57a */
+  if (m57) { M57.think = !(UN && UN.mode === 'lost'); try { if (M57.think) await m57SmsNo(true) } catch (e) { } }
+  try {
+    /* m17: what the plan was before the save */
+    const F0 = F, nm = String((F0 && F0.h && F0.h.name) || '').trim();
+    /* fx3 */
+    if(UN&&UN.why===FX3QW){const u=parseJ(($('fx3_until')||{}).value||'');F.quote={at:tDay(),until:u&&u>=tDay()?u:dAdd(tDay(),30)}}
+    /* base */
+    const m=$('unMsg');if(!UN.why){m.className='msg err';m.textContent='دلیل را انتخاب کنید.'}else{t.disabled=true;if(!t.dataset.sid)t.dataset.sid=uuid();
   try{const d=toDoc(F);d.updatedAt=new Date().toISOString();const name=F.h.name.trim();
     const uj=await api('undecided',{record:{id:F.id,data:d,name,nid:F.h.nid||'',status:'draft',total:planTotal(F)},reason:UN.why,note:$('un_note').value.trim(),sendId:t.dataset.sid});delete t.dataset.sid;
     if(UN.mode==='lost')await api('undecidedSet',{id:uj.id||F.id,to:'lost',reason:UN.why,note:$('un_note').value.trim()});
     $('unSheet').hidden=true;leaveForm(UN.mode==='lost'?`انصراف ${name} ثبت شد.`:`${name}: در «پیگیری‌ها»ی پذیرش، یک هفته و چهار هفته‌ی بعد یادآوری می‌شود.`);pollQ(true)}
   catch(e){m.className='msg err';m.textContent=e.message}finally{t.disabled=false}}
+    /* m17: PDF only when the plan was saved and left (also runs after the «choose a reason» message, where it does nothing) */
+    if (m17) try { if (F === F0 || !nm || !$('unSheet').hidden) return; /* not saved: no PDF */
+      const j = jalali(new Date()), fname = `${safeName(nm)} - ${j.dash}.pdf`, R = Object.assign({}, F0, { jalali: j.slash, pdfName: fname });
+      const pdf = await buildPDF(R, { jalali: j.slash }); downloadBlob(pdf.blob, fname) }
+    catch (e) { alertMsg('ثبت انجام شد ولی PDF ساخته نشد: ' + (e && e.message || e)) }
+  } finally { if (m57) M57.think = false } }
 

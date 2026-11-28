@@ -16,7 +16,8 @@ function m57Units(R) { try { return M11_UX.reduce((a, k) => a + (R && R.s && R.s
 function m57Block(R, no) { const nm = String((R && R.h && R.h.name) || '').trim(), n = m57Units(R);
   const txt = `${nm} مایل به درمان ${n ? fa(n) + ' واحد ایمپلنت ' : ''}در یزد می‌باشم.`;
   return textBlock('برای شروع درمان', [no ? `هر وقت تصمیم به انجام درمان گرفتید، متن زیر را به شماره‌ی ${faD(no)} پیامک کنید:` : 'هر وقت تصمیم به انجام درمان گرفتید، متن زیر را برای کلینیک پیامک کنید:', '«' + txt + '»']) }
-{ const _s = sendUndecided; sendUndecided = async function () { M57.think = !(UN && UN.mode === 'lost'); try { if (M57.think) await m57SmsNo(true) } catch (e) { } try { return await _s.apply(this, arguments) } finally { M57.think = false } } }
+/* sendUndecided sets M57.think (and loads the number) in its single definition (consultant/consultant-undecided-plans-cheques-due.js), from here on */
+var M57_SU = 1;
 /* buildPDF: the SMS block (window.M57PB) is now part of the single definition in pdf/built-pdf-writer-a4-pages.js */
 /* settings: the number (manager) */
 function m57SetMount() { const p = $('set_phone'); if (!p || $('m57sms')) return; const l = p.closest('label'); (l || p).insertAdjacentHTML('afterend', '<label class="f">شماره‌ی پیامک برای اعلام آمادگی درمان (در PDF بیمارِ «می‌خواهد فکر کند»)<input id="m57sms" inputmode="numeric" class="ltr" placeholder="09xxxxxxxxx" maxlength="15"></label>') }

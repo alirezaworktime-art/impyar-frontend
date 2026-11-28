@@ -33,7 +33,9 @@ function pl10Via() { const el = $('pl10Via'); if (!el || !F || !F.pay) return; c
   if (p.mt === 'pos') { h = POSL ? `<div class="f"><span>کدام کارتخوان؟ *</span>${posChips('pl10pos', p.pos || '', {}).replace(/<button[^>]*data-pl10pos="xfer"[^>]*>[^<]*<\/button>/, '')}</div>` : '<p class="note">در حال خواندن فهرست کارتخوان‌ها…</p>'; if (!POSL) ensurePos().then(() => { try { pl10Via() } catch (e) { } }) }
   else if (p.mt === 'xfer') h = `<div class="f"><span>به کدام حساب؟ *</span>${fin1Chips('pl10acct', FIN1_ACC, p.acct || '')}</div>`;
   if (el.innerHTML !== h) el.innerHTML = h }
-function pl10PayUI() { if (!$('pl9Pm') || !F || !F.pay) return; const p = F.pay, o3 = String(p.opt) === '3', cash = pl9Mode() === 'cash';
+/* pl10PayUI = base + the o3s layer (finance/o3s-option-agreed-default-surgery.js: option 3 label and note from the surgery part);
+   the o3s part runs after the base part, also when the base part has nothing to do */
+function pl10PayUI() { if ($('pl9Pm') && F && F.pay) { const p = F.pay, o3 = String(p.opt) === '3', cash = pl9Mode() === 'cash';
   document.querySelectorAll('#payOpt [data-opt]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.opt === String(p.opt || '1'))));
   const L = id => { const x = $(id); return x && x.closest('label') }; pl9Hide(L('p_chq1'), true);
   const c3 = $('pl10C3'), c3n = $('pl10C3N'); if (c3) c3.hidden = cash || !o3; if (c3n) c3n.hidden = cash || !o3;
@@ -42,6 +44,9 @@ function pl10PayUI() { if (!$('pl9Pm') || !F || !F.pay) return; const p = F.pay,
   else if (!cash) { [L('p_cs'), L('p_n1'), L('p_m2')].forEach(x => pl9Hide(x, false)) }
   const rk = $('pl9Rk'); if (rk) rk.hidden = true; if (num(p.rcv) > 0 && p.rk !== 'dep') { p.rk = 'dep'; try { pl9PayUI() } catch (e) { } }
   pl10Via(); pl10BrandBtn() }
+  /* o3s: o3sCash / o3sRest come from finance/o3s (a later script); until that script has run this part does nothing, as before */
+  try{o3sCash;const p=F&&F.pay;if(p&&String(p.opt)==='3'){const ci=$('p_c3'),lb=ci&&ci.closest('label');if(lb&&lb.firstChild&&lb.firstChild.nodeType===3)lb.firstChild.textContent='درصد نقد قبل از جراحی (از پارت جراحی)';
+  const n=$('pl10C3N');if(n&&!n.hidden){const T=totals({s:AS(),brand:F.brand,pay:p}),b=effBrand(F),S=T.surg[b]||0,P=T.pros||0,C=o3sCash(F,S);n.textContent=`${fa(pl10Pct(F))}٪ پارت جراحی (${fa(S)}) = ${fa(C)} نقد قبل از جراحی · `+o3sRest(S,P,C)}}}catch(e){} }
 { const _r = recalc; recalc = function () { const r = _r.apply(this, arguments); try { pl10PayUI() } catch (e) { } return r } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-pl10pos],[data-pl10acct]'); if (!t || !F || !F.pay) return; e.preventDefault(); e.stopImmediatePropagation(); if (t.dataset.pl10pos !== undefined) F.pay.pos = posPick(t, 'pl10pos'); else F.pay.acct = fin1Pick(t, 'pl10acct'); touch() }, true);
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('#payOpt [data-opt]'); if (!t || !F || !F.pay) return; if (t.dataset.opt === '3') { F.pay.n1 = ''; F.pay.n3 = ''; F.pay.cash = '' } else if (String(F.pay.opt) === '3') F.pay.cash = '' }, true);
