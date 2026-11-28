@@ -37,8 +37,9 @@ function l5Badges(x){const S=L5.seenNf||{},d=x.data||{},c=d.cntChange,nf=(x.nf||
 function l5Seen(lid){const x=LB.items.find(i=>i.id===lid);if(L5.seenNf&&x){L5.seenNf[lid]=x.nf||0;try{localStorage.setItem('l5nf',JSON.stringify(L5.seenNf))}catch(e){}}
   const c=x&&(x.data||{}).cntChange;if(c&&!c.seen){c.seen=1;api('lab5',{op:'seen',lid}).catch(()=>{})}}
 /* download with the work's name: «شماره-بیمار-نام فایل» */
-l2Dl=async function(fid,b){const f=l2File(fid);if(!f)return;const o=(L2.ord&&L2.ord.order)||{};if(b)b.disabled=true;
-  try{const bl=await l2Fetch(f,p=>{if(b)b.textContent=fa(Math.round(p*100))+'٪'});downloadBlob(bl,l5DlName(o.no,o.name,f.name))}catch(e){alertMsg(e.message)}finally{if(b){b.disabled=false;b.textContent='دانلود'}}};
+/* l2Dl — single definition (fe2): base core/3d-viewer-stl-ply-scans.js (download with the file name) replaced by lab5 (download as «شماره-بیمار-نام فایل»); the base never ran after load */
+async function l2Dl(fid,b){const f=l2File(fid);if(!f)return;const o=(L2.ord&&L2.ord.order)||{};if(b)b.disabled=true;
+  try{const bl=await l2Fetch(f,p=>{if(b)b.textContent=fa(Math.round(p*100))+'٪'});downloadBlob(bl,l5DlName(o.no,o.name,f.name))}catch(e){alertMsg(e.message)}finally{if(b){b.disabled=false;b.textContent='دانلود'}}}
 const l5DlName=(no,pn,fn)=>[no?String(no):'',String(pn||'').replace(/[\\/:*?"<>|]/g,'').trim(),fn].filter(Boolean).join('-');
 /* main render */
 (function(){const _r=renderLab;renderLab=function(){if(ROLE!=='lab')return _r.apply(this,arguments);

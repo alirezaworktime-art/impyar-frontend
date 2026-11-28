@@ -60,6 +60,5 @@ function openViewer(items,title){const root=document.createElement('div');root.c
   need();return {close}}
 function l2View3(fid){const F=((L2.ord&&L2.ord.files)||[]).filter(f=>f.done&&/\.(stl|ply)$/i.test(f.name)&&(fid==='all'||f.id===fid));if(!F.length)return;
   openViewer(F.map(f=>({id:f.id,name:f.name,label:L2_FKL[f.kind]||'',get:async onp=>(await l2Fetch(f,onp)).arrayBuffer()})),(L2.ord.order.name||'')+' · #'+l2No(L2.ord.order.no))}
-async function l2Dl(fid,b){const f=l2File(fid);if(!f)return;if(b)b.disabled=true;try{const bl=await l2Fetch(f,p=>{if(b)b.textContent=fa(Math.round(p*100))+'٪'});downloadBlob(bl,f.name)}catch(e){alertMsg(e.message)}finally{if(b){b.disabled=false;b.textContent='دانلود'}}}
 async function l2Img(fid){const f=l2File(fid);if(!f)return;try{const bl=await l2Fetch(f),u=URL.createObjectURL(bl);const s=mkSheet('l2ImSh',`<h3 dir="ltr">${esc(f.name)}</h3><img src="${u}" alt="" style="max-width:100%;height:auto;display:block;margin:auto;border-radius:10px"><div class="btns"><button class="btn ghost" type="button" id="l2ImX">بستن</button></div>`);s.style.zIndex=70;s.hidden=false;$('l2ImX').onclick=()=>{s.hidden=true;URL.revokeObjectURL(u)}}catch(e){alertMsg(e.message)}}
 
