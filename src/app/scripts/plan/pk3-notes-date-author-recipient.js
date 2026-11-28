@@ -42,8 +42,9 @@ const PK3_Q=[['UR',[8,7,6,5,4,3,2,1]],['UL',[1,2,3,4,5,6,7,8]],['LR',[8,7,6,5,4,
 const pk3Tag=f=>{const m=/\[st=([a-z]*);t=([A-Z0-9,]*)\]/.exec(String(f&&f.note||''));return m?{st:m[1],t:m[2]?m[2].split(','):[]}:{st:'',t:[]}};
 const pk3TagStr=t=>t&&(t.st||(t.t||[]).length)?`[st=${t.st||''};t=${(t.t||[]).join(',')}]`:'';
 const pk3TagTxt=t=>[t.st?FXST[t.st]||'':'',t.t&&t.t.length?toothTxt(t.t):''].filter(Boolean).join(' · ');
-function pk3TagUI(j){if(!PK3.tag.st)PK3.tag.st=(j&&j.ntStage)||'';const st=PK3.tag.st;
-  return `<div class="pk3tag"><div class="fields"><label class="f">مرحله‌ی این تصویر (اختیاری)<select id="pk3St">${Object.keys(FXST).map(k=>`<option value="${k}"${k===st?' selected':''}>${FXST[k]}</option>`).join('')}</select></label><div class="f"><span>دندان (اختیاری)</span><div class="pk3teeth">${PK3_Q.map(([q,L])=>`<div class="pk3q"><small>${QNAME[q]}</small>${L.map(n=>`<button type="button" class="t" data-pk3t="${q}${n}" aria-pressed="${PK3.tag.t.includes(q+n)}">${fa(n)}</button>`).join('')}</div>`).join('')}</div></div></div></div>`}
+/* pk3TagUI layers: base replaced by a18 (owner 2026-11-10): no per-image stage/tooth tagging — images are only grouped before/after implant (q6);
+   the «مرحله‌ی این تصویر / دندان» block is gone, so this is always empty */
+function pk3TagUI(){return ''}
 {const _i=pfImgs;pfImgs=function(j){let h=_i.apply(this,arguments);try{const F2=j.files||[];
   if(canImg())h=h.replace('<div class="fx3up">',pk3TagUI(j)+'<div class="fx3up">');
   const sts=[...new Set(F2.map(f=>pk3Tag(f).st).filter(Boolean))];

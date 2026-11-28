@@ -37,5 +37,4 @@ function q7PlanSheet(snap){const id=snap.id,all=[{no:1,s:snap.s}].concat(((snap.
 {const _a=api;api=function(action,payload){const p=_a.apply(this,arguments);if(!(action==='toSurgery'||action==='sendDoc'||action==='apptSet'))return p;
   return Promise.resolve(p).catch(async e=>{if(ROLE==='staff'&&/طرح درمان بیمار هنوز انتخاب نشده/.test((e&&e.message)||'')&&payload&&payload.id){try{const j=await _a('get',{id:payload.id});if(j&&j.data&&j.data.pay&&j.data.pay.plater)setTimeout(()=>q7PlanSheet(fromDoc(payload.id,j.data)),350)}catch(x){}}throw e})}}
 /* the archived plans travel with the record */
-{const _t=toDoc;toDoc=function(r){const o=_t.apply(this,arguments);try{if(r&&r.alts&&r.alts.plans)o.alts=Object.assign({},r.alts,{plans:r.alts.plans.map(p=>({no:p.no,s:secDoc(p.s)}))})}catch(e){}return o}}
 {const _f=fromDoc;fromDoc=function(id,d){const r=_f.apply(this,arguments);try{if(d&&d.alts&&Array.isArray(d.alts.plans))r.alts=Object.assign({},d.alts,{plans:d.alts.plans.map(p=>({no:p.no,s:secFrom(p.s)}))})}catch(e){}return r}}

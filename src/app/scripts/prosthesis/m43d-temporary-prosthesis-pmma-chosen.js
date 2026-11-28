@@ -12,14 +12,6 @@ try{A13_TEETH.pmma=1;A13_TEETH.pmmail=1}catch(e){}
 try{M2_NO_I.esx=1;M2_NO_I.dnt=1}catch(e){}
 try{['روکش موقت Essix','روکش موقت دنچر'].forEach(n=>{if(typeof M14_MAP!=='undefined'&&!M14_MAP.includes(n))M14_MAP.push(n)})}catch(e){}
 
-/* ===== tariffs in the manager's settings ===== */
-const stepU=k=>A13_TEETH[k]?'هر دندان':k==='essix'?'هر فک':'هر جلسه';
-{const _r=renderPriceSettings;renderPriceSettings=function(){const r=_r.apply(this,arguments);try{const w=$('set_prices'),P=SET.prices||{};if(w&&!w.querySelector('[data-tp="tmp_es"]')){
-  const inp=(k,l)=>`<div class="grp"><span>${l}</span><input class="price" inputmode="numeric" data-tp="${k}" value="${esc(fmtInput((P[k]||{}).price||''))}"></div>`;
-  const t=w.querySelector('[data-tp="tmp"]'),g=t&&t.closest('.grp');
-  if(g){const sp=g.querySelector('span');if(sp)sp.textContent='روکش موقت PMMA · هر واحد (پروتز)';g.insertAdjacentHTML('afterend',inp('tmp_es','روکش موقت Essix · هر فک (پروتز)')+inp('tmp_dn','روکش موقت دنچر · هر فک (پروتز)'))}
-  w.insertAdjacentHTML('beforeend','<h4 class="a10ph">مراحل پروتز در پرونده‌ی جا مانده — پیش‌فرض مبلغ</h4>'+A13_TY.map(([k,n])=>inp('pr_'+k,esc(n)+' · '+stepU(k))).join(''))}}catch(e){console.error('m43d set',e)}return r}}
-
 /* ===== (1) plan form ===== */
 const T=SEC.tmp;
 try{if(T&&T.groups&&T.groups.length===1)T.groups.push({l:'Essix — فک',o:JO.slice()},{l:'دنچر — فک',o:JO.slice()})}catch(e){}

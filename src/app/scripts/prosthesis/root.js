@@ -7,7 +7,6 @@ try { I2BG.rt = 'Root' } catch (e) { } try { MRBR.rt = 'Root' } catch (e) { } tr
 const M22_D2 = 'تحویل مجدد روکش نهایی';
 try { if (!PK4_TN.deliv2) { PK4_TY.push(['deliv2', M22_D2]); PK4_TN.deliv2 = M22_D2; PK4_TEETH.deliv2 = 1; L5W.deliv2 = M22_D2 } } catch (e) { }
 const m22NoRedo = h => String(h).replace(/<div class="(?:grp|a13g)"><span>مجدد بوده؟<\/span><div class="chips">[\s\S]*?<\/div><\/div>/, '');
-{ const _b = pk4Block; pk4Block = function () { try { if (L5 && L5.work === 'deliv2') L5.redo = false } catch (e) { } let h = _b.apply(this, arguments); try { if (L5 && L5.work === 'deliv2') { h = m22NoRedo(h).replace('<div class="pk4b">', '<div class="pk4b"><p class="note">روکش نهایی برای بار دوم (یا بیشتر) به بیمار تحویل شد. مبلغ اختیاری است؛ اگر خالی بماند چیزی به حساب بیمار اضافه نمی‌شود.</p>') } } catch (e) { } return h } }
 /* 2: paper file — «تحویل مجدد روکش نهایی» among «مراحل پروتز», «بستن هیلینگ مجدد» beside «بستن هیلینگ» */
 try { if (!A13_TN.deliv2) { const i = A13_TY.findIndex(x => x[0] === 'deliv'); A13_TY.splice(i < 0 ? A13_TY.length : i + 1, 0, ['deliv2', M22_D2]); A13_TN.deliv2 = M22_D2; A13_TEETH.deliv2 = 1 } } catch (e) { }
 try { if (!A6C.heal2) { const i = A6CAT.findIndex(x => x.k === 'heal'), e = { k: 'heal2', t: 'بستن هیلینگ مجدد', s: i >= 0 ? A6CAT[i].s : 'R', m: 'n', p: () => 0 }; A6CAT.splice(i < 0 ? A6CAT.length : i + 1, 0, e); A6C.heal2 = e } } catch (e) { }

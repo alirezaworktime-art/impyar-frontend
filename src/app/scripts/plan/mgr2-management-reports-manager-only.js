@@ -17,8 +17,13 @@ const mrOn=()=>ROLE==='manager'&&TILE==='mrep';
 const mrPct=(a,b)=>b?Math.round(a/b*1000)/10:null;
 const mrDy=v=>v===null||v===undefined||v===''?'—':faD(String(v));
 const mrHM=m=>m===null||m===undefined?'—':faD(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));
-function mrApply(){const v=$('viewDash');if(!v||v.hidden)return;const on=mrOn();let B=$('mrBody');if(!B){B=document.createElement('div');B.id='mrBody';B.hidden=true;$('dBody').after(B)}
-  $('dPer').hidden=on;$('dBody').hidden=on;$('dAt').hidden=on;B.hidden=!on;const h=v.querySelector('.dhead h2');if(h)h.textContent=on?'گزارش‌های مدیریتی':'داشبورد مدیریت';if(on)mrRender()}
+/* mrApply layers: base + ux6 (manager «داشبورد و گزارش‌ها» in one tile: with UX6.mr on, TILE is 'mrep' while this runs and is restored
+   afterwards even on an error; then the «داشبورد / گزارش‌های مدیریتی» buttons, also when the dashboard is hidden) */
+function mrApply(){let sw=false,t0;if(ROLE==='manager'&&TILE==='dash'&&UX6.mr){t0=TILE;TILE='mrep';sw=true}
+  try{const v=$('viewDash');if(v&&!v.hidden){const on=mrOn();let B=$('mrBody');if(!B){B=document.createElement('div');B.id='mrBody';B.hidden=true;$('dBody').after(B)}
+  $('dPer').hidden=on;$('dBody').hidden=on;$('dAt').hidden=on;B.hidden=!on;const h=v.querySelector('.dhead h2');if(h)h.textContent=on?'گزارش‌های مدیریتی':'داشبورد مدیریت';if(on)mrRender()}}
+  finally{if(sw)TILE=t0}
+  try{ux6DashSeg()}catch(e){}}
 function mrMonths(from,to){return i2Months(from,to)}
 /* days → Jalali months (all months of the range, empty ones included) */
 function mrByMon(rows,from,to,fields){const M={};rows.forEach(r=>{const k=i2Mon(r.day),x=M[k]||(M[k]={mon:k});fields.forEach(f=>{x[f]=(x[f]||0)+(Number(r[f])||0)})});

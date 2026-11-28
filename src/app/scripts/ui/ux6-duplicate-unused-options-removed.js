@@ -13,7 +13,6 @@ try{TILE_HD.staff.bkd='تقویم نوبت‌ها'}catch(e){}
 function ux6DashSeg(){const v=$('viewDash');if(!v||ROLE!=='manager')return;const hd=v.querySelector('.dhead');if(!hd)return;let s=$('ux6DSeg');
   if(!s){s=document.createElement('div');s.id='ux6DSeg';s.className='seg ux6dseg';s.setAttribute('role','group');s.setAttribute('aria-label','بخش');s.innerHTML='<button type="button" data-ux6d="0">داشبورد</button><button type="button" data-ux6d="1">گزارش‌های مدیریتی</button>';hd.after(s)}
   s.querySelectorAll('[data-ux6d]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.ux6d==='1')===UX6.mr)))}
-{const _ma=mrApply;mrApply=function(){let r;if(ROLE==='manager'&&TILE==='dash'&&UX6.mr){const t0=TILE;TILE='mrep';try{r=_ma.apply(this,arguments)}finally{TILE=t0}}else r=_ma.apply(this,arguments);try{ux6DashSeg()}catch(e){}return r}}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ux6d]');if(!b)return;UX6.mr=b.dataset.ux6d==='1';mrApply();window.scrollTo(0,0)});
 /* manager «صندوق و هزینه»: the debtors list is in «حسابداری کامل» and «گزارش‌های مدیریتی» */
 (function(){const B=$('arBox');if(!B)return;new MutationObserver(()=>{B.querySelectorAll('h3.pf-h').forEach(h=>{if(/^بدهکاران \(پرداخت/.test(h.textContent.trim())){const n=h.nextElementSibling;if(n&&n.classList.contains('list'))n.remove();h.remove()}})}).observe(B,{childList:true})})();

@@ -16,5 +16,3 @@
     const lost = j.queue === 'lost' || j.queue === 'undecided';
     return `<div class="pbar${lost ? ' lost' : ''}">${S.map(([l, d], i) => `<span class="ps${d ? ' ok' : ''}${i === cur ? ' cur' : ''}"><i></i><b>${l}</b><small>${d ? esc(jd(d)) : i === cur ? (lost ? (j.queue === 'lost' ? 'انصراف' : 'مردد') : 'مرحله‌ی بعدی') : ''}</small></span>`).join('')}</div>`;
   } catch (e) { return html } } }
-/* a18 (owner 2026-11-10): no per-image stage/tooth tagging — images are only grouped before/after implant (q6); the «مرحله‌ی این تصویر / دندان» block is gone */
-try { pk3TagUI = function () { return '' }; } catch (e) {}

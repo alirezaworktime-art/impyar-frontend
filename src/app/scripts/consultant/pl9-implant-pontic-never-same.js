@@ -36,7 +36,6 @@ function pl9PL(r, x, L) {
 { const _r = rowTotals; rowTotals = function (r, x) { const o = _r.apply(this, arguments); try { if (x && x.id === 'anes') { const s = r.s[x.id], it = (x.items || []).find(i => itemQty(s, i)); if (it) o.flat = num(s.ip[it.k]) } } catch (e) { } return o } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-pl9an]'); if (!t) return; e.preventDefault(); const s = AS().anes; if (!s) return; const k = t.dataset.pl9an, was = !!s.isel[k + ':on'];
   Object.keys(s.isel).forEach(z => { if (/^(ga|sd):/.test(z)) delete s.isel[z] }); if (!was) s.isel[k + ':on'] = true; if (SURG) SURG.dirty = true; else touch(); reSec('anes') }, true);
-{ const _ps = renderPriceSettings; renderPriceSettings = function () { const r = _ps.apply(this, arguments); try { const i = document.querySelector('#set_prices [data-tp="anes"]'); const g = i && i.closest('.grp'); if (g) g.remove() } catch (e) { } return r } }
 /* (8) surgery day: GBR units per tooth (s.icnt['gn:UR4']; default 1) */
 { const _q = qty; qty = function (s, x) { const n = _q.apply(this, arguments); try { if (x && x.id === 'gbr' && s && s.icnt) { let e = 0; Object.keys(s.sel || {}).forEach(k => { if (s.sel[k] && isTooth(k)) { const c = num(s.icnt['gn:' + k]); if (c > 1) e += c - 1 } }); return n + e } } catch (e) { } return n } }
 function pl9GbrHTML() { if (!SURG || SURG.arc) return ''; const s = SURG.s.gbr; if (!s) return ''; const T = Object.keys(s.sel || {}).filter(k => s.sel[k] && isTooth(k)).sort(); if (!T.length) return '';
