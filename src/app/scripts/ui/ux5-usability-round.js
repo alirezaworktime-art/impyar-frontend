@@ -1,7 +1,20 @@
 /* ---------- ux5: usability round (owner, 2026-11-04) ---------- */
 /* (2) one in-app confirmation dialog: uxAsk / uxConfirm / uxPrompt; l2Ask and every «دوباره بزنید» button use it */
 var UXA=null;
-function uxAsk(o){o=o||{};return new Promise(res=>{if(UXA){try{UXA.done(null)}catch(e){}}
+/* uxAsk — merged patch layers, in call order:
+   m33 (archive/m33-paper-files-clearer-question.js): the «بیمار مشابه» question gets a clearer text (who was found, what matched);
+   m13 (archive/m13-every-leave-without-saving.js): the older «خروج بدون ذخیره» questions (paper file, archive surgery day) ask the same thing as m4Ask;
+   ux5 (base): the in-app dialog. m33Day / m4Ask / arcSave / a6Save come from those later files (only used when such a question is asked). */
+function uxAsk(o){
+  try { if (o && o.title === 'بیمار مشابه' && typeof o.msg === 'string') { const m = o.msg.match(/ثبت شده است: ([\s\S]*?)\. اگر همان بیمار/); const who = m ? m[1] : '';
+    const L = who.split(' ؛ ').map(x => x.trim()).filter(Boolean);
+    o = Object.assign({}, o, { title: 'بیمار با مشخصات مشابه پیدا شد', msg: '',
+      fields: [{ type: 'html', html: `<div class="m33dup"><p>${L.length > 1 ? 'این بیماران' : 'این بیمار'} قبلاً در بایگانی هست${L.length > 1 ? 'ند' : ''}:</p><ul>${L.map(x => `<li>${esc(faD(x.replace(/ثبت (\d{4}-\d\d-\d\d)/, (m, d) => 'ثبت ' + m33Day(d))))}</li>`).join('')}</ul><p class="note">اگر بیمار شما <b>شخص دیگری</b> است (فقط هم‌نام یا شبیه)، «بیمار دیگری است، ثبت شود» را بزنید.<br>اگر <b>همان بیمار</b> است، «نه» را بزنید و پرونده‌ی قبلی را از بایگانی باز کنید.</p></div>` }],
+      ok: 'بیمار دیگری است، ثبت شود', cancel: 'نه، همان بیمار است' }) } } catch (e) {}
+  if (o && o.title === 'خروج بدون ذخیره') {
+  const save = async () => { if (SURG && SURG.arc) { await arcSave($('fxaGo') || document.createElement('button')); return false } if (A6 && $('a6Save')) { await a6Save($('a6Save')); return false } return false };
+  return m4Ask({ save: async () => { await save(); return true } }).then(a => a === 'drop') }
+  o=o||{};return new Promise(res=>{if(UXA){try{UXA.done(null)}catch(e){}}
   const F=o.fields||[];
   const fld=(f,i)=>f.type==='html'?f.html:`<label class="f${f.full?' full':''}">${esc(f.l||'')}${f.type==='textarea'?`<textarea data-ak="${i}" rows="3">${esc(f.v||'')}</textarea>`:f.type==='select'?`<select data-ak="${i}">${(f.opts||[]).map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(f.v??'')?' selected':''}>${esc(l)}</option>`).join('')}</select>`:`<input data-ak="${i}" value="${esc(f.v??'')}"${f.type==='num'?' inputmode="numeric" dir="ltr" class="ltr"':''}${f.type==='date'?' data-jd="1" placeholder="مثلاً '+esc(jDay(tDay()))+'"':''}${f.ph?` placeholder="${esc(f.ph)}"`:''}${f.list?` list="${f.list}"`:''}>`}</label>`;
   const s=mkSheet('uxAskSh',`<h3 id="uxAskT">${esc(o.title||'تأیید')}</h3>${o.who?`<p class="uxwho">${esc(o.who)}</p>`:''}${o.msg?`<p class="uxmsg">${esc(o.msg)}</p>`:''}${F.length?`<div class="fields">${F.map(fld).join('')}</div>`:''}<div class="msg" id="uxAskM" role="alert"></div><div class="btns"><button class="btn${o.danger?' danger':''}" type="button" id="uxAskOk">${esc(o.ok||'تأیید')}</button><button class="btn ghost" type="button" id="uxAskNo">${esc(o.cancel||'انصراف')}</button></div>`);

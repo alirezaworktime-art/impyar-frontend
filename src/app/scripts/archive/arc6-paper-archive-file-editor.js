@@ -86,7 +86,6 @@ function a6Open(j){M51.told = {}; M51.key = ''; M51.res = null;
     if (!ok) { localStorage.removeItem(key); return } const s = x.s || {}; for (const k in s) { const v = s[k]; A6[k] = v && v.__set ? new Set(v.__set) : v } A6.dirty = true; a6Render(); toast('پیش‌نویس پرونده بازیابی شد؛ برای ثبت «ذخیره» را بزنید.') } catch (e) {} }, 900);
   m51Later(1200)}
 {const _s=show;show=function(v){const r=_s.apply(this,arguments);const el=$('viewArc6');if(el)el.hidden=v!=='arc6';return r}}
-{const _t=ttlNow;ttlNow=function(){const el=$('viewArc6');if(el&&!el.hidden)return 'پرونده‌ی جا مانده';return _t.apply(this,arguments)}}
 /* reception: a clear entry in its own tiles */
 {const _t=TILES.staff;TILES.staff=()=>{const L=_t(),i=L.findIndex(t=>t.k==='arch'),T={k:'arcp',c:'arch',l:'+ پرونده‌ی جا مانده',s:'ورود پرونده‌ی کاغذی بیماران قبلی',n:0,a6:1};if(i<0)L.push(T);else L.splice(i,0,T);return L}}
 {const _g=goTile;goTile=function(k,opt){const t=tileList().find(x=>x.k===k);if(t&&t.a6){fxArcOpen(null);return}

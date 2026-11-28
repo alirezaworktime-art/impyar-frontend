@@ -7,7 +7,6 @@ const DR_CLIN = 'کلینیک';
 const drKey = n => normN(String(n || '').replace(/^\s*(د|دکتر)\s*[.\-]?\s*/, ''));
 (function () { const s = document.createElement('section'); s.id = 'viewDr'; s.className = 'wrap'; s.style.padding = '0'; s.hidden = true; s.innerHTML = '<div id="drRoot" class="m1 drw"></div>'; const o = $('viewM1') || $('viewInv'); if (o && o.parentNode) o.parentNode.insertBefore(s, o.nextSibling); else document.body.appendChild(s); })();
 { const _s = show; show = function (v) { const r = _s.apply(this, arguments); const el = $('viewDr'); if (el) el.hidden = v !== 'dr'; return r } }
-{ const _t = ttlNow; ttlNow = function () { const el = $('viewDr'); if (el && !el.hidden) return 'گزارش پزشکان'; return _t.apply(this, arguments) } }
 { const _t = TILES.manager; if (_t) TILES.manager = () => { const L = _t(); const i = L.findIndex(t => t.k === 'm1'); L.splice(i < 0 ? 0 : i + 1, 0, { k: 'dr', c: 'fin', l: 'گزارش پزشکان', s: 'کارکرد روزانه، کارکرد به ریز، تجمیعی و قابل پرداخت هر پزشک', n: 0, dr: 1 }); return L } }
 { const _g = goTile; goTile = function (k, opt = {}) { const t = (tileList() || []).find(x => x.k === k); if (!t || !t.dr) return _g.apply(this, arguments);
   if (typeof dirty !== 'undefined' && dirty && !$('viewForm').hidden) return;

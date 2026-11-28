@@ -1,13 +1,6 @@
 
 /* ---------- m33 (owner, 2026-11-16): (1) paper files: clearer «بیمار مشابه» question (who was found, file no., last digits of mobile, what matched);
    (2) manager archive: «حذف کامل پرونده» (30-day trash, «پرونده‌های حذف‌شده» with «بازگردانی»). ---------- */
-{ const _u = uxAsk; uxAsk = function (o) {
-  try { if (o && o.title === 'بیمار مشابه' && typeof o.msg === 'string') { const m = o.msg.match(/ثبت شده است: ([\s\S]*?)\. اگر همان بیمار/); const who = m ? m[1] : '';
-    const L = who.split(' ؛ ').map(x => x.trim()).filter(Boolean);
-    o = Object.assign({}, o, { title: 'بیمار با مشخصات مشابه پیدا شد', msg: '',
-      fields: [{ type: 'html', html: `<div class="m33dup"><p>${L.length > 1 ? 'این بیماران' : 'این بیمار'} قبلاً در بایگانی هست${L.length > 1 ? 'ند' : ''}:</p><ul>${L.map(x => `<li>${esc(faD(x.replace(/ثبت (\d{4}-\d\d-\d\d)/, (m, d) => 'ثبت ' + m33Day(d))))}</li>`).join('')}</ul><p class="note">اگر بیمار شما <b>شخص دیگری</b> است (فقط هم‌نام یا شبیه)، «بیمار دیگری است، ثبت شود» را بزنید.<br>اگر <b>همان بیمار</b> است، «نه» را بزنید و پرونده‌ی قبلی را از بایگانی باز کنید.</p></div>` }],
-      ok: 'بیمار دیگری است، ثبت شود', cancel: 'نه، همان بیمار است' }) } } catch (e) {}
-  return _u.call(this, o) } }
 
 let M33T = null;
 const m33Day = s => { try { return jDay(String(s || '').slice(0, 10)) } catch (e) { return '' } };

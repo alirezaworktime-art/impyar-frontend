@@ -1,5 +1,11 @@
 /* ---------- ttl1: the app-bar title names the section the user is in (not always «طرح درمان ایمپلنت») ---------- */
-function ttlNow(){if(!ROLE||!$('viewLogin').hidden)return 'طرح درمان ایمپلنت';
+/* ttlNow — merged patch layers: the views added later (m35 «گزارش پزشکان», m1 «مالی», arc6 paper file) are checked first, in this order; then ttl1 (base).
+   Those sections are created hidden by their own files; until then $() finds nothing and the check is skipped. */
+function ttlNow(){
+  { const el = $('viewDr'); if (el && !el.hidden) return 'گزارش پزشکان'; } /* m35: finance/m35-manager-daily-sheet-like.js */
+  { const el = $('viewM1'); if (el && !el.hidden) return 'مالی'; } /* m1: finance/inventory-manager-accountant-only-two.js */
+  { const el=$('viewArc6');if(el&&!el.hidden)return 'پرونده‌ی جا مانده'; } /* arc6: archive/arc6-paper-archive-file-editor.js */
+  if(!ROLE||!$('viewLogin').hidden)return 'طرح درمان ایمپلنت';
   const vs=$('viewSurg');if(vs&&!vs.hidden)return SURG&&SURG.arc?'بایگانی · پرونده‌ی جا مانده':'روز جراحی';
   const vf=$('viewForm');if(vf&&!vf.hidden)return 'طرح درمان';
   let t=null;try{t=tileList().find(x=>x.k===TILE)}catch(e){}

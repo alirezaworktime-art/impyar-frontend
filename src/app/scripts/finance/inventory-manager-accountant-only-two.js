@@ -6,7 +6,6 @@ const M1_KIND = { cash: 'نقد', card: 'کارتخوان', chq: 'چک', arc: '�
 const m1Cat = k => { try { const e = EXPC.find(x => x[0] === k); if (e) return e[1] } catch (e) {} return k || '' };
 (function () { const s = document.createElement('section'); s.id = 'viewM1'; s.className = 'wrap'; s.style.padding = '0'; s.hidden = true; s.innerHTML = '<div id="m1Root" class="m1"></div>'; const o = $('viewInv'); if (o && o.parentNode) o.parentNode.insertBefore(s, o.nextSibling); else document.body.appendChild(s); })();
 { const _s = show; show = function (v) { const r = _s.apply(this, arguments); const el = $('viewM1'); if (el) el.hidden = v !== 'm1'; return r } }
-{ const _t = ttlNow; ttlNow = function () { const el = $('viewM1'); if (el && !el.hidden) return 'مالی'; return _t.apply(this, arguments) } }
 for (const role of ['manager', 'accountant']) { const _t = TILES[role]; if (!_t) continue; TILES[role] = () => { let L = _t(); const H = M1_HIDE[role];
   if (!M1.more && H.includes(TSAVE[role] || '')) M1.more = true;
   const T = { k: 'm1', c: 'fin', l: 'مالی', s: 'دریافتی، بدهی بیماران، سهم پزشکان، سود', n: 0, m1: 1 };

@@ -47,9 +47,6 @@ function m4Live(sh) { try { const s = BD.snap.get(sh); if (!s) return; const L =
   const now = bdVals(sh), v = {}; for (const k in now) if (now[k] !== (s.vals[k] ?? '') && String(now[k]).trim() !== '') v[k] = { from: s.vals[k] ?? '', to: now[k] }; L[s.head] = { v, at: Date.now() }; m4Put('live', L) } catch (e) {} }
 setInterval(() => { try { if (ROLE) ['rcSheet', 'pfSheet'].forEach(id => { const sh = $(id); if (sh && !sh.hidden) m4Live(sh) }) } catch (e) {} }, 4000);
 addEventListener('pagehide', () => { try { ['rcSheet', 'pfSheet'].forEach(id => { const sh = $(id); if (sh && !sh.hidden) m4Live(sh) }) } catch (e) {} });
-/* opening a window: kept or live text of the last 3 hours comes back (the older step restores it) */
-{ const _o = bdOpened; bdOpened = function (sh) { try { if (['rcSheet', 'pfSheet'].includes(sh.id)) { M4T.delete(sh); const head = bdHead(sh), K = m4Get('kept'), L = m4Get('live'), x = BD.drafts.get(head) || K[head] || L[head];
-      if (x && Date.now() - x.at < 3 * 3600e3) { const cur = bdVals(sh); for (const k in x.v || {}) if (cur[k] === '' || cur[k] === undefined) x.v[k].from = cur[k] || ''; BD.drafts.set(head, x) } delete K[head]; delete L[head]; m4Put('kept', K); m4Put('live', L) } } catch (e) {} return _o.apply(this, arguments) } }
 /* a window closed after its work was sent: no draft stays behind */
 new MutationObserver(M => M.forEach(m => { const sh = m.target; if (!sh || !['rcSheet', 'pfSheet'].includes(sh.id) || !sh.hidden || m.oldValue !== null) return; try { const s = BD.snap.get(sh); if (!s) return; const L = m4Get('live'); if (L[s.head]) { delete L[s.head]; m4Put('live', L) } if (BD.drafts.has(s.head)) m4BdPersist() } catch (e) {} })).observe(document.body, { attributes: true, attributeFilter: ['hidden'], attributeOldValue: true, subtree: true });
 /* paper file: device draft every few seconds; the next opening offers it back */
