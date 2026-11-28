@@ -1,14 +1,8 @@
 /* ---------- patient file: extra tabs ---------- */
 function refreshFile(){if(!PF)return;const {id}=PF;api('get',{id},{timeout:12000}).then(j=>{if(PF&&PF.id===id){PF.j=j;renderFile()}}).catch(()=>{})}
-/* pfTabs: base + m42b («همه‌ی توضیح‌ها» tab) */
-function pfTabs(j){const was=PF&&PF.tab;if(was==='cm')PF.tab='tl';const T=[['tl','سیر درمان'],['hist','تاریخچه'+(PF&&PF.ev?' <small id="pfEvN">'+fa(PF.ev.length)+'</small>':' <small id="pfEvN"></small>')]];if(seesMoney()&&CF_ON)T.push(['pay','پرداخت‌ها']);if(CF_ON&&(j.pros||j.status==='confirmed'||j.status==='modified'))T.push(['pros','پروتز و لابراتوار']);if(CF_ON)T.push(['ap','نوبت‌ها']);if(ROLE!=='lab'&&ROLE!=='inventory')T.push(['img','تصاویر'+((j.files||[]).length?' ('+fa(j.files.length)+')':'')]);
-  if(!T.some(t=>t[0]===PF.tab))PF.tab='tl';let h=T.length>1?`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0">${T.map(([k,l])=>`<button type="button" data-pft="${k}" aria-pressed="${PF.tab===k}">${l}</button>`).join('')}</div>`:'';if(was==='cm')PF.tab='cm';
-  try{let n=0;try{n=cmList(j).length}catch(e){}const btn=`<button type="button" data-pft="cm" aria-pressed="${was==='cm'}">همه‌ی توضیح‌ها${n?' <small>'+fa(n)+'</small>':''}</button>`;
-    if(!h)h=`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0"><button type="button" data-pft="tl" aria-pressed="${was!=='cm'}">سیر درمان</button>${btn}</div>`;
-    else{if(was==='cm')h=h.replace('data-pft="tl" aria-pressed="true"','data-pft="tl" aria-pressed="false"');const i=h.lastIndexOf('</div>');h=h.slice(0,i)+btn+h.slice(i)}}catch(e){console.error('m42b tabs',e)}
-  return h}
-/* pfTabHTML: base + m42b (cm) */
-function pfTabHTML(tab,j,r){if(tab==='cm'){try{return cmHTML(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}}try{if(tab==='hist')return pfHist(j);if(tab==='pay')return pfPays(j,r);if(tab==='pros')return pfPros(j,r);if(tab==='ap')return pfAppts(j);if(tab==='img')return pfImgs(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}return ''}
+function pfTabs(j){const T=[['tl','سیر درمان'],['hist','تاریخچه'+(PF&&PF.ev?' <small id="pfEvN">'+fa(PF.ev.length)+'</small>':' <small id="pfEvN"></small>')]];if(seesMoney()&&CF_ON)T.push(['pay','پرداخت‌ها']);if(CF_ON&&(j.pros||j.status==='confirmed'||j.status==='modified'))T.push(['pros','پروتز و لابراتوار']);if(CF_ON)T.push(['ap','نوبت‌ها']);if(ROLE!=='lab'&&ROLE!=='inventory')T.push(['img','تصاویر'+((j.files||[]).length?' ('+fa(j.files.length)+')':'')]);
+  if(!T.some(t=>t[0]===PF.tab))PF.tab='tl';return T.length>1?`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0">${T.map(([k,l])=>`<button type="button" data-pft="${k}" aria-pressed="${PF.tab===k}">${l}</button>`).join('')}</div>`:''}
+function pfTabHTML(tab,j,r){try{if(tab==='hist')return pfHist(j);if(tab==='pay')return pfPays(j,r);if(tab==='pros')return pfPros(j,r);if(tab==='ap')return pfAppts(j);if(tab==='img')return pfImgs(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}return ''}
 /* payments */
 /* payNums: base + fx4 (the balance the server computes) */
 function payNums(j){if(j&&j.bal&&typeof j.bal==='object'){const b=j.bal;return {total:b.total,got:b.paid,wait:b.wait,bounce:b.bounce,rest:b.rest,credit:b.credit,rfOpen:b.rfOpen,waived:b.waived}}const P=j.pays||[],sg=j.surg||{},sum=f=>P.filter(f).reduce((a,p)=>a+(Number(p.amount)||0),0);

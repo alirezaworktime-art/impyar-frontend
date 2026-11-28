@@ -29,7 +29,12 @@ function cmList(j){const out=[],d=j.data||{},h=d.h||{},add=(at,sec,by,text,fin)=
 function cmHTML(j){const L=cmList(j);
   return `<h3 class="pf-h">همه‌ی توضیح‌ها</h3><p class="note">هر توضیحی که در طرح، مشاوره، جراحی، پروتز، نوبت‌ها، پیگیری‌ها و لابراتوار برای این بیمار نوشته شده — تازه‌ترین بالا.${FIN()?' توضیح‌های مالی فقط برای مدیر، مشاور و پذیرش دیده می‌شود.':''}</p>`+
     (L.length?`<div class="m42bl">${L.map(x=>`<div class="m42bc${x.fin?' fin':''}"><div class="m42bh"><b>${esc(x.sec)}</b><small>${esc(x.at?jt(x.at):'')}${x.by?' · '+esc(x.by):''}</small></div><p>${esc(x.text)}</p></div>`).join('')}</div>`:'<div class="empty">برای این بیمار توضیحی نوشته نشده است.</div>')}
-/* the «همه‌ی توضیح‌ها» tab and its content are in pfTabs / pfTabHTML (patient-file-extra-tabs) */
+{const _t=pfTabs;pfTabs=function(j){const was=PF&&PF.tab;if(was==='cm')PF.tab='tl';let h=_t.apply(this,arguments);if(was==='cm')PF.tab='cm';
+  try{let n=0;try{n=cmList(j).length}catch(e){}const btn=`<button type="button" data-pft="cm" aria-pressed="${was==='cm'}">همه‌ی توضیح‌ها${n?' <small>'+fa(n)+'</small>':''}</button>`;
+    if(!h)h=`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0"><button type="button" data-pft="tl" aria-pressed="${was!=='cm'}">سیر درمان</button>${btn}</div>`;
+    else{if(was==='cm')h=h.replace('data-pft="tl" aria-pressed="true"','data-pft="tl" aria-pressed="false"');const i=h.lastIndexOf('</div>');h=h.slice(0,i)+btn+h.slice(i)}}catch(e){console.error('m42b tabs',e)}
+  return h}}
+{const _h=pfTabHTML;pfTabHTML=function(tab,j,r){if(tab==='cm'){try{return cmHTML(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}}return _h.apply(this,arguments)}}
 /* the treatment-plan step in «سیر درمان» before the final approval */
 const hasPlan=j=>{try{if(['consult','consulting','undecided'].includes(j.queue))return true;if(j.queue!=='lost')return false;const r=fromDoc(j.id||(PF&&PF.id)||'',j.data||{});return !/طرحی ثبت نشده/.test(planViewHTML(r.s))}catch(e){return false}};
 const planAt=j=>{let at=j.updatedAt||j.queuedAt||j.createdAt;if(j.lost&&j.lost.at&&String(at)>String(j.lost.at))at=j.lost.at;if(String(at)<String(j.createdAt||''))at=j.createdAt;return at};
