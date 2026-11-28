@@ -1,7 +1,8 @@
 /* ---------- xl: implant reason per fixture + the clinic's Excel reports in accounting ---------- */
 var IMPRS='new';
 const XL_RS={new:'جديد',redo:'کاشت مجدد',fail:'فيل اوليه'};
-function xlRsBtns(){document.querySelectorAll('#impSheet [data-rs]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rs===IMPRS))}
+/* xlRsBtns: base + ex1 (loan fixture / early failure rows: ex1ImpUI) + pk2 (re-implant first / second and its tariff: pk2UI) */
+function xlRsBtns(){document.querySelectorAll('#impSheet [data-rs]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.rs===IMPRS));try{ex1ImpUI()}catch(e){}try{pk2UI()}catch(e){}}
 FREND.xl=async B=>{const p=FIN.per.xl||(FIN.per.xl=perRange('m'));const j=await api('finXl',p);const sub=perSub('xl');
   const mcols=[{k:'svc',l:'نام خدمت'}].concat(j.docs.map(d=>({k:'d:'+d,l:d,t:'m',v:r=>r.c[d]||''})),[{k:'tot',l:'جمع',t:'m'}]);
   B.innerHTML=`${perHTML('xl')}<p class="note">همان چهار گزارش اکسل کلینیک (ماکرو sabt): «مبلغ کل» = تعداد × تعرفه‌ی پزشک (سهم پزشک) از صورتحساب‌های ثبت‌شده؛ فیکسچرها و آرشیو از جلسه‌های جراحی ثبت‌شده در این بازه. برای «کاشت مجدد» و «فيل اوليه» سهم پزشک صفر است.</p>

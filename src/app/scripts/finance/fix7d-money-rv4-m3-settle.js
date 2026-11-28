@@ -1,8 +1,8 @@
 /* ---------- fix7d: money (rv4 M3 settle card-to-card, M6 blank cheque count, M7 amount input, W2 refund warning) ---------- */
 /* M6: a remainder with an empty cheque count is one cheque everywhere (text, schedule, suggestions) */
 const fx7N1=r=>{try{const p=(r&&r.pay)||null;if(!p)return r;const z=v=>v===undefined||v===null||String(v).trim()===''||num(v)===0;if(!z(p.n1)&&!z(p.n3))return r;return Object.assign({},r,{pay:Object.assign({},p,{n1:z(p.n1)?'1':p.n1,n3:z(p.n3)?'1':p.n3})})}catch(e){return r}};
-{const _pt=payText;payText=function(r,b){return _pt(fx7N1(r),b)}}
-{const _cf=chqFor;chqFor=function(r){return _cf(fx7N1(r))}}
+/* (payText gets fx7N1 — merged into prosthesis/calc.js) */
+/* (chqFor gets fx7N1 too — merged into fin2.js) */
 /* M7: money inputs take digits only (Persian digits and thousand separators are fine) */
 const FX7_AMT='#py_amount,#st_amt,#rf_amt,#fx4_rfa,#fx4_wv,#pc_cash,#p_cash,#p_chq1,#p_cs,#p_cp,#p_disc,#ic_total,#ic_pre,#a6Rem,#ae_amt,#cp_amt,#uxAskSh input[data-ak][inputmode="numeric"]';
 const FX7_AMT_MSG='فقط رقم بنویسید — بدون اعشار، منفی یا حرف (جداکننده‌ی هزارگان مجاز است).';
@@ -13,15 +13,12 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.matches&&t.matche
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button.btn');if(!t||t.classList.contains('ghost')||t.classList.contains('chip'))return;
   const c=t.closest('.sheet,form,.card,[role=dialog]');if(!c)return;const bad=[...c.querySelectorAll(FX7_AMT)].find(i=>!i.disabled&&fx7IsBad(i));if(!bad)return;
   e.preventDefault();e.stopImmediatePropagation();fx7Mark(bad,true);try{bad.focus({preventScroll:false})}catch(x){}const m=c.querySelector('#uxAskM');if(m){m.className='msg err';m.textContent=FX7_AMT_MSG}else toast(FX7_AMT_MSG,true)},true);
-/* M3: the surgery-difference settlement asks the card-to-card destination too */
-{const _sr=stRender;stRender=function(){const r=_sr.apply(this,arguments);try{if(ST&&ST.k==='card'){const ch=document.querySelector('#stF .poschips');if(ch&&!document.querySelector('[data-fin1w="stacct"]'))ch.closest('.f').insertAdjacentHTML('afterend',fin1AcctHTML('stacct',ST.pos==='xfer',ST.acct||''))}}catch(e){}return r}}
-{const _sp=stPays;stPays=function(){const r=_sp.apply(this,arguments);try{if(Array.isArray(r)&&r[0]&&r[0].kind==='card'&&ST&&ST.pos==='xfer'){if(!ST.acct){const m=$('sdMsg');m.className='msg err';m.textContent='حساب مقصد کارت‌به‌کارت را انتخاب کنید.';return null}r[0].acct=ST.acct}}catch(e){}return r}}
+/* M3: the surgery-difference settlement asks the card-to-card destination too (its render is in stRender, its check in stPays) */
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;const d=t.dataset;
   if(d.stacct!==undefined&&ST){ST.acct=fin1Pick(t,'stacct');const m=$('sdMsg');if(m&&/حساب مقصد/.test(m.textContent))m.textContent='';return}
   if(d.stpos!==undefined)setTimeout(()=>{if(ST)fin1Show('stacct',ST.pos==='xfer')},0)},true);
 /* W2: deleting / bouncing a payment that a refund relies on asks first */
 {const _a=api;api=async function(action,payload={},opt={}){try{return await _a(action,payload,opt)}catch(e){const m=/^FX7RF\|(\d+)\|([\s\S]*)$/.exec((e&&e.message)||'');if(!m||action!=='paySet')throw e;
   if(!(await uxConfirm(m[2],'ادامه',true,'این پرداخت پشتوانه‌ی استرداد است')))throw new Error('تغییری ثبت نشد.');return await _a(action,Object.assign({},payload||{},{rfAck:1}),opt)}}}
-/* M7: the payments tab checks the amount itself too (the form may be redrawn between typing and the click) */
-{const _py=pyAdd;pyAdd=async function(t){const i=$('py_amount');if(i&&fx7IsBad(i)){fx7Mark(i,true);const m=$('pyMsg');if(m){m.className='msg err';m.textContent=FX7_AMT_MSG}return}return _py.apply(this,arguments)}}
+/* M7: the payments-tab amount check now lives in pyAdd itself (appointments/events.js) */
 

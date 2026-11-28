@@ -46,13 +46,6 @@ spHTML = function (x) { const s = AS()[x.id], rows = s.sp || []; if (SURG && !ro
 document.addEventListener('change', e => { const i = e.target; if (!i || !i.matches || !i.matches('select[data-sp][data-spf="b"],select[data-sp][data-spf="k"]')) return; setTimeout(() => { try { const z = ['z', 'n', 't'], s = AS().imp, had = !!document.querySelector('[data-sec="imp"] .m55p'), need = (s.sp || []).some(r => z.includes(m55Ty(r.b)));
   if (had !== need || need) reSec('imp'); else recalc() } catch (x) { } }, 0) });
 document.addEventListener('input', e => { const i = e.target; if (!i || !i.dataset || !i.dataset.m55p) return; try { const s = AS().imp; s.ip['sp' + i.dataset.m55p] = i.value; touch(); recalc() } catch (x) { } });
-/* settings: the three tariffs */
-{ const _r = renderPriceSettings; renderPriceSettings = function () { const r = _r.apply(this, arguments); try { const el = $('set_prices'), P = SET.prices || {}; if (el && !el.querySelector('[data-tp="sp_z"]')) {
-  const h = ['z', 'n', 't'].map(k => `<div class="grp"><span>پایه ایمپلنت · ${M55_ZN[k]} (موارد خاص) · هر واحد</span><input class="price" inputmode="numeric" data-tp="sp_${k}" value="${esc(fmtInput((P['sp_' + k] || {}).price || ''))}" placeholder="خالی = تعرفه‌ی All on X ${M55_ZN[k]}"></div>`).join('');
-  const n = el.querySelector('.note'); if (n) n.insertAdjacentHTML('beforebegin', h); else el.insertAdjacentHTML('beforeend', h) } } catch (e) { console.error('m55a set', e) } return r } }
 /* surgery day: an implant placed on a tooth that the plan marks as زایگوما / نازال / تریگوئید is priced with that tariff (not the brand of the fixture),
    so the surgery amount equals the plan and no false difference is made */
-{ const _s = surgActual; surgActual = function (rec, sessions) { let t = _s.apply(this, arguments); try { const P = rec && rec.s && rec.s.imp; if (!P || !P.ip || !P.ip.m43) return t;
-  const b = effBrand(rec), T = {}; (P.sp || []).forEach(r => { if (!r || !r.k || !isTooth(r.k) || T[r.k] !== undefined) return; const ty = m55Ty(r.b); if (!ty) return; T[r.k] = (ty === 'z' || ty === 'n' || ty === 't') ? ty : '' });
-  (sessions || []).forEach(ss => { const sel = ((ss.s || {}).imp || {}).sel, im = ss.imp || {}; const L = Array.isArray(sel) ? sel : Object.keys(sel || {}).filter(k => sel[k]);
-    L.forEach(k => { const ty = T[k]; if (!ty) return; const p = num(P.ip['sp' + ty]); if (!p) return; const g = (im[k] && im[k].g) || b; t += p - num(P.bp[g] || P.bp[b]) }) }) } catch (e) { console.error('m55a surg', e) } return t } }
+/* (surgActual: this layer is merged into surgery/surgery-day.js) */

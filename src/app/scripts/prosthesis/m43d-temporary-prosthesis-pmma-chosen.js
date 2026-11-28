@@ -12,14 +12,6 @@ try{A13_TEETH.pmma=1;A13_TEETH.pmmail=1}catch(e){}
 try{M2_NO_I.esx=1;M2_NO_I.dnt=1}catch(e){}
 try{['روکش موقت Essix','روکش موقت دنچر'].forEach(n=>{if(typeof M14_MAP!=='undefined'&&!M14_MAP.includes(n))M14_MAP.push(n)})}catch(e){}
 
-/* ===== tariffs in the manager's settings ===== */
-const stepU=k=>A13_TEETH[k]?'هر دندان':k==='essix'?'هر فک':'هر جلسه';
-{const _r=renderPriceSettings;renderPriceSettings=function(){const r=_r.apply(this,arguments);try{const w=$('set_prices'),P=SET.prices||{};if(w&&!w.querySelector('[data-tp="tmp_es"]')){
-  const inp=(k,l)=>`<div class="grp"><span>${l}</span><input class="price" inputmode="numeric" data-tp="${k}" value="${esc(fmtInput((P[k]||{}).price||''))}"></div>`;
-  const t=w.querySelector('[data-tp="tmp"]'),g=t&&t.closest('.grp');
-  if(g){const sp=g.querySelector('span');if(sp)sp.textContent='روکش موقت PMMA · هر واحد (پروتز)';g.insertAdjacentHTML('afterend',inp('tmp_es','روکش موقت Essix · هر فک (پروتز)')+inp('tmp_dn','روکش موقت دنچر · هر فک (پروتز)'))}
-  w.insertAdjacentHTML('beforeend','<h4 class="a10ph">مراحل پروتز در پرونده‌ی جا مانده — پیش‌فرض مبلغ</h4>'+A13_TY.map(([k,n])=>inp('pr_'+k,esc(n)+' · '+stepU(k))).join(''))}}catch(e){console.error('m43d set',e)}return r}}
-
 /* ===== (1) plan form ===== */
 const T=SEC.tmp;
 try{if(T&&T.groups&&T.groups.length===1)T.groups.push({l:'Essix — فک',o:JO.slice()},{l:'دنچر — فک',o:JO.slice()})}catch(e){}
@@ -35,7 +27,7 @@ const mark=s=>{try{if(s&&s.tmp&&s.tmp.ip){s.tmp.ip.m43d='1';if(!s.tmp.ip.es)s.tm
 /* a plan that is not finally approved and has nothing in «روکش موقت» yet moves to the new way */
 {const _d=fromDoc;fromDoc=function(id,d){const r=_d.apply(this,arguments);try{if(r&&r.status!=='confirmed'&&r.status!=='modified')[r.s,r.s2].concat(r.sx||[]).forEach(S=>{if(S&&S.tmp&&!NEWM(S.tmp)&&!used(S.tmp))mark(S)})}catch(e){}return r}}
 /* «سایر کلینیک‌ها»: that form has no prices and keeps the plain «نوع» choice */
-try{if(typeof oc3Mount==='function'){const _m=oc3Mount;oc3Mount=function(){const f=_m.apply(this,arguments);try{if(f&&f.s&&f.s.tmp&&f.s.tmp.ip){f.s.tmp.ip.m43d='';f.s.tmp.ip.es='';f.s.tmp.ip.dn=''}}catch(e){}return f}}}catch(e){}
+/* (now inside oc3Mount in other-clinics/oc3-per-patient-three-tabs.js) */
 {const _r=rowTotals;rowTotals=function(r,x){const o=_r.apply(this,arguments);try{if(x&&x.id==='tmp'&&r&&r.s&&NEWM(r.s.tmp)){const c=sync(r.s.tmp);o.flat=c.sum;o.m43d=c}}catch(e){console.error('m43d',e)}return o}}
 {const _c=chipsHTML;chipsHTML=function(x){try{if(x&&x.id==='tmp'&&x.groups&&x.groups.length===3){const s=AS().tmp;
     if(!NEWM(s))return _c.call(this,Object.assign({},x,{groups:[x.groups[0]]}));
@@ -62,7 +54,6 @@ const jn=l=>l.scan==='B'?2:1;
 const stepN=l=>A13_TEETH[l.ty]?(l.teeth||[]).length:l.ty==='essix'?(l.scan==='B'?2:l.scan?1:0):1;
 const stepDef=l=>{if(!l||!l.ty||l.redo)return 0;return PRT('pr_'+l.ty)*stepN(l)};
 try{A6C.pros.p=l=>stepDef(l)}catch(e){}
-{const _n=a6NewLine;a6NewLine=function(k){const l=_n.apply(this,arguments);try{if(l&&(k==='esx'||k==='dnt')){l.scan='U';l.n=1;l.teeth=[]}if(l&&k==='pros'){l.m43new=1;l.pm=0}}catch(e){}return l}}
 {const _f=a6From;a6From=function(){const S=_f.apply(this,arguments);try{(S.lines||[]).forEach(l=>{if(isJ(l)){l.scan=JW[l.scan]?l.scan:(num(l.n)>=2?'B':'U');l.n=jn(l)}if(l.k==='pros')l.pm=1})}catch(e){}return S}}
 const chips=(l,v)=>`<div class="chips" role="group">${['U','L','B'].map(s=>`<button type="button" class="chip" data-m43scan="${s}" data-l="${l.id}" aria-pressed="${v===s}">${JW[s]}</button>`).join('')}</div>`;
 {const _l=a6Line;a6Line=function(l){let h=_l.apply(this,arguments);try{

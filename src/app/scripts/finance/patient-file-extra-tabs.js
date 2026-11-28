@@ -4,12 +4,16 @@ function pfTabs(j){const T=[['tl','سیر درمان'],['hist','تاریخچه'+
   if(!T.some(t=>t[0]===PF.tab))PF.tab='tl';return T.length>1?`<div class="seg pftabs" role="group" aria-label="بخش پرونده" style="margin:12px 0">${T.map(([k,l])=>`<button type="button" data-pft="${k}" aria-pressed="${PF.tab===k}">${l}</button>`).join('')}</div>`:''}
 function pfTabHTML(tab,j,r){try{if(tab==='hist')return pfHist(j);if(tab==='pay')return pfPays(j,r);if(tab==='pros')return pfPros(j,r);if(tab==='ap')return pfAppts(j);if(tab==='img')return pfImgs(j)}catch(e){return `<div class="empty">${esc(e.message)}</div>`}return ''}
 /* payments */
-function payNums(j){const P=j.pays||[],sg=j.surg||{},sum=f=>P.filter(f).reduce((a,p)=>a+(Number(p.amount)||0),0);
+/* payNums: base + fx4 (the balance the server computes) */
+function payNums(j){if(j&&j.bal&&typeof j.bal==='object'){const b=j.bal;return {total:b.total,got:b.paid,wait:b.wait,bounce:b.bounce,rest:b.rest,credit:b.credit,rfOpen:b.rfOpen,waived:b.waived}}const P=j.pays||[],sg=j.surg||{},sum=f=>P.filter(f).reduce((a,p)=>a+(Number(p.amount)||0),0);
   const total=(Number(j.total)||0)+(j.settle&&sg.diff?Number(sg.diff):0),got=sum(p=>p.st==='ok')-(j.refunds||[]).filter(x=>x.st==='paid').reduce((a,x)=>a+(Number(x.amount)||0),0),wait=sum(p=>p.kind==='chq'&&p.st==='wait'),bounce=sum(p=>p.st==='bounce');return {total,got,wait,bounce,rest:total-got-wait}}
-function paySugs(r){const out=[];try{const pv=PV(r,1),T=totals(pv),b=effBrand(r),S=T.surg[b],P=T.pros;
+/* paySugs: base + o3s (option 3: two rows for the rest, no cheque) */
+function paySugs(r){try{if(pl10O3(r)){const T=totals(PV(r,1)),b=effBrand(r),S=T.surg[b]||0,P=T.pros||0,C=o3sCash(r,S);return [['cash','s',C,`نقد قبل از جراحی (${fa(pl10Pct(r))}٪ پارت جراحی)`],['cash','s',Math.max(0,S-C),'مانده‌ی پارت جراحی — تا روز قالب‌گیری'],['cash','p',P,'پارت پروتز — تا روز قالب‌گیری']].filter(s=>s[2]>0)}}catch(e){}
+  const out=[];try{const pv=PV(r,1),T=totals(pv),b=effBrand(r),S=T.surg[b],P=T.pros;
   if(S){const n=r.pay.opt==='1'?num(r.pay.n1)||1:1,x=splitPay(S,fracS(r),n);out.push(['cash','s',discOn(r)?S-discAmt(r,S):x.c,discOn(r)?'نقد جراحی با تخفیف':'پیش‌پرداخت نقد جراحی']);if(x.rest)out.push(['chq','s',x.per,n>1?'هر چک جراحی':'چک جراحی'])}
   if(P){const n=num(r.pay.n3)||1,x=splitPay(P,fracP(r),n);out.push(['cash','p',discOn(r)?P-(discAmt(r,S+P)-discAmt(r,S)):x.c,discOn(r)?'نقد پروتز با تخفیف':'پیش‌پرداخت نقد پروتز']);if(x.rest)out.push(['chq','p',x.per,n>1?'هر چک پروتز':'چک پروتز'])}}catch(e){}return out.filter(s=>s[2]>0)}
 let PYF={kind:'cash',part:'s'};
+/* pfPays: base + arc6 (payment date) + ux6 (ux6PayWrap) + pl10 (referral without settlement) + m12 («مغایرت» banner) */
 function pfPays(j,r){const N=payNums(j),P=(j.pays||[]).filter(p=>p.st!=='del'),ed=ROLE==='consultant'||ROLE==='accountant'||ROLE==='staff',td=tDay();let pt={};try{pt=payText(PV(r,1),effBrand(r))}catch(e){}
   const k=(l,v,c)=>`<div class="kpi mini${c?' '+c:''}"><b>${fa(v)}<small class="cur">تومان</small></b><span>${l}</span></div>`;
   let dsc=0;try{const T0=totals(PV(r,1)),gross=(r.brand==='ref'?Math.min(...BRANDS.map(b=>T0.surg[b.k])):T0.surg[r.brand])+T0.pros;dsc=discAmt(r,gross)}catch(e){}
@@ -35,6 +39,14 @@ function pfPays(j,r){const N=payNums(j),P=(j.pays||[]).filter(p=>p.st!=='del'),e
         ${fin1ChqHTML('py',PYF)}<div class="chips">${[1,2,3,4,5,6].map(n=>`<button type="button" class="chip" data-pydq="${mAdd(td,n)}">${fa(n)} ماه بعد</button>`).join('')}</div></div>
       <div class="msg" id="pyMsg"></div><div class="btns"><button class="btn" type="button" id="pyAdd">ثبت پرداخت</button></div></div>`;
     h+=icHTML(Math.max(0,N.rest-N.wait))}
+  /* arc6: the payment date (a past date is an earlier payment, not today's cash) */
+  if(h.includes('id="pyMsg"')&&!h.includes('id="py_day"'))h=h.replace('<div class="msg" id="pyMsg"></div>',`<div class="fields"><label class="f">تاریخ پرداخت<input id="py_day" data-jd="1" placeholder="${esc(jDay(tDay()))}" value="${esc(A6PDV||jDay(tDay()))}" autocomplete="off"><small class="dhint">امروز = صندوق امروز. تاریخ گذشته = پرداخت قبلی (در صندوق امروز نمی‌آید).</small></label></div><div class="msg" id="pyMsg"></div>`);
+  /* ux6 */
+  try{h=ux6PayWrap(h,j,r)}catch(e){console.error('ux6 pay',e)}
+  /* pl10 (10): the consultant / manager can allow a referral without settlement */
+  try { if ((ROLE === 'consultant' || ROLE === 'manager') && r && (r.status === 'confirmed' || r.status === 'modified') && payNums(j).rest > 0) h += `<div class="btns pl10al"><button class="btn sm ghost" type="button" data-pl10allow="${esc(j.id || r.id || '')}">اجازه‌ی ارجاع به جراح بدون تسویه…</button></div>` } catch (e) { }
+  /* m12: «مغایرت» banner */
+  try { const id = (j && j.id) || (r && r.id); if (id && M12[id]) h = `<div class="banner warn m12b">${m12Pill(M12[id])} جمع چک‌ها و پرداخت‌ها با مبلغ طرح یکی نیست؛ تا تسویه این پیام می‌ماند.</div>` + h } catch (e) { }
   return h}
 let IC={open:false,total:'',pre:'',n:'6',gap:1,first:'',bank:'',part:'s'};
 function jmAdd(iso,n){const p=jParts(iso);let y=p[0],m=p[1]+n;while(m>12){m-=12;y++}while(m<1){m+=12;y--}const key=(a,b,c)=>a*600+b*40+c;let d=dAdd(iso,Math.round(n*30.44));
@@ -50,14 +62,18 @@ function icHTML(rest){if(!IC.total&&rest)IC.total=rest.toLocaleString('en-US');i
     <div id="icPrev">${icPrev(P)}</div>
     <p class="note">پیش‌پرداخت را جداگانه با «ثبت پرداخت تازه» ثبت کنید. شماره‌ی هر چک را بعداً می‌توانید در توضیح بنویسید.</p>
     <div class="msg" id="icMsg"></div><div class="btns"><button class="btn" type="button" id="icGo"${P.rows.length?'':' disabled'}>ثبت ${fa(P.rows.length||0)} چک</button></div></details>`}
+/* icPrev: base + id1 (a cheque-number input beside each row number) */
 function icPrev(P){if(!P.rows.length)return `<div class="empty">${P.rest<=0&&num(IC.total)?'پیش‌پرداخت از مبلغ کل بیشتر است.':'مبلغ و تاریخ را وارد کنید.'}</div>`;
-  return `<div class="ictab">${P.rows.map((r,i)=>`<div><span>${fa(i+1)}</span><span>${esc(wDay(r.due))} ${esc(jDay(r.due))}</span><b>${fa(r.amount)}</b></div>`).join('')}<div class="tot"><span></span><span>جمع ${fa(P.rows.length)} چک</span><b>${fa(P.rest)}</b></div></div>`}
+  const h=`<div class="ictab">${P.rows.map((r,i)=>`<div><span>${fa(i+1)}</span><span>${esc(wDay(r.due))} ${esc(jDay(r.due))}</span><b>${fa(r.amount)}</b></div>`).join('')}<div class="tot"><span></span><span>جمع ${fa(P.rows.length)} چک</span><b>${fa(P.rest)}</b></div></div>`;
+  IC.nos = IC.nos || {}; return h.replace(/<div><span>([۰-۹]+)<\/span>/g, (m0, n) => { const i = Number(toEn(n)) - 1; return `<div><span>${n} <input class="id1no" data-icno="${i}" inputmode="numeric" placeholder="شماره چک" value="${esc(IC.nos[i] || '')}" aria-label="شماره چک ${n}"></span>` })}
 function icRead(){[['total','ic_total'],['pre','ic_pre'],['n','ic_n'],['first','ic_first'],['bank','ic_bank']].forEach(([k,id])=>{const e=$(id);if(e)IC[k]=e.value})}
 function icRefresh(){icRead();const P=icPlan();$('icPrev').innerHTML=icPrev(P);const b=$('icGo');b.disabled=!P.rows.length;b.textContent=`ثبت ${fa(P.rows.length||0)} چک`}
-async function icGo(t){icRead();const P=icPlan(),m=$('icMsg');if(!P.rows.length)return;t.disabled=true;let ok=0;
-  try{for(const r of P.rows){m.className='msg';m.textContent=`در حال ثبت چک ${fa(ok+1)} از ${fa(P.rows.length)}…`;await api('payAdd',{id:PF.id,pay:{kind:'chq',part:IC.part,amount:r.amount,due:r.due,no:'',bank:IC.bank||'',note:`قسط ${fa(ok+1)} از ${fa(P.rows.length)}`},sendId:uuid()});ok++}
-    toast(`${fa(ok)} چک ثبت شد.`);IC={open:false,total:'',pre:'',n:'6',gap:1,first:'',bank:'',part:IC.part};refreshFile();pollQ(true)}
-  catch(e){m.className='msg err';m.textContent=(ok?`${fa(ok)} چک ثبت شد؛ `:'')+e.message;t.disabled=false;if(ok)refreshFile()}}
+/* icGo: id1 version (replaced the base): every cheque needs a number and the bank is required */
+async function icGo(t) { icRead(); const P = icPlan(), m = $('icMsg'); if (!P.rows.length) return; const miss = P.rows.map((r, i) => (IC.nos || {})[i] ? '' : String(i + 1)).filter(Boolean); if (miss.length) { m.className = 'msg err'; m.textContent = 'شماره‌ی چک ' + miss.map(fa).join('، ') + ' را بنویسید.'; return } if (!String(IC.bank || '').trim()) { m.className = 'msg err'; m.textContent = 'بانک را بنویسید.'; return }
+  t.disabled = true; let ok = 0; const nos = Object.assign({}, IC.nos);
+  try { for (const r of P.rows) { m.className = 'msg'; m.textContent = `در حال ثبت چک ${fa(ok + 1)} از ${fa(P.rows.length)}…`; await api('payAdd', { id: PF.id, pay: { kind: 'chq', part: IC.part, amount: r.amount, due: r.due, no: nos[ok] || '', bank: IC.bank || '', note: `قسط ${fa(ok + 1)} از ${fa(P.rows.length)}` }, sendId: uuid() }); ok++ }
+    toast(`${fa(ok)} چک ثبت شد.`); IC = { open: false, total: '', pre: '', n: '6', gap: 1, first: '', bank: '', part: IC.part }; refreshFile(); pollQ(true) }
+  catch (e) { m.className = 'msg err'; m.textContent = (ok ? `${fa(ok)} چک ثبت شد؛ ` : '') + e.message; t.disabled = false; if (ok) refreshFile() } }
 document.addEventListener('input',e=>{const i=e.target;if(!i.id||!i.id.startsWith('ic_'))return;if(i.id==='ic_total'||i.id==='ic_pre')i.value=fmtInput(i.value);icRefresh()});
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('instc'))IC.open=e.target.open},true);
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;if(t.dataset.icg){IC.gap=+t.dataset.icg;t.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===t));icRefresh();return}
@@ -77,16 +93,6 @@ function cpHints(){const a=parseInt(toEn($('cp_amt').value).replace(/[^\d]/g,'')
   document.querySelectorAll('[data-cpu]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cpu===u))}
 function printHTML(html){const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f);const d=f.contentDocument;d.open();d.write(html);d.close();
   setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){alertMsg('چاپ در این دستگاه پشتیبانی نمی‌شود؛ از کامپیوتر چاپ کنید.')}setTimeout(()=>f.remove(),60000)},400)}
-function printChq(){const m=$('cpMsg'),a=parseInt(toEn($('cp_amt').value).replace(/[^\d]/g,''),10)||0,iso=parseJ($('cp_day').value.trim()),to=$('cp_to').value.trim();
-  if(!a){m.className='msg err';m.textContent='مبلغ را وارد کنید.';return}if(!iso){m.className='msg err';m.textContent='تاریخ را درست وارد کنید.';return}if(!to){m.className='msg err';m.textContent='«در وجه» را بنویسید.';return}
-  const u=CP.unit||'r',v=u==='r'?a*10:a,ul=u==='r'?'ریال':'تومان',dx=parseFloat(toEn($('cp_dx').value))||0,dy=parseFloat(toEn($('cp_dy').value))||0,nid=$('cp_nid').value.trim(),fr=$('cp_for').value.trim();
-  CPS.set('to',to);CPS.set('nid',nid);CPS.set('dx',String(dx));CPS.set('dy',String(dy));CPS.set('unit',u);
-  const E=x=>esc(x),pos=(l,t,w,c)=>`<div class="t" style="left:${(l-dx).toFixed(1)}mm;top:${(t+dy).toFixed(1)}mm;${w?'width:'+w+'mm;':''}">${c}</div>`;
-  printHTML(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>چک</title><style>@page{size:175mm 80mm;margin:0}html,body{margin:0;width:175mm;height:80mm}body{position:relative;font-family:Vazirmatn,Tahoma,sans-serif;font-size:11pt;color:#000}.t{position:absolute;white-space:nowrap;overflow:hidden}.b{font-weight:700}</style></head><body>
-${pos(108,11,52,`<span class="b">${E(jDateWords(iso))}</span>`)}${pos(14,11,34,`<span class="b">${E(faD(toEn(jDay(iso))))}</span>`)}
-${pos(18,27,118,`<span class="b">${E(numWords(v))} ${ul}</span>`)}${pos(18,37,118,`${E(to)}${fr?' — بابت '+E(fr):''}`)}${nid?pos(70,46,66,E(faD(toEn(nid)))):''}
-${pos(12,52,44,`<span class="b">${E(fa(v))} ${ul}</span>`)}</body></html>`);
-  m.className='msg ok';m.textContent='به پرینتر فرستاده شد.'}
 function printChqReceipt(){if(!PF||!PF.j)return;const r=fromDoc(PF.id,PF.j.data||{}),h=r.h||{},C=(PF.j.pays||[]).filter(p=>p.kind==='chq').sort((a,b)=>(a.due||'').localeCompare(b.due||'')),tot=C.reduce((x,p)=>x+(Number(p.amount)||0),0);
   if(!C.length){alertMsg('چکی برای این بیمار ثبت نشده.');return}const E=x=>esc(String(x??''));
   printHTML(`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>رسید چک‌ها</title><style>@page{size:A5;margin:12mm}body{font-family:Vazirmatn,Tahoma,sans-serif;font-size:10.5pt;color:#000}h1{font-size:14pt;margin:0 0 2mm;text-align:center}.sub{text-align:center;margin:0 0 6mm;color:#333}table{width:100%;border-collapse:collapse;margin:4mm 0}th,td{border:1px solid #555;padding:2mm;text-align:center}th{background:#eee}.tot{font-weight:700}.sig{display:flex;justify-content:space-between;margin-top:16mm}.sig div{width:45%;border-top:1px solid #000;padding-top:2mm;text-align:center}</style></head><body>
@@ -106,49 +112,12 @@ document.addEventListener('input',e=>{if(e.target&&(e.target.id==='cp_amt'||e.ta
 /* prosthesis + lab */
 let LO=null;
 function implantsOf(j){const out={};((j.surg||{}).sessions||[]).forEach(s=>Object.keys(s.imp||{}).forEach(k=>out[k]=s.imp[k]));return out}
-function pfPros(j,r){const pr=j.pros,st=pr?pr.stage:'',idx=PST.findIndex(s=>s[0]===st),labs=j.labs||[],open=labs.filter(l=>!['done','cancel'].includes(l.st)),ed=canPros();let h='';
-  if(!pr)return `<p class="note">مرحله‌ی پروتز این بیمار هنوز شروع نشده. بعد از ثبت آخرین جلسه‌ی جراحی (با ایمپلنت) خودکار شروع می‌شود.</p>${ed?`<div class="btns"><button class="btn" type="button" data-pnext="${esc(PF.id)}" data-pst="heal">شروع مرحله‌ی پروتز</button><button class="btn ghost" type="button" data-pnext="${esc(PF.id)}" data-pst="impr">شروع از قالب‌گیری</button></div>`:''}`;
-  const cnt={};(pr.log||[]).forEach(g=>cnt[g.k]=(cnt[g.k]||0)+1);
-  h+=`<div class="stepper5">${PST.slice(0,6).map((s,i)=>`<span class="${s[0]===st?'on':(i<idx||st==='done')?'past':''}">${s[1]}${cnt[s[0]]>1?' ×'+fa(cnt[s[0]]):''}</span>`).join('')}</div>`;
-  if(pr.map&&Object.keys(pr.map).length){const M=pr.map,A=Object.keys(M).filter(k=>M[k]==='a'),P=Object.keys(M).filter(k=>M[k]==='p');h+=`<p class="note">پایه‌ها: <b>${esc(toothTxt(A)||'—')}</b>${P.length?' · پونتیک: <b>'+esc(toothTxt(P))+'</b>':''}${pr.mapBy?' · ثبت '+esc(pr.mapBy):''}${pr.mapNote?'<br>'+esc(pr.mapNote):''}</p>`}
-  if(st==='done')h+=`<div class="banner info">پروتز تحویل شد. چکاپ دوره‌ای در کارتابل پذیرش زمان‌بندی شده است.</div>`;
-  if(st==='heal'&&pr.ready)h+=`<p class="note">زمان تقریبی آنکاوری / قالب‌گیری: <b>${esc(jDay(pr.ready))}</b> (${esc(dayHint(pr.ready))})</p>`;
-  const B=[];const bk=(kind,l)=>canAppt()?`<button class="btn sm ghost" type="button" data-book="${kind}">${l}</button>`:'';
-  if(ed){if(st==='heal'){B.push(`<button class="btn sm" type="button" data-pnext="${esc(PF.id)}" data-pst="impr">${NEXT_LBL.heal}</button>`);B.push(bk('uncover','نوبت آنکاوری'))}
-    if(st==='impr'){if(canLab())B.push(`<button class="btn sm" type="button" id="loOpen">ثبت دستور کار لابراتوار</button>`);B.push(bk('impr','نوبت قالب‌گیری'))}
-    if(st==='lab')B.push(`<span class="note">منتظر لابراتوار…</span>`);
-    if(st==='tryin'){if(canLab())B.push(`<button class="btn sm" type="button" id="loOpen">${NEXT_LBL.tryin}</button>`);B.push(bk('tryin','نوبت تست رزین'))}
-    if(st==='rabt'){if(canLab())B.push(`<button class="btn sm" type="button" id="loOpen">${NEXT_LBL.rabt}</button>`);B.push(bk('rabt','نوبت تست رزین اباتمنت'))}
-    if(st==='deliv'){B.push(`<button class="btn sm" type="button" data-pnext="${esc(PF.id)}" data-pst="done">${NEXT_LBL.deliv}</button>`);B.push(bk('deliv','نوبت تحویل روکش'))}}
-  if(B.length)h+=`<div class="btns" style="flex-wrap:wrap">${B.join('')}</div>`;
-  if(ed){const R=PST.slice(0,st==='done'?6:idx+1);h+=`<div class="prrep"><div class="btns" style="flex-wrap:wrap"><button class="btn sm ghost" type="button" data-pmap="${esc(PF.id)}" data-pmn="">🦷 پایه و پونتیک</button>${R.length?'<button class="btn sm ghost" type="button" data-prept="1">↺ تکرار یک مرحله</button>':''}</div><div class="chips" hidden style="margin-top:6px">${R.map(s=>`<button type="button" class="chip" data-prep="${s[0]}">${s[0]===st?'تکرار همین مرحله: ':'برگشت به: '}${esc(s[1])}${cnt[s[0]]?' (بار '+ordWords(cnt[s[0]]+1)+')':''}</button>`).join('')}</div></div>`}
-  if(LO&&canLab()&&st!=='done')h+=loForm(j);
-  if(labs.length){h+=`<h3 class="pf-h">سفارش‌های لابراتوار</h3>`+labs.slice().reverse().map(l=>{const d=l.data||{},late=l.due&&l.due<tDay()&&!['ready','done','cancel'].includes(l.st),op=!['done','cancel'].includes(l.st);
-    return `<div class="lorder"><div class="row1"><b>${esc(toothTxt(d.teeth||[])||'سفارش')}</b><span class="pill ${LSTC[l.st]||''}">${esc(LST[l.st]||l.st)}</span></div>
-      <div class="labcard"><div class="spec">${labSpecs(d)}</div>${l2Btn(l)}</div><div class="meta">ثبت ${esc(jd(l.created))} · تحویل <span class="${late?'late':''}">${esc(jDay(l.due)||'—')}</span>${d.by?' · '+esc(d.by):''}</div>${d.note?`<div class="meta">${esc(d.note)}</div>`:''}${labLog(l.log)}
-      ${op&&ROLE!=='manager'?`<div class="labmsg"><input placeholder="پیام یا توضیح برای لابراتوار" data-lbmsg="${esc(l.id)}"><button class="btn sm ghost" type="button" data-lbsend="${esc(l.id)}">ارسال</button></div>`:''}
-      ${ed&&l.st==='ready'?`<div class="acts" style="margin-top:8px"><button class="btn sm ghost" type="button" data-lbredo="${esc(l.id)}">برگشت به لابراتوار برای اصلاح</button></div>`:''}
-      ${ed&&(l.st==='new')?`<div class="acts" style="margin-top:8px"><button class="btn sm ghost danger" type="button" data-lbset="cancel" data-lid="${esc(l.id)}">لغو سفارش</button></div>`:''}</div>`}).join('')}
-  if((pr.log||[]).length)h+=`<h3 class="pf-h">سابقه‌ی مراحل</h3><ul class="llog">${pr.log.slice().reverse().map(g=>`<li><b>${esc(PSTN[g.k]||g.k)}${g.rep?' — تکرار':''}</b>${g.note?' — '+esc(g.note):''}<small>${esc(jt(g.at))}${g.by?' · '+esc(g.by):''}</small></li>`).join('')}</ul>`;
-  return h}
+/* (pfPros: the one in use is in prosthesis/pros2-prosthesis-workflow-v2-work.js; the older copy here never ran — the later declaration of the same script wins) */
 const LO_OPT={type:['روکش تک','بریج','اوردنچر','All-on-X','موقت'],mat:['زیرکونیا','PFM','E.max','PMMA'],abut:['استوک','کاستوم','مولتی‌یونیت','Ti-base'],ret:['پیچی','سمانی']};
-function loInit(j){const imp=implantsOf(j),teeth=Object.keys(imp),sys=[...new Set(teeth.map(k=>[imp[k].b,imp[k].sys].filter(Boolean).join(' ')).filter(Boolean))].join('، ');
-  const r=fromDoc(PF.id,j.data||{}),st0=((j.pros||{}).stage)||'impr';LO={teeth,all:teeth.slice(),type:teeth.length>1?'':'روکش تک',mat:'زیرکونیا',abut:'',ret:'پیچی',shade:'',sys,doc:PROSDOC()||r.h.doc||docList()[0]||'',note:'',due:dAdd(tDay(),10),for:LFOR_DEF[st0]||'tryin'};
-  const M=(j.pros||{}).map;if(M&&Object.keys(M).length){LO.all=Object.keys(M);LO.teeth=LO.all.slice();LO.pon=LO.all.filter(k=>M[k]==='p');if(LO.pon.length)LO.type='بریج'}}
-function loForm(j){const o=LO,ch=(g,l)=>`<div class="grp"><span>${l}</span><div class="chips">${LO_OPT[g].map(v=>`<button type="button" class="chip" data-lo="${g}" data-lov="${esc(v)}" aria-pressed="${o[g]===v}">${esc(v)}</button>`).join('')}</div></div>`;
-  return `<div class="payform"><b>دستور کار تازه برای لابراتوار</b>
-    <div class="grp"><span>این دستور کار برای ساخت</span><div class="chips">${Object.keys(LFOR).map(k=>`<button type="button" class="chip" data-lofor="${k}" aria-pressed="${o.for===k}">${LFOR[k]}</button>`).join('')}</div><small class="note">بعد از «آماده» شدن کار در لابراتوار، بیمار به همین مرحله می‌رود. به نظر پزشک پروتز می‌شود مستقیم روکش نهایی ساخت.</small></div>
-    <div class="grp"><span>دندان‌ها${o.all.length?'':' (ایمپلنتی در جلسات جراحی ثبت نشده؛ در توضیح بنویسید)'}</span><div class="chips">${o.all.map(k=>`<button type="button" class="chip" data-lot="${k}" aria-pressed="${o.teeth.includes(k)}">${esc(toothTxt([k]))}${(o.pon||[]).includes(k)?' · پونتیک':''}</button>`).join('')}</div></div>
-    ${ch('type','نوع کار')}${ch('mat','جنس')}${ch('abut','اباتمنت')}${ch('ret','نوع اتصال')}
-    <div class="fields"><label class="f">رنگ (Shade)<input id="lo_shade" class="ltr" placeholder="A2" value="${esc(o.shade)}"></label><label class="f">سیستم ایمپلنت<input id="lo_sys" value="${esc(o.sys)}"></label>
-      <label class="f">تاریخ تحویل از لابراتوار<input id="lo_due" inputmode="numeric" value="${esc(jDay(o.due))}"><small class="dhint" id="lo_dueH">${esc(dayHint(o.due))}</small></label><label class="f">پزشک<input id="lo_doc" value="${esc(o.doc)}"></label></div>
-    <label class="f">توضیح برای لابراتوار<textarea id="lo_note" rows="2">${esc(o.note)}</textarea></label>
-    <div class="msg" id="loMsg"></div><div class="btns"><button class="btn" type="button" id="loSend">ارسال سفارش به لابراتوار</button><button class="btn ghost" type="button" id="loCancel">انصراف</button></div></div>`}
-function loRead(){if(!LO)return;const g=id=>($(id)||{}).value;['shade','sys','doc','note'].forEach(k=>{const v=g('lo_'+k);if(v!==undefined)LO[k]=v});const d=g('lo_due');if(d!==undefined){const iso=parseJ(d);LO.dueTxt=d;if(iso)LO.due=iso;else LO.due=''}}
-async function loSend(t){loRead();const m=$('loMsg');if(!LO.due){m.className='msg err';m.textContent='تاریخ تحویل را درست وارد کنید.';return}if(!LO.teeth.length&&!LO.note.trim()){m.className='msg err';m.textContent='دندان‌ها را انتخاب کنید یا در توضیح بنویسید.';return}
-  t.disabled=true;if(!t.dataset.sid)t.dataset.sid=uuid();
-  try{await api('labNew',{id:PF.id,order:{for:LO.for,teeth:LO.teeth,pon:(LO.pon||[]).filter(k=>LO.teeth.includes(k)),type:LO.type,mat:LO.mat,abut:LO.abut,ret:LO.ret,shade:LO.shade,sys:LO.sys,doc:LO.doc,note:LO.note,by:ROLE_LBL[ROLE]},due:LO.due,sendId:t.dataset.sid});LO=null;toast('سفارش به لابراتوار رفت.');refreshFile();if(!$('viewPros').hidden)loadPros()}
-  catch(e){m.className='msg err';m.textContent=e.message;t.disabled=false}}
+/* (loInit, loForm: the ones in use are in prosthesis/pros2-prosthesis-workflow-v2-work.js; the older copies here never ran) */
+/* loRead: base + hani (lab/hani-lab-work-order-sheet.js: the work-order sheet fields, h9Read + h9Apply — they run also when there is no LO) */
+function loRead(){if(LO){const g=id=>($(id)||{}).value;['shade','sys','doc','note'].forEach(k=>{const v=g('lo_'+k);if(v!==undefined)LO[k]=v});const d=g('lo_due');if(d!==undefined){const iso=parseJ(d);LO.dueTxt=d;if(iso)LO.due=iso;else LO.due=''}}try{h9Read();h9Apply()}catch(e){}}
+/* (loSend: the one in use is in prosthesis/pros2-prosthesis-workflow-v2-work.js; the older copy here never ran — the later declaration of the same script wins) */
 /* appointments in the file */
 function pfAppts(j){const A=(j.appts||[]).slice().sort((a,b)=>(b.day+b.time).localeCompare(a.day+a.time)),td=tDay(),C=a=>apptCard(a,{date:1,nofile:1});
   const part=(L,ttl,g,bk,bl)=>{const up=L.filter(a=>a.day>=td&&a.st==='set').reverse(),past=L.filter(a=>!(a.day>=td&&a.st==='set'));if(!L.length&&!bk)return '';

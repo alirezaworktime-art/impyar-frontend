@@ -1,7 +1,7 @@
 /* ---------- m16: paper files — editing never changes what was saved (owner, 2026-11-11): (1) «پایه ایمپلنت» sessions entered as separate rows (e.g. different tariffs on the same day) stay separate on reopening, and every row keeps its own saved tariff (before: rows of the same day + doctor were joined and one tariff of the brand group won → 6 × 30M); (2) All on X implants keep their saved tariff per base on reopening; a new or re-branded base takes the tariff of its kind ---------- */
 const m16Pr = (p, t, ty) => { const s = p && p.tp && p.tp[t]; return s && s.ty === ty ? s.pr : m15Pr(ty) };
 const m16Groups = (l, p) => { const o = {}; (l.teeth || []).forEach(t => { const ty = m15Ty(((l.imp || {})[t] || {}).b), pr = m16Pr(p, t, ty), k = ty + '|' + pr; (o[k] = o[k] || { ty, pr, T: [] }).T.push(t) }); return Object.values(o) };
-m15Amt = function (l) { try { const p = m15Par(l); if (!p) return null; if (m2Only() === 'p') return 0; return m16Groups(l, p).reduce((a, g) => a + g.T.length * g.pr, 0) } catch (e) { return null } };
+/* (m15Amt now uses m16Groups: finance/layer.js) */
 /* reopening: the saved tariff of every All on X base */
 { const _f = a6From; a6From = function (j) { const S = _f.apply(this, arguments); try { const a = j && j.data && j.data.arc; if (a && a.v6 && Array.isArray(a.lines)) S.lines.filter(l => l.k === 'aox').forEach(p => { const cid = m2Cid(p), tp = {};
   a.lines.filter(l => l.k === 'imp' && String(l.id).replace(/-(ir|ko|it|sw|rt|xx|k\d{1,2})$/, '') === cid).forEach(c => (c.teeth || []).forEach(t => { const m = (c.imp || {})[t] || {}; tp[t] = { ty: m15Ty(m.b), pr: num(c.price) } }));
@@ -13,8 +13,6 @@ m15Amt = function (l) { try { const p = m15Par(l); if (!p) return null; if (m2On
   payload.arc.lines = out } } catch (e) { } return _a.apply(this, arguments) } }
 /* table + session panel by kind and tariff */
 const m16Rows = l => { const p = m15Par(l); if (l.k === 'imp' && l.ax && p) return m16Groups(l, p).map(g => { const pr = m2Only() === 'p' ? 0 : g.pr, br = [...new Set(g.T.map(t => ((l.imp || {})[t] || {}).b).filter(Boolean))]; return { lab: 'پایه ایمپلنت All on X — ' + M15_TY[g.ty] + (br.length ? ' (' + br.join('، ') + ')' : '') + ' — ' + toothTxt(g.T), n: g.T.length, p: pr, a: g.T.length * pr } }); return m15Rows(l) };
-a6TabHTML = function (C) { const rows = A6.lines.slice().sort((a, b) => String(a.day).localeCompare(String(b.day))).flatMap(l => m16Rows(l).map(r => `<tr><td>${esc(l.dayJ || '')}</td><td>${esc(r.lab)}</td><td>${esc(l.doc || '')}</td><td>${fa(r.n)} × ${fa(r.p)}</td><td>${fa(r.a)}</td></tr>`)).join('');
-  return `<table class="a6ct a9ct"><thead><tr><th>تاریخ</th><th>شرح درمان</th><th>نام پزشک</th><th>تعداد × تعرفه</th><th>مبلغ کل</th></tr></thead><tbody>${rows || '<tr><td colspan="5">هنوز درمانی وارد نشده.</td></tr>'}</tbody><tfoot><tr><td colspan="4">هزینه‌ی کل</td><td>${fa(C.cost)}</td></tr></tfoot></table>` };
 { const _l = a6Line; a6Line = function (l) { let h = _l.apply(this, arguments); if (!l || l.k !== 'aox' || m2Only() === 'p') return h; try { const G = m16Groups(l, l);
   const rows = G.length ? G.map(g => `<div class="a6def">${M15_TY[g.ty]}: ${fa(g.T.length)} × ${fa(g.pr)} = <b>${fa(g.T.length * g.pr)}</b>${l.tp && g.T.every(t => l.tp[t] && l.tp[t].ty === g.ty) && g.pr !== m15Pr(g.ty) ? ' <small>(تعرفه‌ی ثبت‌شده)</small>' : ''}</div>`).join('') : '<div class="a6def">پایه‌ها را بزنید</div>';
   h = h.replace(/(<div class="m15ty"><b>[^<]*<\/b>)[\s\S]*?(<small class="note">)/, '$1' + rows + '$2') } catch (e) { } return h } }

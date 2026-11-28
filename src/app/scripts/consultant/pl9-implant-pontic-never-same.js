@@ -6,9 +6,7 @@
   if (SEC.tmp) SEC.tmp.pros = false;
   const a = SEC.anes; if (a) { a.t = 'بیهوشی / سدیشن'; a.items = [{ k: 'ga', l: 'بیهوشی عمومی', type: 'toggle', pk: 'anes_ga' }, { k: 'sd', l: 'سدیشن', type: 'toggle', pk: 'anes_sd' }]; }
 })();
-/* (1) a tooth is either an implant or a pontic */
-{ const _t = toothBtn; toothBtn = function (sid, key) { let h = _t.apply(this, arguments); try { const o = sid === 'imp' ? 'pon' : sid === 'pon' ? 'imp' : ''; if (o && !/\sdisabled[\s>]/.test(h)) { const S = AS(); if (S && S[o] && S[o].sel && S[o].sel[key] && !(S[sid] && S[sid].sel && S[sid].sel[key])) h = h.replace('<button ', '<button disabled title="' + (o === 'imp' ? 'این دندان پایه‌ی ایمپلنت است' : 'این دندان پونتیک است') + '" ').replace('class="t', 'class="t pl9x') } } catch (e) { } return h } }
-{ const _e = exRefresh; exRefresh = function (sid) { const r = _e.apply(this, arguments); try { const o = sid === 'imp' ? 'pon' : sid === 'pon' ? 'imp' : ''; if (o && document.querySelector(`[data-sec="${o}"]`)) reSec(o) } catch (e) { } return r } }
+/* (1) a tooth is either an implant or a pontic: merged into toothBtn and exRefresh (surgery/form-render.js) */
 /* (3) every «count × tariff = sum» reads left to right */
 const PL9_RE = /([۰-۹][۰-۹٬]*)(?:\s*(?:واحد|Q|فک|پایه|عدد))?\s*×\s*([۰-۹][۰-۹٬]*)(\s*=\s*<b>[^<]*<\/b>)?/g;
 const pl9Ltr = h => String(h).replace(PL9_RE, (m, a, b, c) => `<bdi class="pl9m" dir="ltr">${a} × ${b}${c ? ' = ' + c.replace(/^\s*=\s*/, '') : ''}</bdi>`);
@@ -36,31 +34,27 @@ function pl9PL(r, x, L) {
 { const _p = priceLines; priceLines = function (r, x) { const L = _p.apply(this, arguments); try { if (x.id === 'anes') { const s = r.s[x.id], it = (x.items || []).find(i => itemQty(s, i)); if (it) { const v = rowTotals(r, x).flat; return v ? [{ t: it.l, c: '#444', s: 17 }, { t: fa(v), b: 1 }] : L } } return pl9PL(r, x, L) } catch (e) { return L } } }
 /* (9) anesthesia / sedation: the chosen option's own tariff replaces the old single price */
 { const _r = rowTotals; rowTotals = function (r, x) { const o = _r.apply(this, arguments); try { if (x && x.id === 'anes') { const s = r.s[x.id], it = (x.items || []).find(i => itemQty(s, i)); if (it) o.flat = num(s.ip[it.k]) } } catch (e) { } return o } }
-{ const _s = sectionHTML; sectionHTML = function (x) { let h = _s.apply(this, arguments); try { if (x.id === 'anes') { const s = AS()[x.id]; const on = k => !!Object.keys(s.isel || {}).some(z => s.isel[z] && z.startsWith(k + ':'));
-      const ch = `<div class="chips pl9an" role="group" aria-label="نوع">${x.items.map(it => `<button type="button" class="chip" data-pl9an="${it.k}" aria-pressed="${on(it.k)}">${it.l}</button>`).join('')}</div>`;
-      const pr = SURG ? '' : `<div class="fields">${x.items.map(it => `<label class="f">قیمت ${it.l}<input class="price" inputmode="numeric" data-ip="anes" data-ik="${it.k}" value="${esc(s.ip[it.k] || '')}"></label>`).join('')}</div>`;
-      h = h.replace('</h2>', '</h2>' + ch); if (!SURG) { h = h.replace(/<label class="f">قیمت<input id="pr_anes"[^>]*><\/label>/, m0 => (num(s.price) && !x.items.some(it => on(it.k))) ? m0 : ''); const i = h.lastIndexOf('<div class="calc" id="calc_anes">'); if (i >= 0) h = h.slice(0, i) + pr + h.slice(i) } } } catch (e) { } return h } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-pl9an]'); if (!t) return; e.preventDefault(); const s = AS().anes; if (!s) return; const k = t.dataset.pl9an, was = !!s.isel[k + ':on'];
   Object.keys(s.isel).forEach(z => { if (/^(ga|sd):/.test(z)) delete s.isel[z] }); if (!was) s.isel[k + ':on'] = true; if (SURG) SURG.dirty = true; else touch(); reSec('anes') }, true);
-{ const _ps = renderPriceSettings; renderPriceSettings = function () { const r = _ps.apply(this, arguments); try { const i = document.querySelector('#set_prices [data-tp="anes"]'); const g = i && i.closest('.grp'); if (g) g.remove() } catch (e) { } return r } }
 /* (8) surgery day: GBR units per tooth (s.icnt['gn:UR4']; default 1) */
 { const _q = qty; qty = function (s, x) { const n = _q.apply(this, arguments); try { if (x && x.id === 'gbr' && s && s.icnt) { let e = 0; Object.keys(s.sel || {}).forEach(k => { if (s.sel[k] && isTooth(k)) { const c = num(s.icnt['gn:' + k]); if (c > 1) e += c - 1 } }); return n + e } } catch (e) { } return n } }
-{ const _d = secDesc; secDesc = function (S, x) { let t = _d.apply(this, arguments); try { if (x && x.id === 'gbr') { const s = S[x.id] || {}; const L = Object.keys(s.sel || {}).filter(k => s.sel[k] && isTooth(k) && num((s.icnt || {})['gn:' + k]) > 1).map(k => toothTxt([k]) + ': ' + fa(num(s.icnt['gn:' + k])) + ' عدد'); if (L.length) t += (t ? ' — ' : '') + 'تعداد GBR: ' + L.join('، ') } } catch (e) { } return t } }
 function pl9GbrHTML() { if (!SURG || SURG.arc) return ''; const s = SURG.s.gbr; if (!s) return ''; const T = Object.keys(s.sel || {}).filter(k => s.sel[k] && isTooth(k)).sort(); if (!T.length) return '';
   return `<div class="pl9gn"><small>تعداد GBR استفاده‌شده روی هر دندان</small>${T.map(k => { const n = Math.max(1, num(s.icnt['gn:' + k])); return `<span class="pl9g"><b>${esc(toothTxt([k]))}</b><button type="button" data-pl9g="${k}|-1" aria-label="کمتر"${n <= 1 ? ' disabled' : ''}>−</button><b class="n">${fa(n)}</b><button type="button" data-pl9g="${k}|1" aria-label="بیشتر">+</button></span>` }).join('')}</div>` }
-{ const _s = sectionHTML; sectionHTML = function (x) { let h = _s.apply(this, arguments); try { if (x.id === 'gbr' && SURG) { const g = pl9GbrHTML(); if (g) { const i = h.lastIndexOf('<div class="calc" id="calc_gbr">'); h = i >= 0 ? h.slice(0, i) + g + h.slice(i) : h.replace('</section>', g + '</section>') } } } catch (e) { } return h } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-pl9g]'); if (!t || !SURG) return; e.preventDefault(); e.stopPropagation(); const [k, d] = t.dataset.pl9g.split('|'), s = SURG.s.gbr; s.icnt = s.icnt || {};
   const n = Math.max(1, Math.min(20, Math.max(1, num(s.icnt['gn:' + k])) + Number(d))); if (n > 1) s.icnt['gn:' + k] = String(n); else delete s.icnt['gn:' + k]; SURG.dirty = true; reSec('gbr') }, true);
 /* (5) surgery day: doctor per tooth — pick the doctor, then tap the teeth he / she did (default: the section's assistant) */
 const PL9D = () => { const L = ASSTS().slice(), s = SURGEON(); if (s && !L.includes(s)) L.push(s); return L };
+/* sectionHTML, the three pl9 layers in one wrapper (run order kept): (5) keep the per-tooth doctors across a redraw (before + after the call),
+   (9) anesthesia / sedation chips and prices (only x.id 'anes'), (8) GBR units per tooth on surgery day (only x.id 'gbr' with SURG) */
 { const _s = sectionHTML; sectionHTML = function (x) { try { if (SURG) { SURG.pl9st = SURG.pl9st || {}; if (SURG.st && SURG.st[x.id] && !SURG.pl9st[x.id]) SURG.pl9st[x.id] = Object.assign({}, SURG.st[x.id]) } } catch (e) { }
-  const h = _s.apply(this, arguments); try { if (SURG && SURG.pl9st && SURG.pl9st[x.id]) { SURG.st = SURG.st || {}; SURG.st[x.id] = SURG.pl9st[x.id] } } catch (e) { } return h } }
-p5SplitHTML = function (x) {
-  if (!SURG || SURG.arc || SOLO.includes(x.id)) return ''; const s = SURG.s[x.id], U = p5Units(s); if (U.length < 2) return '';
-  const a1 = SURG.sa[x.id] || SURG.asst || '', st = (SURG.pl9st || {})[x.id] || {}, B = (SURG.pl9b || {})[x.id] || '';
-  return `<div class="p5split pl9pt"><small>پزشک هر دندان: اول پزشک را بزنید، بعد دندان‌هایی که انجام داد (بقیه: ${esc(a1 || 'دستیار این بخش')})</small><div class="chips pl9dr">${PL9D().map(n => `<button type="button" class="chip" data-pl9b="${esc(x.id)}" data-n="${esc(n)}" aria-pressed="${B === n}">${esc(n)}</button>`).join('')}</div>
-    <div class="chips">${U.map(k => { const w = st[k] || a1; return `<button type="button" class="chip${st[k] && st[k] !== a1 ? ' p5b' : ' p5a'}" data-pl9u="${esc(x.id)}|${esc(k)}">${esc(p5ULbl(x, k))} · <b>${esc(w || '—')}</b></button>` }).join('')}</div>${B ? `<div class="p5all"><button type="button" class="btn sm ghost" data-pl9all="${esc(x.id)}">همه با ${esc(B)}</button></div>` : ''}</div>` };
-p5St = function (usedX) { const out = {}; if (!SURG) return out; const M = SURG.pl9st || SURG.st || {}; usedX.forEach(x => { if (SOLO.includes(x.id)) return; const a1 = SURG.sa[x.id] || SURG.asst || '', m = M[x.id] || {}, o = {}; p5Units(SURG.s[x.id]).forEach(k => { if (m[k] && m[k] !== a1) o[k] = m[k] }); if (Object.keys(o).length) out[x.id] = o }); return out };
+  let h = _s.apply(this, arguments);
+  /* (9) */ try { if (x.id === 'anes') { const s = AS()[x.id]; const on = k => !!Object.keys(s.isel || {}).some(z => s.isel[z] && z.startsWith(k + ':'));
+      const ch = `<div class="chips pl9an" role="group" aria-label="نوع">${x.items.map(it => `<button type="button" class="chip" data-pl9an="${it.k}" aria-pressed="${on(it.k)}">${it.l}</button>`).join('')}</div>`;
+      const pr = SURG ? '' : `<div class="fields">${x.items.map(it => `<label class="f">قیمت ${it.l}<input class="price" inputmode="numeric" data-ip="anes" data-ik="${it.k}" value="${esc(s.ip[it.k] || '')}"></label>`).join('')}</div>`;
+      h = h.replace('</h2>', '</h2>' + ch); if (!SURG) { h = h.replace(/<label class="f">قیمت<input id="pr_anes"[^>]*><\/label>/, m0 => (num(s.price) && !x.items.some(it => on(it.k))) ? m0 : ''); const i = h.lastIndexOf('<div class="calc" id="calc_anes">'); if (i >= 0) h = h.slice(0, i) + pr + h.slice(i) } } } catch (e) { }
+  /* (8) */ try { if (x.id === 'gbr' && SURG) { const g = pl9GbrHTML(); if (g) { const i = h.lastIndexOf('<div class="calc" id="calc_gbr">'); h = i >= 0 ? h.slice(0, i) + g + h.slice(i) : h.replace('</section>', g + '</section>') } } } catch (e) { }
+  /* (5) */ try { if (SURG && SURG.pl9st && SURG.pl9st[x.id]) { SURG.st = SURG.st || {}; SURG.st[x.id] = SURG.pl9st[x.id] } } catch (e) { } return h } }
+/* p5SplitHTML and p5St of (5): merged into surgery/pa5-assistant-per-tooth-non.js */
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('button'); if (!t || !SURG) return;
   if (t.dataset.pl9b) { e.stopImmediatePropagation(); const id = t.dataset.pl9b; SURG.pl9b = SURG.pl9b || {}; SURG.pl9b[id] = SURG.pl9b[id] === t.dataset.n ? '' : t.dataset.n; reSec(id); return }
   const set = (id, k, B) => { const a1 = SURG.sa[id] || SURG.asst || ''; SURG.pl9st = SURG.pl9st || {}; const m = SURG.pl9st[id] = SURG.pl9st[id] || {}; if (B === a1) delete m[k]; else m[k] = B; SURG.st = SURG.st || {}; SURG.st[id] = m };

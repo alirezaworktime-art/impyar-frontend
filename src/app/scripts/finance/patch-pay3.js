@@ -7,12 +7,15 @@ function cashParts(r){const C=cashTot(r);if(C===null)return null;const S=partS(r
 const fracS=r=>{const c=cashParts(r);if(!c)return pctS(r)/100;return c.cS<=1?0:c.cS};
 const fracP=r=>{const c=cashParts(r);if(!c)return pctP(r)/100;return c.cP<=1?0:c.cP};
 function chqDates(r,n){const iso=parseJ(((r&&r.pay)||{}).chq1||'');if(!iso)return [];const out=[];for(let i=0;i<n;i++)out.push(jAddM(iso,i));return out}
-function cashNoteRender(){const el=$('cashNote');if(!el)return;const cp=cashParts(F),p=F.pay||{},L=[];
+/* cashNoteRender: patch-pay3 base + fix6b A9 (100% cash with discount) + o3s (option 3: no note) */
+function cashNoteRender(){const el=$('cashNote');try{if(F&&F.pay&&String(F.pay.opt)==='3'){if(el)el.innerHTML='';return}}catch(e){}if(!el)return;const cp=cashParts(F),p=F.pay||{},L=[];
   if(cp){L.push(`نقد ${fa(cp.C)} تومان: پارت جراحی ${fa(cp.cS)} (${fa(pctS(F))}٪)${cp.P?' · پارت پروتز '+fa(cp.cP)+' ('+fa(pctP(F))+'٪)':''}${cp.extra?' · <b>'+fa(cp.extra)+' تومان بیشتر از جمع طرح</b>':''}`);
     const a=$('p_cs'),b=$('p_cp');if(a)a.value=String(Math.round(pctS(F)));if(b)b.value=String(Math.round(pctP(F)))}
   const iso=parseJ(p.chq1||'');if(String(p.chq1||'').trim()&&!iso)L.push('<b>تاریخ اولین چک درست نیست (مثال: ۱۴۰۵/۰۹/۰۱).</b>');
   else if(iso){try{const c=chqFor(F),n=c.chq.length;if(n){const D=chqDates(F,n);L.push(`سررسید ${fa(n)} چک: `+D.map((d,i)=>`${jDay(d)} (${fa(c.chq[i].amount)})`).join('، '))}}catch(e){}}
-  el.innerHTML=L.join('<br>');el.hidden=!L.length}
+  el.innerHTML=L.join('<br>');el.hidden=!L.length;
+  try{const p=F.pay||{},raw=String(p.cash==null?'':p.cash).trim();
+  if(raw!==''&&discOn(F)){const C=num(raw),net=planTotal(F),G=partS(F)+partP(F),ex=C-net;el.hidden=false;el.innerHTML='نقد '+fa(C)+' تومان = <b>۱۰۰٪ نقد با '+fa(discPct(F))+'٪ تخفیف</b> (جمع طرح '+fa(G)+' تومان، با تخفیف '+fa(net)+' تومان)'+(ex>0?' · <b>'+fa(ex)+' تومان بیشتر از جمع با تخفیف</b>':'')}}catch(e){}}
 function payBlockDates(r){try{const iso=parseJ(((r&&r.pay)||{}).chq1||'');if(!iso)return '';const n=chqFor(r).chq.length;if(!n)return '';return 'سررسید چک‌ها: '+chqDates(r,n).map(d=>jDay(d)).join('، ')}catch(e){return ''}}
 /* ---- surgery-difference settlement when the clinic owes the patient ---- */
 function rfFormHTML(c){return `<div class="payform" id="stForm"><b>تعیین تکلیف ${fa(c)} تومان بستانکاری بیمار</b><div class="chips" id="stKind" style="margin-top:6px"><button type="button" class="chip" data-stk="refund" aria-pressed="false">پرداخت به بیمار (ارجاع به حسابداری)</button><button type="button" class="chip" data-stk="reduce" aria-pressed="false">از مانده / چک‌های بعدی کم شود</button></div><div id="stF" style="margin-top:8px"></div></div>`}

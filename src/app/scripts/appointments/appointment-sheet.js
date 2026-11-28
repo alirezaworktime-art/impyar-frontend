@@ -1,9 +1,16 @@
 /* ---------- appointment sheet ---------- */
 let AP=null;
+var BK1={day:''};   // bk1: the day picked in the booking review (read once by openAppt)
 function docList(){const L=(SET.docs||[]).filter(Boolean);if(!L.length&&SET.doctor)L.push(SET.doctor.split('·')[0].trim());return L}
-function apKindRender(){const G={sg:['sg','cs'],pr:['pr','cp']}[AP.grp];
+/* kinds: in a reception booking mode (appt1: surgery / prosthesis / other) only that mode's kinds; otherwise grouped */
+function apKindRender(){
+  if(AP&&AP.mode&&BKM[AP.mode]){const M=BKM[AP.mode];
+    $('apKind').innerHTML=`<div class="akg bkk"><div class="chips">${M.k.map(k=>`<button type="button" class="chip" data-apk="${k}" aria-pressed="${k===AP.kind}">${esc(BKL[k]||AKL[k]||k)}</button>`).join('')}</div></div><button type="button" class="btn sm ghost" data-apall="1" style="margin-top:6px">نمایش همه‌ی انواع نوبت</button>`;return}
+  const G={sg:['sg','cs'],pr:['pr','cp']}[AP.grp];
   $('apKind').innerHTML=[['جراحی','sg'],['پروتز','pr'],['چکاپ جراحی','cs'],['چکاپ پروتز','cp'],['سایر','ot']].filter(([l,g])=>AP.book?g==='sg':!G||G.includes(g)).map(([l,g])=>`<div class="akg"><small>${l}</small><div class="chips">${AGRP[g].map(k=>`<button type="button" class="chip" data-apk="${k}" aria-pressed="${k===AP.kind}">${AKL[k]}</button>`).join('')}</div></div>`).join('')+(!AP.book&&G?`<button type="button" class="btn sm ghost" data-apall="1" style="margin-top:6px">نمایش همه‌ی انواع نوبت</button>`:'')}
-function openAppt(o={}){const td=tDay();AP=Object.assign({aid:'',plan:'',name:'',phone:'',kind:'surg',day:'',time:'',dur:0,doc:'',note:'',task:'',onl:'',book:0},o);
+/* o.mode (appt1): reception booking mode → its title and kinds; BK1.day (bk1): the day picked in the booking review */
+function openAppt(o){o=o||{};if(BK1.day&&!o.day)o=Object.assign({},o,{day:BK1.day});BK1.day='';
+  const td=tDay();AP=Object.assign({aid:'',plan:'',name:'',phone:'',kind:'surg',day:'',time:'',dur:0,doc:'',note:'',task:'',onl:'',book:0},o);
   if(!AP.dur)AP.dur=aDur(AP.kind);AP.grp=o.grp||(o.kind?apG(o.kind):'')||'all';
   $('apTitle').textContent=AP.aid?'جابه‌جایی / ویرایش نوبت':AP.book?'اخذ نوبت جراحی (بیمار تلفنی)':'نوبت جدید';$('ap_onl').checked=String(AP.onl)==='1';$('apOnlW').hidden=!AGRP.sg.includes(AP.kind);$('apMsg').textContent='';$('apWarn').hidden=true;
   renderApWho();
@@ -15,7 +22,8 @@ function openAppt(o={}){const td=tDay();AP=Object.assign({aid:'',plan:'',name:''
   const D=docList();if(AP.doc&&!D.includes(AP.doc))D.push(AP.doc);$('ap_doc').innerHTML='<option value="">—</option>'+D.map(n=>`<option${n===AP.doc||(!AP.doc&&!AP.aid&&D.length===1)?' selected':''}>${esc(n)}</option>`).join('');
   $('ap_note').value=AP.note||'';
   $('apQuick').innerHTML=[['امروز',td],['فردا',dAdd(td,1)],['پس‌فردا',dAdd(td,2)],['یک هفته بعد',dAdd(td,7)],['دو هفته بعد',dAdd(td,14)],['یک ماه بعد',mAdd(td,1)],['سه ماه بعد',mAdd(td,3)]].map(([l,d])=>`<button type="button" class="chip" data-apd="${d}">${l}</button>`).join('');
-  apDayHint();$('apSheet').hidden=false;if(!AP.name)setTimeout(()=>{const q=$('ap_q');if(q)q.focus()},50);if(!listLoaded&&CF_ON)loadList()}
+  apDayHint();$('apSheet').hidden=false;if(!AP.name)setTimeout(()=>{const q=$('ap_q');if(q)q.focus()},50);if(!listLoaded&&CF_ON)loadList();
+  if(o.mode&&AP){AP.mode=o.mode;$('apTitle').textContent=BKM[o.mode].t;apKindRender()}}
 function renderApWho(){const el=$('apWho');
   if(AP.name&&!AP.free){el.innerHTML=`<div class="who"><div><b>${esc(AP.name)}</b>${AP.phone?` <span class="note">${esc(faD(AP.phone))}</span>`:''}</div>${AP.aid||AP.lock?'':'<button class="btn sm ghost" type="button" id="apChg">تغییر بیمار</button>'}</div>`;return}
   if(AP.free){el.innerHTML=`<div class="fields"><label class="f">نام بیمار *<input id="ap_name" value="${esc(AP.name)}"></label><label class="f">موبایل<input id="ap_phone" class="ltr" inputmode="tel" value="${esc(AP.phone)}"></label></div><button class="btn sm ghost" type="button" id="apChg">جستجو در پرونده‌ها</button>`;return}

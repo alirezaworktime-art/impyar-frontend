@@ -3,9 +3,7 @@
    (۳) در دستور کار لابراتوار اسکن‌های پرونده تیک می‌خورند و بدون بارگذاری دوباره به سفارش می‌روند. ---------- */
 const UP2_RX = /\.(stl|ply|obj|zip|rar|7z|dcm|3oxz|constructioninfo)$/i, UP2_ACC = '.stl,.ply,.obj,.zip,.rar,.7z,.dcm,.3oxz,.constructioninfo';
 const UP2 = { c: {}, busy: '', sel: new Set() };
-/* (1) l2Upload (lab8 wrapper) showed a failed file only in its panel and returned as if it worked */
-{ const _w = l2Upload; l2Upload = async function (lid, file, kind, onp) { const n0 = (L8.up || []).length; await _w.apply(this, arguments); const r = (L8.up || [])[n0];
-  if (r && r.el && r.el.classList.contains('bad')) { const e = new Error(((r.el.querySelector('.l8upp') || {}).textContent || 'خطا').replace(/^خطا: /, '')); if (onp) throw e; } } }
+/* (1) a failed file is no longer hidden (l2Upload throws it, see order-sheet-steps-files-returns.js); l2UpFiles reports every failed file */
 l2UpFiles = async function (lid, files) { const M = $('l2upM'), k = $('l2fk') ? $('l2fk').value : 'other'; let ok = 0; const bad = [];
   for (const f of files) { try { await l2Upload(lid, f, k, p => { if (M) M.textContent = f.name + ' — ' + fa(Math.round(p * 100)) + '٪' }); ok++ } catch (e) { bad.push(f.name + ': ' + e.message) } }
   if (M) M.textContent = ''; if (ok) toast(fa(ok) + ' فایل بارگذاری شد.'); if (bad.length) alertMsg('بارگذاری نشد:\n' + bad.join('\n')); l2Load(lid, true); if (ROLE === 'lab') pollLab(true) };
@@ -30,7 +28,7 @@ async function up2Upload(files) { if (!PF || !PF.id) return; const pid = PF.id, 
   if (ok.length) toast(fa(ok.length) + ' فایل اسکن در پرونده ثبت شد.'); if (bad.length) alertMsg('بارگذاری نشد:\n' + bad.join('\n')) }
 { const _f = renderFile; renderFile = function () { const r = _f.apply(this, arguments); try { up2Mount() } catch (e) { } return r } }
 /* the photo inputs and the drop box send scans here, pictures/PDF to «تصاویر» as before */
-{ const _u = imgUpload; imgUpload = async function (files) { const S = [...files].filter(f => UP2_RX.test(f.name)), R = [...files].filter(f => !UP2_RX.test(f.name)); if (S.length) await up2Upload(S); if (R.length) return _u.call(this, R) } }
+/* imgUpload: sending scans to up2Upload is now part of the single definition in pdf/p4-patient-images-radiographs.js */
 document.addEventListener('change', e => { const t = e.target; if (t && t.id === 'up2In' && t.files && t.files.length && !UP2.busy) { const F = [...t.files]; t.value = ''; up2Upload(F) } });
 const up2F = id => { for (const k in UP2.c) { const f = UP2.c[k].files.find(x => x.id === id); if (f) return f } return null };
 document.addEventListener('click', async e => { const t = e.target.closest && e.target.closest('[data-up2v],[data-up2d],[data-up2x]'); if (!t) return; e.preventDefault(); e.stopPropagation(); const d = t.dataset;

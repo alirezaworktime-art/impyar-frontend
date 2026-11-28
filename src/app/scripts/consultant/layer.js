@@ -23,17 +23,19 @@ const m11UncTxt = (r, x) => { const v = m11Unc(r, x); return v ? `آنکاوری
 /* 9 */
 { const _t = totalsBlock; totalsBlock = function (r) { const b = _t.apply(this, arguments); try { if (b && totals(r).pros > 0) { const h0 = b.h, d0 = b.draw; return { h: h0 + 34, draw(cx, top) { d0.call(this, cx, top); T(cx, 'قیمت روکش‌ها به قیمت روز محاسبه خواهند شد.', C.R, top + h0 + 14, { s: 18, w: 700 }) } } } } catch (e) { } return b } }
 /* 4: consultant — only the chosen treatments */
-function m11Vis(init) { if (ROLE !== 'consultant' || SURG || !F) return; const S = AS(), pv = { s: S, brand: 'ko', pay: {} }; const cards = [...document.querySelectorAll('#viewForm [data-sec]')]; if (!cards.length) return;
+/* m11Vis: base + m48a (3) (m48More after every call, also after an early exit) */
+function m11Vis(init) { vis: { if (ROLE !== 'consultant' || SURG || !F) break vis; const S = AS(), pv = { s: S, brand: 'ko', pay: {} }; const cards = [...document.querySelectorAll('#viewForm [data-sec]')]; if (!cards.length) break vis;
   const used = c => { try { return !!rowUsed(pv, SEC[c.dataset.sec]) } catch (e) { return true } };
   if (init) cards.forEach(c => c.classList.toggle('m11hide', !used(c)));
   else cards.forEach(c => { if (used(c)) c.classList.remove('m11hide') });
   const hid = cards.filter(c => c.classList.contains('m11hide')), any = cards.some(used);
-  if (!any) { cards.forEach(c => c.classList.remove('m11hide')); const b0 = $('m11More'); if (b0) b0.remove(); return }
+  if (!any) { cards.forEach(c => c.classList.remove('m11hide')); const b0 = $('m11More'); if (b0) b0.remove(); break vis }
   const last = cards[cards.length - 1]; let b = $('m11More');
-  if (!hid.length && !M11_SHOW) { if (b) b.remove(); return }
+  if (!hid.length && !M11_SHOW) { if (b) b.remove(); break vis }
   if (!b) { last.insertAdjacentHTML('afterend', '<div class="btns" id="m11More"><button type="button" class="btn sm ghost" data-m11more="1"></button></div>'); b = $('m11More') }
   document.querySelectorAll('#viewForm .m11hide').forEach(c => c.classList.toggle('m11show', M11_SHOW));
   b.querySelector('button').textContent = M11_SHOW ? 'پنهان کردن درمان‌های انتخاب نشده' : 'درمان‌های انتخاب نشده در طرح درمان' }
+  try { m48More() } catch (e) { } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-m11more]'); if (!t) return; e.preventDefault(); M11_SHOW = !M11_SHOW; m11Vis(false) });
 /* 10: consultant — «کامل / فقط پایه ایمپلنت / فقط پروتز» */
 function m11Mode() { if (ROLE !== 'consultant' || SURG || !F || !F.h) { const x = $('m11Mode'); if (x) x.remove(); return } let w = $('m11Mode'); const sn = $('staffNote');
@@ -46,8 +48,9 @@ document.addEventListener('click', e => { const t = e.target.closest && e.target
 /* 8: All on X → only Italian */
 const m11Aox = S => { try { const s = S && S.aox; return !!(s && (qty(s, SEC.aox) || chipSel(s))) } catch (e) { return false } };
 const M11_NB = ['ir', 'ko', 'sw'];
-function m11Brands() { if (!['consultant', 'staff'].includes(ROLE) || SURG || !F) return; const bt = $('brandTotals'); if (!bt) return; const on = m11Aox(AS());
+/* m11Brands: base + m57a (1) (m57Tit after every call, also after an early exit) */
+function m11Brands() { br: { if (!['consultant', 'staff'].includes(ROLE) || SURG || !F) break br; const bt = $('brandTotals'); if (!bt) break br; const on = m11Aox(AS());
   M11_NB.forEach(k => bt.querySelectorAll(`[data-brand="${k}"]`).forEach(b => { b.disabled = on; b.classList.toggle('m11off', on); if (on) b.title = 'برای All on X فقط برند ایتالیایی'; else b.removeAttribute('title') })) }
+  try { m57Tit($('brandTotals')) } catch (e) { } }
 { const _r = recalc; recalc = function () { const r = _r.apply(this, arguments); try { m11Brands(); m11Vis(false);
   if (!SURG && F) M11_UX.forEach(id => { const el = document.getElementById('calc_' + id); if (!el) return; el.querySelectorAll('.m11unc').forEach(z => z.remove()); const t = m11UncTxt({ s: AS(), pay: F.pay }, SEC[id]); if (t) el.insertAdjacentHTML('beforeend', `<div class="m11unc">${esc(t)}</div>`) }) } catch (e) { } return r } }
-{ const _b = pl10BrandSheet; pl10BrandSheet = function (snap) { const r = _b.apply(this, arguments); try { const S = PV(snap, 1).s; if (m11Aox(S)) { const sh = $('pl10BrSh'); if (sh) M11_NB.forEach(k => sh.querySelectorAll(`[data-pl10br="${k}"]`).forEach(b => { b.disabled = true; b.classList.add('m11off'); b.title = 'برای All on X فقط برند ایتالیایی' })) } } catch (e) { } return r } }

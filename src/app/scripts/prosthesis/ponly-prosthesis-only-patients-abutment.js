@@ -2,8 +2,7 @@
 const l4Map=j=>(j&&j.pros&&j.pros.map)||{};
 const l4HasA=j=>Object.values(l4Map(j)).includes('a');
 /* reception */
-(function(){const _r=rcReset;rcReset=function(){const r=_r.apply(this,arguments);const c=$('rc_ponly');if(c)c.checked=false;return r}})();
-(function(){const _e=rcEdit;rcEdit=function(id){const r=_e.apply(this,arguments);const x=QITEMS.find(v=>v.id===id),c=$('rc_ponly');if(c)c.checked=!!(x&&x.pOnly);return r}})();
+/* rcReset / rcEdit «فقط پروتز»: merged into surgery/roles-live-queue-reception.js */
 /* prosthesis doctor: patient info + abutment/pontic on top of the lab order */
 function l4Info(j){const r=fromDoc(PF.id,j.data||{}),h=r.h||{},imp=implantsOf(j),ms=medShort(r.med);let lines=[];try{lines=secLines(r.s||{})}catch(e){}
   const kv=[['نام',h.name],['سن',h.age&&faD(h.age)],['موبایل',h.phone&&faD(h.phone)],['پزشک طرح',h.doc],['پذیرش',h.date]].filter(x=>x[1]);
@@ -19,5 +18,4 @@ function l4Info(j){const r=fromDoc(PF.id,j.data||{}),h=r.h||{},imp=implantsOf(j)
     const blk=`<div class="l4map${A.length?'':' l4need'}"><div><b>پایه و پونتیک</b> <small class="note">(اجباری؛ پزشک روی چارت دندان تعیین می‌کند)</small><div class="meta">${A.length?'پایه‌ها: <b>'+esc(toothTxt(A))+'</b>'+(P.length?' · پونتیک: <b>'+esc(toothTxt(P))+'</b>':''):'<b class="late">هنوز تعیین نشده</b>'}</div></div><button class="btn sm${A.length?' ghost':' main'}" type="button" data-pmap="${esc(PF.id)}" data-pmn="${esc((fromDoc(PF.id,j.data||{}).h||{}).name||'')}">🦷 ${A.length?'ویرایش پایه و پونتیک':'تعیین پایه و پونتیک'}</button></div>`;
     h=h.replace('<div class="grp"><span>دندان‌ها',blk+'<div class="grp"><span>دندان‌های این سفارش').replace(' (ایمپلنتی در جلسات جراحی ثبت نشده؛ در توضیح بنویسید)',' (اول پایه و پونتیک را تعیین کنید)');return h}})();
 (function(){const _s=loSend;loSend=async function(t){if(PF&&!l4HasA(PF.j)){const m=$('loMsg');if(m){m.className='msg err';m.textContent='اول «تعیین پایه و پونتیک» را بزنید و پایه‌ها را روی چارت دندان مشخص کنید.'}return}return _s.apply(this,arguments)}})();
-(function(){const _o=l3OpenLab;l3OpenLab=async function(id){const r=await _o.apply(this,arguments);try{if(PF&&PF.id===id&&LO&&PF.j.pros&&!l4HasA(PF.j))setTimeout(()=>openPmap(id,(fromDoc(id,PF.j.data||{}).h||{}).name||''),300)}catch(e){}return r}})();
 

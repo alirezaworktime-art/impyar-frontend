@@ -11,10 +11,8 @@ window.addEventListener('click', e => { try { if (!SURG) return; const t = e.tar
   if (t.dataset.m9pen !== undefined || t.disabled || !t.closest('#surgSecs')) return;
   const id = t.dataset.sid || t.dataset.isid, k = t.dataset.k || t.dataset.ik; if (!id || !k || !m9On(id)) return; const pen = m9Pen(); if (!pen) return;
   if (t.dataset.isid && m9Sel(id, k) && m9Who(id, k) !== pen) { e.preventDefault(); e.stopImmediatePropagation(); m9Set(id, k, pen); SURG.dirty = true; reSec(id) } } catch (x) { } }, true);
-/* 2 */
+/* 2 — m10Payee is read by chqDoc (m8) */
 function m10Payee() { if (!PC || !PC.payee) return ''; if (PC.payee !== '*') return PC.payee; const i = document.querySelector('#pcSheet input.q10other'); return i ? i.value.trim() : '' }
-{ const _c = chqDoc; chqDoc = function () { const pe = m10Payee(); if (!pe) return _c.apply(this, arguments); const g = CPS.get, to0 = g.call(CPS, 'to', ''), nid0 = g.call(CPS, 'nid', '');
-  CPS.get = function (k, d) { if (k === 'to') return pe; if (k === 'nid') return to0 === pe ? nid0 : ''; return g.call(CPS, k, d) }; try { return _c.apply(this, arguments) } finally { CPS.get = g } } }
 /* 3 */
 let M10PP = 0;
 { const _o = openPostConfirm; openPostConfirm = function () { const r = _o.apply(this, arguments); try { if (PC && !PC.first && PC.chq && PC.chq.length) { PC.first = jDay(jAddM(tDay(), 1)); const i = $('pc_first'); if (i) i.value = PC.first; pcRender() }
@@ -22,8 +20,7 @@ let M10PP = 0;
 { const _i = h9Init; h9Init = function (j) { const fresh = !(LO && LO.h9); const r = _i.apply(this, arguments); try { if (fresh && r && !r.file && PF) { const h = (fromDoc(PF.id, (j && j.data) || {}).h) || {}; r.file = String(h.file || h.pfile || '') } } catch (e) { } return r } }
 /* 4 */
 window.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-m10pp]')) M10PP = Date.now() }, true);
-{ const _a = apptCard; apptCard = function (a) { let h = _a.apply(this, arguments); try { if (a && a.owe > 0 && a.oweP && ROLE === 'staff' && a.plan && (a.st || 'set') === 'set' && ['tryin', 'rscr', 'rabt', 'deliv'].includes(a.kind) && h.indexOf('data-p4rest') < 0)
-  h = h.replace('<div class="acts">', `<div class="acts"><button class="btn sm main" type="button" data-p4rest="${esc(a.plan)}" data-m10pp="1">تعیین تکلیف مالی پروتز (${fa(a.owe)} مانده)</button>`) } catch (e) { } return h } }
+/* the prosthesis-remainder button (data-m10pp) on appointment cards is in apptCard (appointments/appointments-calendar.js) */
 /* 5 */
 let M10D = '';
 const m10Docs = () => f7cDocs();

@@ -3,17 +3,16 @@
 (function () { const mv = (id, after) => { const i = SECTIONS.findIndex(x => x.id === id); if (i < 0) return; const [x] = SECTIONS.splice(i, 1); const j = SECTIONS.findIndex(y => y.id === after); SECTIONS.splice(j < 0 ? SECTIONS.length : j + 1, 0, x) }; try { mv('pon', 'imp'); mv('sub', 'ram') } catch (e) { } })();
 /* 2 */
 { const _r = renderForm; renderForm = function () { const r = _r.apply(this, arguments); try { if (ROLE === 'doctor') { const s = document.querySelector('#viewForm .pk3n'), sec = $('sections'); if (s && sec && sec.nextElementSibling !== s) sec.insertAdjacentElement('afterend', s) } } catch (e) { } return r } }
-{ const _o = ntOpen; ntOpen = async function (plan, o = {}) { const r = await _o.apply(this, arguments); try { if (ROLE === 'doctor' && !(o && o.note)) { const b = $('nt2By'); if (b) b.value = 'دکتر علویکیا' } } catch (e) { } return r } }
 /* 4 */
 try { const i = A6CAT.findIndex(x => x.k === 'heal'); if (i >= 0) { const [h] = A6CAT.splice(i, 1); h.s = 'R'; const j = A6CAT.findIndex(x => x.k === 'unc'); A6CAT.splice(j < 0 ? A6CAT.length : j + 1, 0, h) } } catch (e) { }
-{ const _d = a6DueDef; a6DueDef = function () { const r = _d.apply(this, arguments); try { if (A6 && A6.stage === 'imprw') { const u = A6.lines.filter(l => l.k === 'unc' && l.day).map(l => l.day).sort().pop(); if (u) { let d = dAdd(u, 14); const clamp = d < tDay(); if (clamp) d = tDay(); return { d, clamp } } } } catch (e) { } return r } }
 /* 5 */
 const M15_TY = { p: 'پلاس', z: 'زایگوما', t: 'تریگوئید', n: 'نازال' }, M15_SUF = { p: 'it', z: 'ir', t: 'ko', n: 'sw' };
 const m15Ty = b => { const s = String(b || ''); return /zyg|زایگوما|زیگوما/i.test(s) ? 'z' : /pter|ptg|تریگو|پتریگو/i.test(s) ? 't' : /nasal|نازال/i.test(s) ? 'n' : 'p' };
 const m15Pr = ty => { const pl = A6P('aox_cb') || arbDef('it'); return ty === 'z' ? (A6P('aox_z') || pl) : ty === 't' ? (A6P('aox_t') || pl) : ty === 'n' ? (A6P('aox_n') || pl) : pl };
 const m15Par = l => { if (typeof A6 === 'undefined' || !A6 || !l || l.k !== 'imp') return null; const id = l.ax || l.id; return A6.lines.find(x => x.id === id && x.k === 'aox') || null };
 const m15Groups = l => { const o = {}; (l.teeth || []).forEach(t => { const k = m15Ty(((l.imp || {})[t] || {}).b); (o[k] = o[k] || []).push(t) }); return o };
-function m15Amt(l) { try { if (!m15Par(l)) return null; if (m2Only() === 'p') return 0; return (l.teeth || []).reduce((a, t) => a + m15Pr(m15Ty(((l.imp || {})[t] || {}).b)), 0) } catch (e) { return null } }
+/* m15Amt: m15 base, replaced by m16 (plan/reopening-saved-tariff-every-all.js): every All on X base keeps its saved tariff (m16Groups) */
+function m15Amt (l) { try { const p = m15Par(l); if (!p) return null; if (m2Only() === 'p') return 0; return m16Groups(l, p).reduce((a, g) => a + g.T.length * g.pr, 0) } catch (e) { return null } }
 /* save: the implants of an All on X session go as one line per kind, each at its tariff */
 { const _a = api; api = function (action, payload) { try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) { const out = [];
   for (const x of payload.arc.lines || []) { const l = x.k === 'imp' && A6.lines.find(y => y.id === x.id), p = l && l.ax && A6.lines.find(y => y.id === l.ax && y.k === 'aox'); if (!p) { out.push(x); continue }
@@ -22,8 +21,6 @@ function m15Amt(l) { try { if (!m15Par(l)) return null; if (m2Only() === 'p') re
 /* cost table */
 const m15Rows = l => { const p = m15Par(l); if (l.k === 'imp' && l.ax && p) { const G = m15Groups(l); return Object.keys(G).map(k => { const T = G[k], pr = m2Only() === 'p' ? 0 : m15Pr(k), br = [...new Set(T.map(t => ((l.imp || {})[t] || {}).b).filter(Boolean))]; return { lab: 'پایه ایمپلنت All on X — ' + M15_TY[k] + (br.length ? ' (' + br.join('، ') + ')' : '') + ' — ' + toothTxt(T), n: T.length, p: pr, a: T.length * pr } }) }
   if (l.k === 'aox') return [{ lab: 'All on X · پروتز — ' + toothTxt(l.teeth || []), n: num(l.n), p: num(l.price), a: a8Base(l) }]; return a10Rows(l) };
-a6TabHTML = function (C) { const rows = A6.lines.slice().sort((a, b) => String(a.day).localeCompare(String(b.day))).flatMap(l => m15Rows(l).map(r => `<tr><td>${esc(l.dayJ || '')}</td><td>${esc(r.lab)}</td><td>${esc(l.doc || '')}</td><td>${fa(r.n)} × ${fa(r.p)}</td><td>${fa(r.a)}</td></tr>`)).join('');
-  return `<table class="a6ct a9ct"><thead><tr><th>تاریخ</th><th>شرح درمان</th><th>نام پزشک</th><th>تعداد × تعرفه</th><th>مبلغ کل</th></tr></thead><tbody>${rows || '<tr><td colspan="5">هنوز درمانی وارد نشده.</td></tr>'}</tbody><tfoot><tr><td colspan="4">هزینه‌ی کل</td><td>${fa(C.cost)}</td></tr></tfoot></table>` };
 /* the All on X session: the implant tariffs by kind instead of by brand group */
 { const _l = a6Line; a6Line = function (l) { let h = _l.apply(this, arguments); if (!l || l.k !== 'aox' || m2Only() === 'p') return h; try { const G = m15Groups(l);
   const sum = `<div class="m15ty"><b>ایمپلنت‌ها (پارت جراحی)</b>${Object.keys(G).length ? Object.keys(G).map(k => `<div class="a6def">${M15_TY[k]}: ${fa(G[k].length)} × ${fa(m15Pr(k))} = <b>${fa(G[k].length * m15Pr(k))}</b></div>`).join('') : '<div class="a6def">پایه‌ها را بزنید</div>'}<small class="note">نوع پایه از نام برند / سیستم شناخته می‌شود (زایگوما، تریگوئید، نازال؛ بقیه پلاس). تعرفه‌ها از تنظیمات «All on X · هر پایه …».</small></div>`;

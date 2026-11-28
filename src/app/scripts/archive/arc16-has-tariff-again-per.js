@@ -5,4 +5,3 @@
   h=h.replace('<small>کاشت مجدد رایگان است؛ مبلغ این جلسه صفر.</small>','<small>تعرفه‌ی هر ایمپلنت کاشت مجدد را پایین وارد کنید (پیش‌فرض صفر).</small>');
   h=h.replace(/ · پیش‌فرض [^<]*<button type="button" class="lnk" data-arbdef="[^"]*" data-l="[^"]*">برگرداندن<\/button>/g,'');
   h=h.replace(/تعرفه‌ی ایمپلنت ([^<(]+?) \(هر عدد، تومان\)/g,'تعرفه‌ی کاشت مجدد $1 (هر عدد، تومان)')}catch(e){}return h}}
-{const _b=a13Lab;a13Lab=function(l){const s=_b.apply(this,arguments);return l&&l.k==='imp'?s.replace(' (رایگان)',''):s}}

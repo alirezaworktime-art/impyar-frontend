@@ -548,7 +548,7 @@
    "file": "app/scripts/appointments/appointments-calendar.js"
   },
   {
-   "file": "app/scripts/surgery/appointment-sheet.js"
+   "file": "app/scripts/appointments/appointment-sheet.js"
   },
   {
    "file": "app/scripts/prosthesis/prosthesis-board.js"

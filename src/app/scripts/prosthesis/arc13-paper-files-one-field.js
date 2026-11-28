@@ -7,10 +7,13 @@ const A13_TN=Object.fromEntries(A13_TY),A13_TEETH={impr:1,rscr:1,rabt:1,deliv:1}
 A6CAT.splice(Math.max(0,A6CAT.findIndex(x=>x.k==='crw')),0,{k:'pros',t:'مراحل پروتز',s:'L',m:'n',p:()=>0});A6C.pros=A6CAT.find(x=>x.k==='pros');
 const a13Free=l=>l.k==='pros'?!!(l.redo&&A13_TEETH[l.ty]):l.k==='imp'&&+l.ri>0;
 const a13Roles=l=>{const pt=l.pt||{},a=l.teeth.filter(t=>pt[t]!=='p'),p=l.teeth.filter(t=>pt[t]==='p');return (a.length?'پایه: '+toothTxt(a):'')+(a.length&&p.length?' · ':'')+(p.length?'پونتیک: '+toothTxt(p):'')};
-function a13Lab(l){if(l.k==='imp')return 'پایه ایمپلنت — '+A13_RI[+l.ri||0]+' (رایگان)';
-  let s=A13_TN[l.ty]||'مراحل پروتز';if(l.redo&&A13_TEETH[l.ty])s+=' (مجدد — رایگان)';if(l.ty==='cem'&&l.cem)s+=' — '+(A13_CEM[l.cem]||'');const r=A13_TEETH[l.ty]&&l.teeth&&l.teeth.length?a13Roles(l):'';return s+(r?' — '+r:'')}
+/* a13Lab: base + arc15 (prosthesis/arc15-notes-box-per-session.js: a «مراحل پروتز» line with a note gets « — توضیح: …»)
+   + arc16 (archive/arc16-has-tariff-again-per.js: «پایه ایمپلنت» lines lose « (رایگان)»); m43d (Essix jaw) still wraps this in its own file */
+function a13Lab(l){let s;if(l.k==='imp')s='پایه ایمپلنت — '+A13_RI[+l.ri||0]+' (رایگان)';
+  else{s=A13_TN[l.ty]||'مراحل پروتز';if(l.redo&&A13_TEETH[l.ty])s+=' (مجدد — رایگان)';if(l.ty==='cem'&&l.cem)s+=' — '+(A13_CEM[l.cem]||'');const r=A13_TEETH[l.ty]&&l.teeth&&l.teeth.length?a13Roles(l):'';s=s+(r?' — '+r:'')}
+  if(l&&l.k==='pros'&&String(l.note||'').trim())s=s+' — توضیح: '+String(l.note).trim();
+  return l&&l.k==='imp'?s.replace(' (رایگان)',''):s}
 /* new and opened lines */
-{const _n=a6NewLine;a6NewLine=function(k){const l=_n.apply(this,arguments);if(l&&k==='pros'){l.n=1;l.ty='';l.pt={};l.redo=false;l.cem='';l.price=0}if(l&&k==='imp')l.ri=0;return l}}
 {const _f=a6From;a6From=function(){const S=_f.apply(this,arguments);try{S.lines.forEach(l=>{if(l.k==='reimp'){l.k='imp';l.ri=1;l.price=0}if(l.k==='pros'){l.n=1;l.pt=l.pt||{};l.teeth=l.teeth||Object.keys(l.pt)}if(l.k==='imp')l.ri=+l.ri||0});
   if(S.lines.some(l=>l.k==='pros'))S.op.add('pros');S.op.delete('reimp')}catch(e){}return S}}
 /* one session line */
@@ -27,7 +30,6 @@ function a13Lab(l){if(l.k==='imp')return 'پایه ایمپلنت — '+A13_RI[+
   h=h.replace('تعرفه‌ی هر واحد (تومان)','مبلغ این جلسه (تومان)');
   if(free)h=h.replace(`data-a6f="price" data-l="${l.id}"`,`data-a6f="price" data-l="${l.id}" disabled`);
   if(tt)h=h.replace('<div class="a6sut">',`<div class="a13ch"><p class="note">روی دندان بزنید: یک بار = <b class="a13ka">پایه</b> · دو بار = <b class="a13kp">پونتیک</b> · سه بار = برداشتن${l.teeth.length?' — '+esc(a13Roles(l)):''}</p>${a6Teeth(l)}</div><div class="a6sut">`)}catch(e){}return h}}
-{const _r=a6Render;a6Render=function(){const r=_r.apply(this,arguments);try{(A6&&A6.lines||[]).filter(l=>l.k==='pros').forEach(l=>{const pt=l.pt||{};document.querySelectorAll(`.a13ch [data-a6t][data-l="${l.id}"]`).forEach(b=>{const t=b.dataset.a6t,on=l.teeth.includes(t);b.classList.toggle('a13pa',on&&pt[t]!=='p');b.classList.toggle('a13pp',on&&pt[t]==='p');b.title=on?(pt[t]==='p'?'پونتیک':'پایه'):''})})}catch(e){}return r}}
 const a13Re=()=>{const sc=window.scrollY;a6Render();window.scrollTo(0,sc)};
 window.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('button');if(!t||!A6)return;const d=t.dataset;
   if(d.a6t){const l=a6L(d.l);if(!l||l.k!=='pros')return;e.preventDefault();e.stopImmediatePropagation();const k=d.a6t;l.pt=l.pt||{};

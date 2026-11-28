@@ -2,13 +2,20 @@
 const IMK=[['opg','OPG (پانورکس)'],['cbct','CBCT'],['pre','گرافی / عکس قبل از جراحی'],['intra','عکس داخل دهان'],['post','گرافی / عکس بعد از جراحی'],['doc','مدارک و فرم‌ها'],['other','سایر']],IMKL=Object.fromEntries(IMK);
 let IMG={kind:'opg',busy:false},IMV=null;
 const canImg=()=>ROLE==='staff'||ROLE==='consultant';
+/* pfImgs — base + pk3 (stage / tooth tags: the tag picker before the upload buttons, a stage filter, a label on each tagged image) */
 function pfImgs(j){const F=j.files||[];let h='';
   if(canImg())h+=`<div class="payform"><b>افزودن عکس، رادیوگرافی یا مدرک</b><div class="chips" style="margin:8px 0">${IMK.map(([k,l])=>`<button type="button" class="chip" data-imk="${k}" aria-pressed="${IMG.kind===k}">${l}</button>`).join('')}</div>
     <div class="fx3up"><label class="btn${IMG.busy?' disabled':''}">📷 عکس با دوربین<input type="file" id="imgCam" accept="image/*" capture="environment" hidden${IMG.busy?' disabled':''}></label><label class="btn ghost${IMG.busy?' disabled':''}">🖼 از گالری یا فایل<input type="file" id="imgIn" accept="image/*,application/pdf" multiple hidden${IMG.busy?' disabled':''}></label><label class="btn ghost${IMG.busy?' disabled':''}">🖨 از اسکنر<input type="file" id="imgScan" accept="image/*,application/pdf" multiple hidden${IMG.busy?' disabled':''}></label></div><div class="fx3drop" id="fx3Drop">فایل اسکن‌شده یا عکس را اینجا بکشید و رها کنید</div><p class="note">اسکنر: عکس یا برگه را با برنامه‌ی اسکنر کامپیوتر به‌صورت JPG یا PDF اسکن کنید، بعد «از اسکنر» را بزنید و فایل را از پوشه‌ی اسکن انتخاب کنید (یا همین‌جا بکشید). در آیفون، «از گالری یا فایل» ← «اسکن اسناد» هم کار می‌کند.</p><p class="note" id="imgMsg">${IMG.busy?esc(IMG.busy):'عکس‌ها خودکار کوچک می‌شوند تا سریع باز شوند. PDF تا حدود ۱٫۴ مگابایت.'}</p></div>`;
-  if(!F.length)return h+'<div class="empty">هنوز عکس یا مدرکی برای این بیمار ثبت نشده.</div>';
-  h+=fx3Cmp(F);
-  h+=q6Groups(F); /* q6: grouped before / after surgery, delete per file */
-  return h}
+  if(!F.length)h+='<div class="empty">هنوز عکس یا مدرکی برای این بیمار ثبت نشده.</div>';
+  else{h+=fx3Cmp(F);
+  h+=q6Groups(F);} /* q6: grouped before / after surgery, delete per file */
+  /* pk3 */
+  try{const F2=j.files||[];
+  if(canImg())h=h.replace('<div class="fx3up">',pk3TagUI(j)+'<div class="fx3up">');
+  const sts=[...new Set(F2.map(f=>pk3Tag(f).st).filter(Boolean))];
+  if(sts.length){const ch=`<div class="chips pk3filt"><button type="button" class="chip" data-pk3f="" aria-pressed="${!PK3.filt}">همه</button>${sts.map(k=>`<button type="button" class="chip" data-pk3f="${k}" aria-pressed="${PK3.filt===k}">${FXST[k]||k}</button>`).join('')}</div>`;const i=h.indexOf('<h3 class="pf-h">');h=i>=0?h.slice(0,i)+ch+h.slice(i):h+ch}
+  F2.forEach(f=>{const t=pk3Tag(f);if(!t.st&&!t.t.length)return;const tx=pk3TagTxt(t);h=h.replace(`data-imv="${esc(f.id)}" title="${esc(f.name||'')}">`,`data-imv="${esc(f.id)}" title="${esc(f.name||'')}" data-pk3st="${t.st}"${PK3.filt&&t.st!==PK3.filt?' hidden':''}><small class="pk3lbl">${esc(tx)}</small>`)});
+  if(PK3.filt)F2.forEach(f=>{const t=pk3Tag(f);if(!t.st&&!PK3.filt)return;if(!t.st)h=h.replace(`data-imv="${esc(f.id)}" title="${esc(f.name||'')}">`,`data-imv="${esc(f.id)}" title="${esc(f.name||'')}" hidden>`)})}catch(e){}return h}
 async function imgPrep(file){
   if(file.type==='application/pdf'){if(file.size>1.4e6)throw new Error(file.name+': فایل PDF بزرگ‌تر از ۱٫۴ مگابایت است.');
     const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(new Error('خواندن فایل ممکن نشد.'));r.readAsDataURL(file)});return {mime:'application/pdf',data:d,thumb:''}}
@@ -17,7 +24,11 @@ async function imgPrep(file){
   const draw=(max,q)=>{const s=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(bmp.width*s));c.height=Math.max(1,Math.round(bmp.height*s));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bmp,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)};
   let d=draw(2200,0.85);if(d.length>1.85e6)d=draw(1800,0.75);if(d.length>1.85e6)d=draw(1400,0.7);
   return {mime:'image/jpeg',data:d.split(',')[1],thumb:draw(260,0.7)}}
-async function imgUpload(files){if(!PF||!files.length)return;const id=PF.id,errs=[];let ok=0;
+/* imgUpload — one definition of the old layers: up2 (3D scan / archive files go to the scan box, the rest continues here),
+   arc10 (a PDF too big to keep becomes page images), then the base upload. */
+async function imgUpload(files){{const S=[...files].filter(f=>UP2_RX.test(f.name)),R=[...files].filter(f=>!UP2_RX.test(f.name));if(S.length)await up2Upload(S);if(!R.length)return;files=R}
+  {let F;try{F=await a10Expand(files,2200,(i,n)=>{const m=$('imgMsg');if(m){m.className='note';m.textContent=`تبدیل PDF: صفحه‌ی ${fa(i)} از ${fa(n)}…`}},false)}catch(e){alertMsg(e.message);return}files=F}
+  if(!PF||!files.length)return;const id=PF.id,errs=[];let ok=0;
   for(let i=0;i<files.length;i++){IMG.busy=`در حال ارسال ${fa(i+1)} از ${fa(files.length)}…`;const m=$('imgMsg');if(m){m.className='note';m.textContent=IMG.busy}
     try{const p=await imgPrep(files[i]);await api('fileAdd',{id,sendId:uuid(),file:{kind:IMG.kind,name:files[i].name||'',mime:p.mime,data:p.data,thumb:p.thumb}},{timeout:90000});ok++}catch(e){errs.push(e.message)}}
   IMG.busy=false;if(ok)toast(fa(ok)+' فایل در پرونده ثبت شد.');if(errs.length)alertMsg(errs.join('\n'));if(PF&&PF.id===id)refreshFile()}

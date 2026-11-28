@@ -9,22 +9,12 @@ function arcSecHead(x){const m=arcMeta(x.id),solo=SOLO.includes(x.id);
   const who=solo?`<input class="arcsb" data-arcsb="${x.id}" list="dlSgDoc" placeholder="جراح *" value="${esc(m.by||'')}" aria-label="جراح ${esc(x.t)}">`
     :`<select class="sgas" data-arcsa="${x.id}" aria-label="پزشک انجام‌دهنده ${esc(x.t)}"><option value="">پزشک انجام‌دهنده *</option>${ASSTS().map(n=>`<option value="${esc(n)}"${n===m.asst?' selected':''}>${esc(n)}</option>`).join('')}</select>`;
   return `<span class="arcsh"><input class="arcsd" data-arcsd="${x.id}" placeholder="۱۴۰۲/۰۳/۱۵" value="${esc(m.dayJ||'')}" aria-label="تاریخ ${esc(x.t)}" autocomplete="off">${who}</span>`}
-{const _a=asstSel;asstSel=function(x){if(SURG&&SURG.arc)return arcSecHead(x);return _a.apply(this,arguments)}}
+/* asstSel: the arc5 layer (paper file → arcSecHead) is merged into surgery/form-render.js */
 function arcUncHTML(){const u=SURG.arc.unc||(SURG.arc.unc={n:'',dayJ:'',by:''});
   return `<section class="card" data-sec="${ARCU}"><h2><span class="h2t">آنکاوری</span><span class="arcsh"><input class="arcsd" data-arcud placeholder="۱۴۰۲/۰۳/۱۵" value="${esc(u.dayJ||'')}" aria-label="تاریخ آنکاوری" autocomplete="off"><input class="arcsb" data-arcub list="dlSgDoc" placeholder="پزشک *" value="${esc(u.by||'')}" aria-label="پزشک آنکاوری"></span></h2>
     <label class="f" style="max-width:220px">تعداد آنکاوری<input data-arcun inputmode="numeric" placeholder="۰" value="${u.n?esc(faD(String(u.n))):''}"></label></section>`}
 {const _rs=renderSurg;renderSurg=function(){const r=_rs.apply(this,arguments);if(SURG&&SURG.arc&&SURG.openSecs&&SURG.openSecs.has(ARCU))$('surgSecs').insertAdjacentHTML('afterbegin',arcUncHTML());return r}}
 {const _rp=renderPick;renderPick=function(){const r=_rp.apply(this,arguments);if(SURG&&SURG.arc){const h1=$('sgPick').querySelector('.sgh');if(h1)h1.textContent='جراحی‌ها';const h3=$('sgImpW')&&$('sgImpW').querySelector('h3');if(h3)h3.textContent='ایمپلنت‌ها';const u=SURG.arc.unc||{};$('sgPick2').insertAdjacentHTML('beforeend',`<button type="button" class="chip sgc${num(u.n)?' marked':''}" data-sgsec="${ARCU}" aria-pressed="${!!(SURG.openSecs&&SURG.openSecs.has(ARCU))}">آنکاوری${num(u.n)?' ✓':''}</button>`)}return r}}
-/* one working set of all treatments; older paper files (several sessions) are merged, each treatment keeps its session's date */
-function arcMerge(L){const M=blankSections(),meta={};let unc=null;
-  L.forEach(c=>{const pv={s:c.s,brand:'ko',pay:{}};SECTIONS.forEach(x=>{if(!rowUsed(pv,x))return;const a=c.s[x.id],t=M[x.id];
-      Object.keys(a.sel).forEach(k=>{if(a.sel[k])t.sel[k]=true});Object.keys(a.isel||{}).forEach(k=>{if(a.isel[k])t.isel[k]=true});Object.keys(a.icnt||{}).forEach(k=>{t.icnt[k]=String(num(t.icnt[k])+num(a.icnt[k]))});
-      if(num(a.cnt))t.cnt=String(num(t.cnt)+num(a.cnt));['U','L'].forEach(j=>{if(num(a.jc[j]))t.jc[j]=String(num(t.jc[j])+num(a.jc[j]))});if(a.text)t.text=[t.text,a.text].filter(Boolean).join(' · ');
-      meta[x.id]={dayJ:c.dayJ,by:SOLO.includes(x.id)?c.by:'',asst:SOLO.includes(x.id)?'':((c.sa||{})[x.id]||c.asst||c.by||'')}});
-    if(num(c.uncN))unc={n:num(c.uncN)+(unc?num(unc.n):0),dayJ:c.dayJ,by:c.by}});
-  const imp={};L.forEach(c=>Object.assign(imp,c.imp||{}));return {s:M,imp,meta,unc}}
-{const _p=arcPage;arcPage=function(j){const r=_p.apply(this,arguments);try{const A=SURG.arc,m=arcMerge(A.ses);
-  A.ses=[Object.assign(arcSes0(),{s:m.s,imp:m.imp})];A.meta=m.meta;A.unc=m.unc||{n:'',dayJ:'',by:''};A.last={};arcLoad(0)}catch(e){console.error(e)}return r}}
 /* remembers the last date / doctor so the next treatment starts with them */
 function arcSet(e){const t=e.target,d=t.dataset;if(!SURG||!SURG.arc)return;const A=SURG.arc;A.last=A.last||{};
   if(d.arcsd){arcMeta(d.arcsd).dayJ=t.value.trim();A.last.dayJ=t.value.trim()}
@@ -41,15 +31,16 @@ function arcSecCost(id,c){const P=blankSections(),S=blankSections(),src=c.s[id],
   if(IMPSECS.includes(id)&&id==='imp'){let v=0;Object.keys(t.sel).filter(k=>t.sel[k]&&isTooth(k)).forEach(k=>{const g=arcG((c.imp[k]||{}).b);v+=num(P.imp.bp[g]||P.imp.bp.ko)});['U','L'].forEach(j=>v+=num(t.jc[j])*num(P.imp.bp.ko));return v}
   const b=id==='aox'?'it':(()=>{const k=Object.keys(t.sel).find(k=>t.sel[k]&&isTooth(k)&&c.imp[k]&&c.imp[k].b);return k?arcG(c.imp[k].b):'ko'})();
   const T=totals({s:S,brand:b,pay:{}});return T.surg[b]+T.pros}
-arcCostAll=function(){const A=SURG&&SURG.arc;if(!A)return {rows:[],tot:0};const c=A.ses[0],pv={s:c.s,brand:'ko',pay:{}},rows=[];
+/* arcCostAll, arcCostUpd: arc4 base replaced by arc5 */
+function arcCostAll(){const A=SURG&&SURG.arc;if(!A)return {rows:[],tot:0};const c=A.ses[0],pv={s:c.s,brand:'ko',pay:{}},rows=[];
   SECTIONS.forEach(x=>{if(!rowUsed(pv,x))return;const m=(A.meta||{})[x.id]||{};rows.push({t:x.t,d:m.dayJ,v:arcSecCost(x.id,c)})});
   const u=A.unc||{};if(num(u.n))rows.push({t:'آنکاوری '+fa(num(u.n))+' عدد'+(ARC_UNC?' × '+fa(ARC_UNC):' (تعرفه‌ی آنکاوری در خدمات حسابداری تعریف نشده)'),d:u.dayJ,v:num(u.n)*(ARC_UNC||0)});
-  return {rows,tot:rows.reduce((a,r)=>a+r.v,0)}};
-arcCostUpd=function(){const el=$('arcCost');if(!el||!SURG||!SURG.arc)return;const {rows,tot}=arcCostAll();
+  return {rows,tot:rows.reduce((a,r)=>a+r.v,0)}}
+function arcCostUpd(){const el=$('arcCost');if(!el||!SURG||!SURG.arc)return;const {rows,tot}=arcCostAll();
   el.innerHTML=`<h3>هزینه‌ی کل بیمار (بر اساس تعرفه‌ها و کارهای انتخاب‌شده)</h3>${rows.length?`<table class="arcct"><tbody>${rows.map(r=>`<tr><td>${esc(r.t)}${r.d?' · '+esc(faD(r.d)):''}</td><td>${fa(r.v)}</td></tr>`).join('')}</tbody><tfoot><tr><td>جمع کل</td><td>${fa(tot)} تومان</td></tr></tfoot></table>`:'<p class="note">هنوز کاری علامت نخورده.</p>'}
-  <p class="note">${FXA&&FXA.id?'پرداخت‌ها را پایین همین صفحه یا در «مالی بیماران» اصلاح کنید.':'پرداخت‌های بیمار را بعد از ثبت، در «مالی بیماران» یا با «ویرایش» همین پرونده وارد کنید.'}</p>`};
-/* save: one session per date (and surgeon) */
-arcSave=async function(btn){const A=fxArcRead(),m=$('fxaMsg'),err=(t,id)=>{m.className='msg err';m.textContent=t;if(id){const s=document.querySelector(`#surgSecs [data-sec="${id}"]`);if(!s&&SURG.openSecs){SURG.openSecs=new Set([id]);renderSurg()}const s2=document.querySelector(`#surgSecs [data-sec="${id}"]`);if(s2)s2.scrollIntoView({behavior:'smooth',block:'center'})}};
+  <p class="note">${FXA&&FXA.id?'پرداخت‌ها را پایین همین صفحه یا در «مالی بیماران» اصلاح کنید.':'پرداخت‌های بیمار را بعد از ثبت، در «مالی بیماران» یا با «ویرایش» همین پرونده وارد کنید.'}</p>`}
+/* save: one session per date (and surgeon); arcSave: arc3 base replaced by arc5 */
+async function arcSave(btn){const A=fxArcRead(),m=$('fxaMsg'),err=(t,id)=>{m.className='msg err';m.textContent=t;if(id){const s=document.querySelector(`#surgSecs [data-sec="${id}"]`);if(!s&&SURG.openSecs){SURG.openSecs=new Set([id]);renderSurg()}const s2=document.querySelector(`#surgSecs [data-sec="${id}"]`);if(s2)s2.scrollIntoView({behavior:'smooth',block:'center'})}};
   if(!A.name){err('نام بیمار را بنویسید.');$('fxa_name').focus();return}
   const day=A.dayJ?parseJ(A.dayJ):'';if(A.dayJ&&!day)return err('تاریخ اولین مراجعه درست نیست.');const due=A.dueJ?parseJ(A.dueJ):'';if(A.dueJ&&!due)return err('تاریخ پیگیری درست نیست.');
   const bv=(A.visits||[]).find(x=>(x.dayJ||x.svc||x.cost||x.paid||x.note||x.teeth)&&!x.day);if(bv)return err('تاریخ هر مراجعه را درست وارد کنید.');
@@ -71,7 +62,7 @@ arcSave=async function(btn){const A=fxArcRead(),m=$('fxaMsg'),err=(t,id)=>{m.cla
     visits:(A.visits||[]).filter(x=>x.day).map(x=>({day:x.day,svc:x.svc,teeth:x.teeth,doc:x.doc,cost:x.cost,paid:x.paid,method:x.method,no:x.no,note:x.note}))};
   btn.disabled=true;try{const r=await api('fxArc',{id:A.id||'',arc,by:fxBy()},{timeout:25000});const ed=!!A.id;
     toast(ed?'اطلاعات بایگانی ذخیره شد.':'پرونده‌ی جا مانده ثبت شد؛ اسکن پرونده را در «تصاویر» اضافه کنید.');arcExit();try{loadList()}catch(e){}pollQ(true);openFile(r.id,arc.name,ed?'tl':'img')}
-  catch(e){m.className='msg err';m.textContent=e.message}finally{btn.disabled=false}};
+  catch(e){m.className='msg err';m.textContent=e.message}finally{btn.disabled=false}}
 
 /* ttl2: the tiles strip has a display rule that beat its «hidden» attribute, so it stayed on the sign-in page after «خروج» */
 {const _sh=show;show=function(v){const r=_sh.apply(this,arguments);document.body.classList.toggle('ttlout',v==='login');if(v==='login')document.body.classList.remove('ux2tc');return r}}

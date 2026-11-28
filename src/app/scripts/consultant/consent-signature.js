@@ -7,8 +7,12 @@ const DEFAULT_CONSENT=`اینجانب {name} با آگاهی کامل و با ر
 ۵. هزینه‌ها و شرایط پرداخت که در این طرح درمان نوشته شده است را مطالعه کرده و می‌پذیرم. قیمت‌ها تقریبی است و تغییر طرح درمان می‌تواند هزینه را تغییر دهد.`;
 const consentText=r=>(SET.consent||DEFAULT_CONSENT).replace(/\{name\}/g,(r.h.name||'').trim()||'……………').replace(/\{clinic\}/g,SET.clinic||'کلینیک')+cons2Text(r);
 const SG={drawn:false,btn:null};
-function openSign(t){if(!(F.h.name||'').trim()||(F.brand==='ref'&&needBrand(F)&&!(F.pay&&F.pay.blater))){finalize(t);return}SG.btn=t;SG.drawn=false;$('sgnTxt').textContent=consentText(F);$('sgnMsg').textContent='';
+/* openSign = base + the ex1 (h) layer (finance/ex1.js: guardian chips of the consent sheet), which also runs when the sheet is skipped and the
+   plan goes straight to finalize; ex1GuardBind lives in finance/ex1.js and its errors are swallowed as before */
+function openSign(t){if(!(F.h.name||'').trim()||(F.brand==='ref'&&needBrand(F)&&!(F.pay&&F.pay.blater))){finalize(t)}else{SG.btn=t;SG.drawn=false;$('sgnTxt').textContent=consentText(F);$('sgnMsg').textContent='';
   const c=$('sgnPad'),cx=c.getContext('2d');cx.clearRect(0,0,c.width,c.height);$('sgnSkip').textContent=F.sign?'ادامه با امضای قبلی':'ثبت نهایی بدون امضا';$('sgnSheet').hidden=false}
+  /* ex1 (h) */
+  try { ex1GuardBind(); const g = F && F.h && F.h.guard; document.querySelectorAll('#sgnSheet [data-ex1g]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ex1g === '1') === !!g))); const w = $('ex1GW'); if (w) { w.hidden = !g; $('ex1_gname').value = g ? g.name || '' : ''; $('ex1_grel').value = g ? g.rel || '' : '' } } catch (e) { } }
 (function(){const c=$('sgnPad');if(!c)return;const cx=c.getContext('2d');let on=false,last=null;
   const pt=e=>{const r=c.getBoundingClientRect();return [(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
   c.addEventListener('pointerdown',e=>{on=true;last=pt(e);c.setPointerCapture(e.pointerId);e.preventDefault()});

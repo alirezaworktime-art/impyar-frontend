@@ -1,17 +1,15 @@
 /* ---------- psess: «جلسه‌ی پروتز» — full read-only file for the prosthesis doctor + work of this session + lab order ---------- */
 const L5W={impr:'قالب‌گیری',rscr:'امتحان رزین پیچ‌شونده',rabt:'امتحان رزین اباتمنت',deliv:'تحویل روکش',other:'سایر'};
 var L5=null,QPSESS=[];
-async function l5Open(id,name,aid){LOF=[];await openFile(id,name,'pros');if(!PF||PF.id!==id)return;
-  if(!PF.j.pros){toast('مرحله‌ی پروتز این بیمار شروع نشده؛ در پرونده «شروع از قالب‌گیری» را بزنید.',1);return}
-  L5={id,aid:aid||'',work:'',res:'',note:''};PF.sess=L5;const st=PF.j.pros.stage;L5.work=['heal','tmpd','impr','lab'].includes(st)?'impr':st==='deliv'?'deliv':PR2.TEST&&PR2.TEST.includes(st)?(st==='rabt'?'rabt':'rscr'):'';
-  LO=null;renderFile();try{$('pfSheet').querySelector('.in').scrollTop=0}catch(e){}}
+/* l5Open: base + pk4 (plan/pk4-login-step-types-paper.js: a session without pk4 data gets pk4Reset + redraw; this part runs on every
+   non-throwing exit, also when the file is not the one asked for or has no prosthesis stage) */
+async function l5Open(id,name,aid){LOF=[];await openFile(id,name,'pros');
+  if(PF&&PF.id===id){
+  if(!PF.j.pros)toast('مرحله‌ی پروتز این بیمار شروع نشده؛ در پرونده «شروع از قالب‌گیری» را بزنید.',1);
+  else{L5={id,aid:aid||'',work:'',res:'',note:''};PF.sess=L5;const st=PF.j.pros.stage;L5.work=['heal','tmpd','impr','lab'].includes(st)?'impr':st==='deliv'?'deliv':PR2.TEST&&PR2.TEST.includes(st)?(st==='rabt'?'rabt':'rscr'):'';
+  LO=null;renderFile();try{$('pfSheet').querySelector('.in').scrollTop=0}catch(e){}}}
+  try{if(L5&&!L5.pk4){pk4Reset();renderFile()}}catch(e){}}
 function l5Read(){if(!L5)return;const n=$('ps_note');if(n)L5.note=n.value;try{if(LO)loRead()}catch(e){}}
-function l5Hist(j){const sg=j.surg||{},ses=sg.sessions||[],pr=j.pros||{},labs=j.labs||[];let h='';
-  h+=`<div class="l5sec"><b>جلسات جراحی</b>${ses.length?`<ul>${ses.map(ss=>{let ll=[];try{ll=secLines(secFrom(ss.s||{}))}catch(e){}const imp=Object.keys(ss.imp||{});return `<li><b>جلسه‌ی ${fa(ss.n||0)}</b><small>${esc(jd(ss.at))}${ss.by?' · '+esc(ss.by):''}</small><div>${esc(ll.map(l=>l.t+(l.d&&l.d!=='—'?' ('+l.d+')':'')).join(' · '))}</div>${imp.length?`<div>ایمپلنت: ${esc(imp.map(k=>toothTxt([k])+' '+impTxt(ss.imp[k])).join('؛ '))}</div>`:''}</li>`}).join('')}</ul>`:'<div class="meta">جلسه‌ی جراحی در این کلینیک ثبت نشده.</div>'}</div>`;
-  const S=Array.isArray(pr.sess)?pr.sess:[];if(S.length)h+=`<div class="l5sec"><b>جلسه‌های پروتز قبلی</b><ul>${S.slice().reverse().map(s=>`<li><b>${esc(L5W[s.work]||s.work)}${s.res?(s.res==='ok'?' — تأیید':' — اصلاح'):''}</b><small>${esc(jd(s.at))}${s.by?' · '+esc(s.by):''}</small>${s.note?'<div>'+esc(s.note)+'</div>':''}</li>`).join('')}</ul></div>`;
-  if(labs.length)h+=`<div class="l5sec"><b>سفارش‌های لابراتوار</b><ul>${labs.slice().reverse().map(l=>{const d=l.data||{};return `<li><b>${l.no?'#'+esc(faD(l.no))+' · ':''}${esc(LST[l.st]||l.st)}</b><small>${esc(jd(l.created))}</small><div>${esc([LFOR[d.for]||'',d.wt||'',toothTxt(d.teeth||[]),l2CurTxt(d)].filter(Boolean).join(' · '))}</div>${l2Btn(l)}</li>`}).join('')}</ul></div>`;
-  if((pr.log||[]).length)h+=`<div class="l5sec"><b>سابقه‌ی مراحل پروتز و آنکاوری</b><ul>${pr.log.slice().reverse().slice(0,25).map(g=>`<li><b>${esc(PSTN[g.k]||pr2Lbl(g.k,pr2T(pr))||g.k)}</b><small>${esc(jt(g.at))}${g.by?' · '+esc(g.by):''}</small>${g.note?'<div>'+esc(g.note)+'</div>':''}</li>`).join('')}</ul></div>`;
-  return h}
 function l5Render(){const {j}=PF,s=L5,name=(fromDoc(PF.id,j.data||{}).h||{}).name||'';$('pfTitle').textContent='جلسه‌ی پروتز · '+name;
   const stg=j.pros?(PSTN[j.pros.stage]||pr2Lbl(j.pros.stage,pr2T(j.pros))||j.pros.stage):'';
   let w=`<section class="l5work"><h3>کار این جلسه</h3><div class="meta">مرحله‌ی فعلی: <b>${esc(stg)}</b></div>
@@ -24,7 +22,7 @@ function l5Render(){const {j}=PF,s=L5,name=(fromDoc(PF.id,j.data||{}).h||{}).nam
   const A=[];if(false)A.push(`<button class="btn main" type="button" id="l5Lab">ثبت جلسه و ارجاع به لابراتوار</button><button class="btn ghost" type="button" id="l5Save">ثبت جلسه بدون سفارش</button>`);else A.push(`<button class="btn main" type="button" id="l5Save">ثبت جلسه</button>`);
   A.push(`<button class="btn ghost sm" type="button" id="l5Full">پرونده‌ی کامل</button><button class="btn ghost sm" id="pfClose" type="button">بستن</button>`);$('pfActs').innerHTML=A.join('')}
 (function(){const _r=renderFile;renderFile=function(){if(PF&&PF.sess&&L5&&PF.sess===L5){try{l5Render()}catch(e){console.error(e);PF.sess=null;return _r.apply(this,arguments)}return}return _r.apply(this,arguments)}})();
-(function(){const _o=openFile;openFile=async function(){L5=null;return _o.apply(this,arguments)}})();
+/* (openFile clears L5: finance/patient-file-timeline.js) */
 async function l5Submit(withLab,b){l5Read();const m=$('l5Msg'),s=L5,j=PF.j,err=t=>{m.className='msg err';m.textContent=t;m.scrollIntoView({block:'center'})};
   if(!s.work)return err('کار این جلسه را انتخاب کنید.');if((s.work==='rscr'||s.work==='rabt')&&!s.res)return err('نتیجه‌ی امتحان را بزنید.');if((s.work==='other'||s.res==='redo')&&!String(s.note).trim())return err('توضیح را بنویسید.');
   const p={id:PF.id,aid:s.aid,work:s.work,result:s.res,note:s.note,by:USERNAME||ROLE_LBL[ROLE]};
@@ -41,8 +39,6 @@ async function l5Submit(withLab,b){l5Read();const m=$('l5Msg'),s=L5,j=PF.j,err=t
     pollQ(true);try{if(!$('viewPday').hidden)loadPday()}catch(e){}}
   catch(e){err(e.message)}finally{b.disabled=false}}
 /* entry points: referral card, prosthesis-day cards, patient name */
-(function(){const _p=pdCard;pdCard=function(id,name){return _p.apply(this,arguments).replace('<span class="nm">',`<span class="nm l5nm" data-l5nm="${esc(id)}" data-l5n="${esc(name)}" title="باز کردن جلسه‌ی پروتز">`).replace('<div class="acts">',`<div class="acts">${id?`<button class="btn sm main" type="button" data-l5="${esc(id)}" data-l5n="${esc(name)}">جلسه‌ی پروتز</button>`:''}`)}})();
-(function(){const _r=l3RenderRef;l3RenderRef=function(){const r=_r.apply(this,arguments);const b=$('l3Ref');if(b){b.querySelectorAll('[data-l3lab]').forEach(x=>{x.dataset.l5=x.dataset.l3lab;x.dataset.l5n=x.dataset.l3n;delete x.dataset.l3lab;x.textContent='شروع جلسه‌ی پروتز'});b.querySelectorAll('.l3it .nm').forEach((s,i)=>{const p=QPREF[i];if(p){s.classList.add('l5nm');s.dataset.l5nm=p.id;s.dataset.l5n=p.name;s.dataset.aid=p.aid}})}return r}})();
 document.addEventListener('click',e=>{const nmEl=e.target.closest&&e.target.closest('[data-l5nm]');if(nmEl&&ROLE&&['surgery','doctor'].includes(ROLE)){l5Open(nmEl.dataset.l5nm,nmEl.dataset.l5n,nmEl.dataset.aid||'');return}
   const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.dataset.l5){e.stopImmediatePropagation();l5Open(t.dataset.l5,t.dataset.l5n,t.dataset.aid||'');return}
@@ -60,5 +56,5 @@ function l5RenderStaff(){if(ROLE!=='staff')return;const pi=$('piList');if(!pi)re
   const L=$('l5List');b.hidden=!QPSESS.length;L.innerHTML=QPSESS.map(x=>{const lab=x.lid?(x.lno?`سفارش لابراتوار #${faD(x.lno)} رفت`:'سفارش لابراتوار رفت'):x.work==='impr'?'<b class="late">سفارش لابراتوار ثبت نشد</b>':'';
     return `<div class="item"><div class="row1"><div><span class="nm">${esc(x.name)}</span><div class="meta"><b>${esc(L5W[x.work]||x.work||'')}${x.res?(x.res==='ok'?' — تأیید':' — اصلاح'):''}</b> انجام شد${x.by?' · '+esc(x.by):''}${lab?' · '+lab:''}</div>${x.note?`<div class="meta">${esc(x.note)}</div>`:''}</div>${x.next?'<span class="pill done">نوبت بعدی دارد</span>':x.stage==='done'?'<span class="pill done">تحویل شد</span>':'<span class="pill wait">نوبت بعدی لازم</span>'}</div>
       <div class="acts"><button class="btn sm${x.next?' ghost':' main'}" type="button" data-file="${esc(x.id)}" data-fname="${esc(x.name)}" data-ftab="pros">پرونده و نوبت بعدی</button></div></div>`}).join('')}
-(function(){const _r=renderPi;renderPi=function(){const r=_r.apply(this,arguments);try{l5RenderStaff()}catch(e){}return r}})();
+/* (l5RenderStaff is called from renderPi in reception/patch-walk.js) */
 

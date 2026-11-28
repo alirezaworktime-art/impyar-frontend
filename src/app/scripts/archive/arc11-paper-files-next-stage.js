@@ -10,7 +10,6 @@ A6C.gbr4=A6CAT.find(x=>x.k==='gbr4');A6C.reimp=A6CAT.find(x=>x.k==='reimp');A6SO
   const box=`<div class="a11re"><h4>ایمپلنت مجدد <small>دندانی که دوباره کاشته شده؛ مبلغ را کلینیک وارد می‌کند</small></h4>${L.map((l,i)=>a6Line(l,i,L.length)).join('')}
    <div class="btns"><button type="button" class="btn sm ghost" data-a11re="1">+ ایمپلنت مجدد</button></div></div>`;
   const i=h.lastIndexOf('</section>');return i>=0?h.slice(0,i)+box+h.slice(i):h+box}}
-{const _r=a6Render;a6Render=function(){if(A6&&A6.lines&&A6.lines.some(l=>l.k==='reimp'))A6.op.add('imp');const r=_r.apply(this,arguments);try{a11Unc()}catch(e){}return r}}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-a11re]');if(!t||!A6)return;e.preventDefault();e.stopPropagation();
   A6.op.add('imp');A6.op.add('reimp');const l=a6NewLine('reimp');A6.dirty=true;const sc=window.scrollY;a6Render();window.scrollTo(0,sc);
   const el=document.querySelector(`.a6l[data-l="${l.id}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'})},true);

@@ -25,14 +25,5 @@ window.addEventListener('click', e => { const t = e.target.closest && e.target.c
   try { if (ROLE === 'staff') { const W = new Set((typeof QITEMS !== 'undefined' ? QITEMS : []).filter(x => (x.queue === 'consult' || x.queue === 'consulting') && x.status === 'modified').map(x => x.id)); if (W.size) { const P = new Set(TASKS.filter(t => !t.done && W.has(t.plan)).map(t => t.id));
     document.querySelectorAll('button[data-tdone]').forEach(b => { if (!P.has(b.dataset.tdone)) return; const c = b.closest('.item'), nm = c && c.querySelector('.nm'); if (nm && !c.querySelector('.m18pill')) nm.insertAdjacentHTML('beforeend', '<span class="pill settle m18pill">طرح تغییر کرده؛ منتظر تأیید مشاور</span>') }) } } } catch (e) { }
   return r } }
-/* (3) win-back list: search + more */
-{ const _rw = renderWb; WB.n = 300; WB.q = '';
-  renderWb = function () { const all = WB.items; try { let q = $('wbQ'); if (!q) { $('wbList').insertAdjacentHTML('beforebegin', '<input id="wbQ" type="search" placeholder="جستجوی نام یا موبایل" autocomplete="off">'); q = $('wbQ'); q.addEventListener('input', () => { WB.q = q.value.trim(); WB.n = 300; renderWb() }) }
-      const k = toEn(WB.q || '').replace(/\s+/g, ''), V0 = WB.q ? all.filter(x => String(x.name || '').includes(WB.q) || (k && toEn(String(x.phone || '')).includes(k))) : all, V = WB.k === 'all' ? V0 : V0.filter(x => x.kind === WB.k);
-      if (V.length <= 300) { WB.items = V0; _rw(); WB.items = all; return }
-      /* long list: draw it page by page with the original card of each row */
-      const cut = V.slice(0, WB.n); WB.items = cut; const k0 = WB.k; WB.k = 'all'; _rw(); WB.k = k0; WB.items = V0; const cnt = {}; V0.forEach(x => cnt[x.kind] = (cnt[x.kind] || 0) + 1);
-      $('wbF').innerHTML = [['all', 'همه', V0.length], ...Object.keys(WBK).map(z => [z, WBK[z][0], cnt[z] || 0])].map(([z, l, n]) => `<button type="button" class="chip" data-wbk="${z}" aria-pressed="${WB.k === z}">${esc(l)} <b>${fa(n)}</b></button>`).join('');
-      WB.items = all; if (V.length > WB.n) $('wbList').insertAdjacentHTML('beforeend', `<div class="btns"><button class="btn ghost" type="button" id="wbMore">نمایش ${fa(Math.min(300, V.length - WB.n))} مورد بعدی (از ${fa(V.length - WB.n)} مورد مانده)</button></div>`) }
-    catch (e) { WB.items = all; _rw() } };
-  document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('#wbMore'); if (t) { WB.n += 300; renderWb() } }) }
+/* (3) win-back list: «نمایش بیشتر» button (search + paging merged into renderWb in p5-online-intake-post-op.js) */
+{ document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('#wbMore'); if (t) { WB.n += 300; renderWb() } }) }

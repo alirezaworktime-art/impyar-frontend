@@ -12,7 +12,6 @@ try { const N = { bench: 'میز کار', 'o/new': 'کار تازه', 'o/all': '
   const p = _a.apply(this, arguments);
   if (action === 'labList' && p && p.then) p.then(j => { if (j && j.m36 && j.m36.stwt) M36.stwt = j.m36.stwt }).catch(() => { });
   return p } })();
-(function () { const _u = l2Upload; l2Upload = function (lid, file, kind, onp) { try { if (M36.upk && kind === 'photo') kind = /^برگه-دستورکار-/.test(file.name || '') ? 'ophoto' : M36.upk } catch (e) { } return _u.call(this, lid, file, kind, onp) } })();
 
 /* ===== rows of the workbench ===== */
 function m36Rows() { const me = L2.me || {}, out = [];
@@ -110,21 +109,6 @@ document.addEventListener('click', async e => { const t = e.target.closest && e.
     else if (op === 'accfor') { const { s } = m36Find(lid, sid); if (!s) return; t.disabled = true; await api('lab5', { op: 'acceptFor', lid, sid, uid: s.asg }); l6Done('به نام ' + (s.asg_name || '') + ' شروع شد.') } }
   catch (x) { t.disabled = false; alertMsg(x.message) } });
 
-/* ===== «دریافت و شروع کار»: work type remembered for the stage, and who gets the first step ===== */
-(function () { const _o = l2StartOpen; l2StartOpen = async function (lid) { const r = await _o.apply(this, arguments);
-  try { const sh = $('l2StSh'); if (!sh || sh.hidden || sh.querySelector('#m36asg') || sh.querySelector('#l2From')) return r;
-    const x = (LB.items || []).find(i => i.id === lid) || (L2.ord && L2.ord.order && L2.ord.order.id === lid ? L2.ord.order : null), d = (x && x.data) || {}, D = await l2Defs(), wt = $('l2wt'), pr = $('l2proc');
-    if (wt && !wt.value && !d.wtid && M36.stwt[d.for] && [...wt.options].some(o => o.value === String(M36.stwt[d.for]))) { wt.value = String(M36.stwt[d.for]); wt.dispatchEvent(new Event('change', { bubbles: true })) }
-    const F = sh.querySelector('.fields:last-of-type') || sh.querySelector('.fields'); if (!F) return r;
-    F.insertAdjacentHTML('beforebegin', '<div class="fields" id="m36asgF"><label class="f full">مرحله‌ی اول به چه کسی ارجاع شود؟<select id="m36asg"></select><small class="note" id="m36asgN"></small></label></div>');
-    const fill = () => { const s = $('m36asg'); if (!s) return; const w = D.wts.find(v => String(v.id) === (wt ? wt.value : '')), p = D.procs.find(v => String(v.id) === ((pr && pr.value) || String((w && w.proc) || ''))), d0 = p && p.steps.length ? D.depts.find(z => z.id === p.steps[0].d) : null, keep = s.value;
-      if (!d0) { s.innerHTML = '<option value="">— اول نوع کار را انتخاب کنید —</option>'; $('m36asgN').textContent = ''; return }
-      const o = m36StaffOpts(D, d0.id); s.innerHTML = (o.A.length === 1 ? '' : '<option value="">— انتخاب کنید —</option>') + o.opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('') + (o.A.length === 1 ? '<option value="">بعداً در میز کار</option>' : '');
-      if (keep && [...s.options].some(q => q.value === keep)) s.value = keep; else if (o.A.length === 1) s.value = o.A[0].id;
-      $('m36asgN').textContent = 'مرحله‌ی اول: «' + d0.name + '»' + (o.A.length === 1 ? ' — تنها کارمند این دپارتمان خودکار انتخاب شد.' : o.opts.length ? '' : ' — هنوز کارمند فعالی تعریف نشده.'); s.dataset.need = o.A.length > 1 ? '1' : '' };
-    fill(); if (wt) wt.addEventListener('change', fill); if (pr) pr.addEventListener('change', fill);
-    const ok = $('l2StOk'), old = ok && ok.onclick; if (ok && old) ok.onclick = function (ev) { const s = $('m36asg'); if (s && s.dataset.need && !s.value && !s.closest('[hidden]')) { const m = $('l2StM'); if (m) { m.className = 'msg err'; m.textContent = 'انجام‌دهنده‌ی مرحله‌ی اول را انتخاب کنید.' } return } return old.call(this, ev) } } catch (e) { console.error('m36 start', e) }
-  return r } })();
 
 /* ===== label 90 × 15 mm ===== */
 l2Label = async function (lid) { let J; try { J = await l2PrintData(lid) } catch (e) { alertMsg(e.message); return } const o = J.order, d = o.data || {}, P = (d.parts || []).length ? d.parts : [{ label: '', teeth: d.teeth || [] }];
@@ -138,17 +122,6 @@ l2Label = async function (lid) { let J; try { J = await l2PrintData(lid) } catch
   $('l8LbX').onclick = () => sh.hidden = true; $('l8LbP').onclick = () => printHTML(html) };
 
 /* ===== «ایجاد کار جدید» ===== */
-(function () { const _r = l4nRender; l4nRender = function () {
-  try { if (L4N && LO && L4N.mode === 'ext' && !L4N.m36m) { L4N.m36m = 1; if (!LO.meth) LO.meth = 'scan' } } catch (e) { }
-  const r = _r.apply(this, arguments);
-  try { const body = $('l4nBody'); if (!body || !L4N || !LO) return r; const ext = L4N.mode === 'ext', form = body.querySelector('.h9form');
-    const st = body.querySelector('.l4stage'), mt = form && [...form.querySelectorAll('span')].find(s => /روش قالب‌گیری/.test(s.textContent));
-    if (st && mt && mt.parentElement && !form.contains(st)) { const lab = st.querySelector('span'); if (lab) lab.innerHTML = 'مرحله‌ی کار:'; st.classList.add('m36stage'); mt.parentElement.insertAdjacentElement('beforebegin', st) }
-    const due = form && form.querySelector('#lo_due'), sch = due && due.closest('.h9sch'); if (sch) sch.hidden = ext;
-    body.querySelectorAll('[data-lometh]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lometh === LO.meth));
-    const fl = body.querySelector('.l3files'); if (fl && !body.querySelector('#m36pk')) { const k = L4N.m36pk || 'ophoto'; fl.insertAdjacentHTML('afterend', `<div class="grp" id="m36pk"><span>عکس‌هایی که بارگذاری می‌کنید چه هستند؟</span><div class="seg"><button type="button" data-m36pk="ophoto" aria-pressed="${k === 'ophoto'}">عکس دستورکار</button><button type="button" data-m36pk="pphoto" aria-pressed="${k === 'pphoto'}">عکس بیمار</button></div></div>`) }
-    if (ext) { const n = body.querySelector('.l4mode ~ small.note, .l4mode ~ .note'); const c = $('l4cl'); if (c && !body.querySelector('#m36free')) c.closest('label').insertAdjacentHTML('afterend', '<small class="note" id="m36free">هیچ خانه‌ای الزامی نیست؛ هر چه دارید پر کنید.</small>') }
-  } catch (e) { console.error('m36 l4n', e) } return r } })();
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-m36pk]'); if (!t || !L4N) return; L4N.m36pk = t.dataset.m36pk; document.querySelectorAll('[data-m36pk]').forEach(b => b.setAttribute('aria-pressed', b === t)) });
 async function m36SaveExt(b) { const m = $('l4nMsg'), err = t => { m.className = 'msg err'; m.textContent = t; m.scrollIntoView({ block: 'center' }) };
   if (typeof V9 !== 'undefined' && V9 && V9.on) return err('اول ضبط صدا را تمام کنید.');
@@ -165,7 +138,6 @@ async function m36SaveExt(b) { const m = $('l4nMsg'), err = t => { m.className =
     if (bad) alertMsg('کار ثبت شد ولی بارگذاری فایل کامل نشد (' + bad + '). از «برگه و فایل‌ها» دوباره بگذارید.');
     toast(`کار #${l2No(r.no)} ثبت شد.`); pollLab(true) }
   catch (e) { err(e.message); b.disabled = false } }
-(function () { const _s = l4Save; l4Save = async function (b) { if (L4N && LO && L4N.mode === 'ext') return m36SaveExt(b); M36.upk = (L4N && L4N.m36pk) || 'ophoto'; try { return await _s.apply(this, arguments) } finally { M36.upk = '' } } })();
 
 /* ===== «برگه و فایل‌ها»: the step table follows the same rules as the workbench ===== */
 (function () { const _r = l2Render; l2Render = function () { const r = _r.apply(this, arguments);
@@ -193,9 +165,3 @@ async function m36SaveExt(b) { const m = $('l4nMsg'), err = t => { m.className =
 try { const N = { row: 'ردیف', no: 'شماره', name: 'بیمار', acct: 'مشتری', doc: 'پزشک', wt: 'نوع کار', teeth: 'دندان‌ها', dept: 'مرحله‌ی فعلی', st: 'وضعیت', due: 'تحویل', enter: 'ورود', box: 'جعبه', color: 'رنگ', stage: 'مرحله‌ی کار', inv: 'صورت‌حساب', act: 'کارها', code: 'کد مشتری', wo: 'شماره دستورکار', note: 'توضیح', created: 'ثبت در سایت', last: 'آخرین مرحله‌ی انجام‌شده', time: 'مدت', file: 'شماره پرونده', sys: 'سیستم ایمپلنت' },
     O = ['row', 'no', 'name', 'acct', 'doc', 'wt', 'teeth', 'dept', 'st', 'due', 'enter', 'box', 'color', 'stage', 'inv', 'code', 'wo', 'note', 'created', 'last', 'time', 'file', 'sys', 'act'];
   L6C.forEach(c => { if (N[c[0]]) c[1] = N[c[0]] }); L6C.sort((a, b) => { const i = O.indexOf(a[0]), j = O.indexOf(b[0]); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) }) } catch (e) { console.error('m36 cols', e) }
-/* ---------- m37 (2026-11-16): corrections after m36 ---------- */
-/* «بیشتر»: our own wording, no duplicate entries */
-(function () { const _b = l6BenchOp; l6BenchOp = async function (b) { const r = await _b.apply(this, arguments);
-  try { if (b && b.dataset.l6b === 'more') { const m = document.querySelector('#l6MenuSh .l6mbtn'); if (m) { const N = { 'نمایش جزییات سفارش': 'برگه، فایل‌ها و گفت‌وگو با پزشک', 'موارد کنترل مشتری (ارسال جهت تست)': 'فرستادن برای تست نزد پزشک', 'تغییر پروسه از این مرحله': 'تغییر مسیر ساخت از این مرحله', 'تکمیل همه مراحل': 'بستن همه‌ی مرحله‌های ارجاع‌شده' }; let seen = 0;
-      [...m.querySelectorAll('button')].forEach(x => { const t = x.textContent.trim(); if (x.hasAttribute('data-l4open')) { if (seen++) { x.remove(); return } } if (t === 'تکمیل این مرحله') { x.remove(); return } if (N[t]) x.textContent = N[t] }) } } } catch (e) { }
-  return r } })();

@@ -24,15 +24,9 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 /* stop a recording if the sheet closes; voice files go with the order (kind «other») */
 (function(){const _r=renderFile;renderFile=function(){if(V9&&V9.on&&!document.getElementById('v9Rec')&&!(LO&&LO.h9))v9Stop();return _r.apply(this,arguments)}})();
 function v9Files(){return ((LO&&LO.h9&&LO.h9.voice)||[]).map(v=>v.file)}
-(function(){const _a=h9Apply;h9Apply=function(){const r=_a.apply(this,arguments);try{const n=v9Files().length;if(n&&LO&&!/توضیح صوتی/.test(LO.note))LO.note=(LO.note+' · '+fa(n)+' توضیح صوتی پیوست است').slice(0,1000)}catch(e){}return r}})();
 (function(){const _s=loSend;loSend=async function(t){if(V9&&V9.on){alertMsg('اول ضبط صدا را تمام کنید.');return}if(LO&&LO.h9){const V=v9Files();LOF=LOF.filter(f=>!V9EXT.test(f.name)).concat(V)}return _s.apply(this,arguments)}})();
 (function(){const _s=l5Submit;l5Submit=async function(withLab,b){if(V9&&V9.on){alertMsg('اول ضبط صدا را تمام کنید.');return}if(withLab&&LO&&LO.h9){const V=v9Files();LOF=LOF.filter(f=>!V9EXT.test(f.name)).concat(V)}return _s.apply(this,arguments)}})();
-(function(){const _u=l2Upload;l2Upload=function(lid,file,kind,onp){return _u.call(this,lid,file,file&&V9EXT.test(file.name)?'other':kind,onp)}})();
 /* the sheet image says a voice note is attached */
-(function(){const _sh=h9Sheet;h9Sheet=async function(){const f=await _sh.apply(this,arguments);const n=v9Files().length;if(!n)return f;
-  try{const im=await createImageBitmap(f),c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);x.direction='rtl';x.textAlign='right';x.textBaseline='middle';
-    x.font=`700 28px ${getComputedStyle(document.body).fontFamily}`;x.fillStyle='#0b3b8c';x.fillText('🎙 '+fa(n)+' توضیح صوتی همراه این سفارش',im.width-70,im.height-50);
-    return await new Promise(res=>c.toBlob(b=>res(new File([b],f.name,{type:'image/png'})),'image/png'))}catch(e){return f}}})();
 /* lab / file view: play voice notes */
 async function v9Play(fid){const f=l2File(fid);if(!f)return;try{const bl=await l2Fetch(f),u=URL.createObjectURL(bl);const s=mkSheet('v9Sh',`<h3 dir="ltr">${esc(f.name)}</h3><audio controls autoplay src="${u}" style="width:100%"></audio><div class="btns"><button class="btn ghost" type="button" id="v9ShX">بستن</button></div>`);s.style.zIndex=70;s.hidden=false;
   $('v9ShX').onclick=()=>{const a=s.querySelector('audio');if(a)a.pause();s.hidden=true;URL.revokeObjectURL(u)}}catch(e){alertMsg(e.message)}}

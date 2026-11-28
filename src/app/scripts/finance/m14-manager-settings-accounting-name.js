@@ -2,8 +2,6 @@
 let M14 = null, M14_WHO = '';
 const M14_MAP = ['EXT IMPLANT', 'GBR 1', 'سینوس باز 1', 'سینوس بسته', 'آلوئولوپلاستی', 'نسج سخت 1', 'پوینتیک', 'FGG', 'آنکاوری', 'هزینه روکش', 'پیوند استخوان بلاک راموس', 'CT scan', 'روکش موقت', 'سرجیکال گاید', 'هزینه جراحی کره ای', 'هزینه جراحی ایتالیایی', 'هزینه جراحی سویسی'];
 const m14Map = n => M14_MAP.some(x => normN(x) === normN(n));
-{ const _r = renderPriceSettings; renderPriceSettings = function () { const r = _r.apply(this, arguments); try { const w = $('set_prices'), P = SET.prices || {}; if (!w) return r;
-  [['cbct', 'CT scan / CBCT · هر مورد'], ['anes', 'زمان بیهوشی · پرونده‌ی کاغذی']].forEach(([k, l]) => { if (w.querySelector(`[data-tp="${k}"]`)) return; w.insertAdjacentHTML('beforeend', `<div class="grp"><span>${l}</span><input class="price" inputmode="numeric" data-tp="${k}" value="${esc(fmtInput((P[k] || {}).price || ''))}"></div>`) }) } catch (e) { } return r } }
 const M14K = { doc: ['پزشک (نوبت‌دهی، لابراتوار، پروتز)', 'set_docs', 'docs', 'doctor'], asst: ['پزشک دستیار جراحی', 'set_assts', 'assts', 'doctor'], recep: ['پذیرنده', 'set_recep', 'recep', 'staff'], staff: ['سایر کارکنان (فقط حسابداری)', '', '', 'staff'] };
 function m14Box() { if (ROLE !== 'manager') return null; let b = $('m14Box'); if (b) return b; const m = $('sMsg'); if (!m) return null; m.insertAdjacentHTML('beforebegin', '<div id="m14Box" class="m14"></div>'); return $('m14Box') }
 async function m14Load() { const b = m14Box(); if (!b) return; b.innerHTML = '<p class="note">در حال خواندن جدول حسابداری…</p>'; try { M14 = await api('m14Cat', {}); m14Render() } catch (e) { b.innerHTML = `<p class="msg err">${esc(e.message)}</p>` } }

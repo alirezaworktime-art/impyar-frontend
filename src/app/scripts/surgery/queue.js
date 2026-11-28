@@ -7,6 +7,7 @@ const mqLate=a=>{if(!a.time)return 0;const n=tehNow(),t=+a.time.slice(0,2)*60+ +
 const tel=p=>p?`<a class="btn sm ghost" href="tel:${esc(toEn(p))}">تماس</a>`:'<span class="pill settle">بدون شماره</span>';
 const fileBtn=(id,name,tab)=>id?`<button class="btn sm ghost" type="button" data-file="${esc(id)}" data-fname="${esc(name||'')}"${tab?` data-ftab="${tab}"`:''}>پرونده</button>${typeof FXW!=='undefined'&&FXW[ROLE]?`<button class="btn sm ghost" type="button" data-ntadd="${esc(id)}" data-ntn="${esc(name||'')}" title="توضیح برای این بیمار (تایپی یا با قلم)" aria-label="توضیح برای ${esc(name||'بیمار')}">📝</button>`:''}`:'';
 /* one row of the queue: {c:color key, name, why, w (sort weight, higher first), act (html of the main button), extra (html)} */
+/* mqItems: base + pa5 (re-implant within a week) + perf1 (cap) */
 function mqItems(){const td=tDay(),R=[],inQ=new Set(QITEMS.filter(x=>['surgery','surgdone','surgpart','waiting','reviewing','consult','consulting'].includes(x.queue)).map(x=>x.id));
   const A=QAPPT.filter(a=>a.day===td&&a.st==='set');
   if(ROLE==='staff'){
@@ -37,13 +38,25 @@ function mqItems(){const td=tDay(),R=[],inQ=new Set(QITEMS.filter(x=>['surgery',
     QITEMS.filter(x=>x.queue==='surgery').forEach(x=>R.push({pid:x.id,c:'surg',name:x.name,why:'ارجاع‌شده برای جراحی از '+mqWait(x.surgAt||x.queuedAt)+(x.surgN?' · جلسه‌ی '+fa(x.surgN+1):'')+(medShort(x.med)?' · <b class="late">⚠ '+esc(medShort(x.med))+'</b>':''),w:90,act:`<button class="btn sm main" type="button" data-qopen="${esc(x.id)}">${x.surgN?'ادامه‌ی ثبت جراحی':'شروع ثبت جراحی'}</button>`,extra:fileBtn(x.id,x.name)}));
     A.filter(a=>!SG_K.includes(a.kind)&&a.kind!=='visit'&&a.kind!=='other').sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1).forEach(a=>{const pr=AGRP.pr.includes(a.kind);R.push({pid:a.plan,c:pr?'pros':'chk',name:a.name,why:`${a.time?faD(a.time)+' · ':''}${AKL[a.kind]||a.kind}${a.doc?' · '+esc(a.doc):''}${mqLate(a)>15?' · <b class="late">'+fa(mqLate(a))+' دقیقه گذشته</b>':''}`,w:pr?30:35,act:pr?`<button class="btn sm main" type="button" data-file="${esc(a.plan)}" data-fname="${esc(a.name)}" data-ftab="pros">پرونده و مراحل</button>`:`<button class="btn sm main" type="button" data-adoc="${esc(a.id)}" data-adn="${esc(a.name)}" data-adp="${esc(a.plan||'')}" data-adk="${esc(a.kind||'')}">ثبت انجام</button>`,extra:(pr&&a.plan?`<button class="btn sm ghost" type="button" data-pmap="${esc(a.plan)}" data-pmn="${esc(a.name)}">پایه و پونتیک</button>`:'')+`<button class="btn sm ghost" type="button" data-ast="noshow" data-aid="${esc(a.id)}">نیامد</button>`})});
   }
-  R.sort((a,b)=>b.w-a.w);return R}
+  R.sort((a,b)=>b.w-a.w);
+  /* pa5: reception «صف من» — the re-implant date is within a week (after the sort, as before) */
+  if(ROLE==='staff'){const td=tDay();
+  TASKS.filter(t=>!t.done&&t.kind==='book'&&t.info==='reimp'&&dDiff(t.due,td)>0&&dDiff(t.due,td)<=7).forEach(t=>R.push({pid:t.plan,c:'surg',name:t.name,why:`کاشت دوباره‌ی ایمپلنت ${esc(jDay(t.due))} (${fa(dDiff(t.due,td))} روز دیگر)؛ تماس بگیرید و نوبت جراحی بدهید${t.note?' · '+esc(t.note):''}`,w:60,act:`<button class="btn sm main" type="button" data-tbook="${esc(t.id)}">تعیین نوبت</button>`,extra:tel(t.phone)+fileBtn(t.plan,t.name,'pros')}));}
+  /* perf1: capped list while renderMyQ draws */
+  if(!MQ_ON)return R;MQ_TOT=R.length;return R.slice(0,MQCAP)}
 function mqLater(){const td=tDay(),now=tehNow();return QAPPT.filter(a=>a.day===td&&a.st==='set'&&a.time&&(+a.time.slice(0,2)*60+ +a.time.slice(3))>now-15).sort((a,b)=>a.time<b.time?-1:1).slice(0,12)}
-function renderMyQ(){const el=$('myq');if(!el||!MQ_HOME[ROLE])return;if(ROLE==='manager'){renderBoard(el);return}
+/* renderMyQ: base + reception/patch-ux.js (count notice, sound button, quick hint: also when the base draws nothing) + surgery/appt2-asks-what-each-purpose.js
+   (perf1: capped list, MQ_ON while drawing, «show more» button in finally) */
+function renderMyQ(){MQ_ON=true;MQ_TOT=0;try{const el=$('myq');if(el&&MQ_HOME[ROLE]){if(ROLE==='manager'){renderBoard(el)}else{
   const R=mqItems(),L=mqLater(),done=QAPPT.filter(a=>a.day===tDay()&&a.st==='done').length;
   el.innerHTML=`<div class="mqh"><h2>صف من</h2><small>${R.length?fa(R.length)+' کار منتظر شماست':'کاری منتظر شما نیست'}${done?' · '+fa(done)+' نوبت امروز انجام شد':''}</small></div>`+
     (R.length?R.map((x,i)=>`<div class="mqi ${MQC[x.c]||''}${i===0?' first':''}"><span class="no">${fa(i+1)}</span><div class="bd"><div class="nm">${esc(x.name||'')}${pdfIco(x.pid,x.name)}</div><div class="why">${x.why}</div></div><div class="acts">${x.extra||''}${x.act}</div></div>`).join(''):`<div class="mqe"><b>صف خالی</b>${ROLE==='staff'?'بیمار تازه را با «پذیرش بیمار» ثبت کنید.':'بیماری برای شما ارجاع نشده.'}</div>`)+
-    (L.length&&ROLE!=='doctor'?`<div class="mqsep">بعداً امروز</div>`+L.map(a=>`<div class="mql" data-file="${esc(a.plan||'')}" data-fname="${esc(a.name)}"><span class="tm">${faD(a.time)}</span><span class="nm">${esc(a.name)}</span><span class="k" style="color:var(--k-${kGrp(a.kind)})">${esc(AKL[a.kind]||a.kind)}</span><span class="st">${a.sms?'یادآوری رفت':''}</span></div>`).join(''):'')}
+    (L.length&&ROLE!=='doctor'?`<div class="mqsep">بعداً امروز</div>`+L.map(a=>`<div class="mql" data-file="${esc(a.plan||'')}" data-fname="${esc(a.name)}"><span class="tm">${faD(a.time)}</span><span class="nm">${esc(a.name)}</span><span class="k" style="color:var(--k-${kGrp(a.kind)})">${esc(AKL[a.kind]||a.kind)}</span><span class="st">${a.sms?'یادآوری رفت':''}</span></div>`).join(''):'')}}
+  {const el=$('myq');if(!el||ROLE==='manager')return;
+  const n=MQ_TOT||el.querySelectorAll('.mqi').length;mqNotify(n);
+  const h=el.querySelector('.mqh');if(h&&!h.querySelector('#sndBtn')){const b=document.createElement('button');b.type='button';b.id='sndBtn';b.className='sndb';b.textContent=SND()?'🔔':'🔕';b.title=SND()?'صدای کار تازه روشن است':'صدای کار تازه خاموش است';h.appendChild(b)}
+  const hi=hintHTML();if(hi&&!el.querySelector('.hintc'))el.insertAdjacentHTML('afterbegin',hi)}}
+  finally{MQ_ON=false;const el=$('myq');if(el&&MQ_TOT>MQCAP&&!el.querySelector('.capmore')){const s=el.querySelector('.mqsep');const b=document.createElement('div');b.innerHTML=capBtn('mq',MQ_TOT,MQCAP);if(s)el.insertBefore(b.firstChild,s);else el.appendChild(b.firstChild)}}}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.mql[data-file]');if(t&&t.dataset.file&&!e.target.closest('button,a')){openFile(t.dataset.file,t.dataset.fname)}
   const g=e.target.closest&&e.target.closest('[data-gotile]');if(g){goTile(g.dataset.gotile)}});
 /* manager board */
@@ -64,11 +77,10 @@ function renderBoard(el){const td=tDay(),A=QAPPT.filter(a=>a.day===td&&a.st!=='c
     <p class="note">جزئیات مالی در «داشبورد» و «حسابداری کامل».</p>`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.mbc .c[data-file]');if(t&&t.dataset.file)openFile(t.dataset.file,t.dataset.fname)});
 /* home tile + rail */
-const _tileList=tileList;tileList=function(){const L=_tileList();if(!MQ_HOME[ROLE])return L;const n=ROLE==='manager'?0:mqItems().length;return [{k:'q',c:'q',l:ROLE==='manager'?'تابلو':'صف من',s:'',n,tab:'tabQueue',view:ROLE==='staff'?'recep':undefined}].concat(L)};
 const _goTile=goTile;goTile=function(k,opt){if(k==='q'&&ROLE!=='staff'){TILE='q';TSAVE[ROLE]='q';try{localStorage.setItem('implantTile',JSON.stringify(TSAVE))}catch(e){}document.body.dataset.tile='q';if($('viewQueue').hidden)show('queue');else renderQ();renderTiles();if(!(opt&&opt.keep))window.scrollTo(0,0);return}return _goTile(k,opt)};
 function mqInit(){if($('myq'))return;const d=document.createElement('div');d.id='myq';d.dataset.tile='q';const host=ROLE==='staff'?$('rAll'):$('viewQueue');if(!host)return;host.insertBefore(d,host.firstChild)}
-const _renderQ2=renderQ;renderQ=function(){_renderQ2();try{mqInit();if(document.body.dataset.tile==='q')renderMyQ();renderTiles()}catch(e){console.error(e)}};
-const _home2=home;home=function(){if(MQ_HOME[ROLE]){TILE=TSAVE[ROLE]&&TSAVE[ROLE]!=='q'&&tileList().some(t=>t.k===TSAVE[ROLE])?TSAVE[ROLE]:'q'}_home2();try{if(ROLE==='manager'){mqInit();goTile('q',{keep:1})}}catch(e){console.error(e)}};
+/* renderQ: the «صف من» layer is merged into surgery/roles-live-queue-reception.js */
+/* home: the «صف من» layer is merged into surgery/roles-live-queue-reception.js */
 /* the tile head text for the home tile */
 TILE_HD.staff.q='';
 setInterval(()=>{try{if(document.body.dataset.tile==='q'&&!document.hidden&&ROLE)renderMyQ()}catch(e){}},60000);

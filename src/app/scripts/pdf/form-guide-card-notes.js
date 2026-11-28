@@ -6,14 +6,7 @@ const m19Join = (note, g) => { note = String(note || '').trim().slice(0, 200); i
 const m19Plan = () => typeof OC3 !== 'undefined' && OC3.mode === 'plan' && !!OC3.f && typeof ROLE !== 'undefined' && (ROLE === 'oclin' || ROLE === 'accountant');
 { const _c = q5Can; q5Can = function () { return m19Plan() || _c.apply(this, arguments) } }
 /* form: guide card + notes */
-{ const _ph = oc3PlanHTML; oc3PlanHTML = function () { const fresh = OC3.mode !== 'plan'; let h = _ph.apply(this, arguments);
-  try { if (fresh) { const pl = OC2.v.plan, d = m19Split(pl ? pl.note : ''); OC3.f.note = d.note; OC3.f.h = OC3.f.h || {}; if (d.sg) OC3.f.h.sgd = d.sg; else delete OC3.f.h.sgd }
-    document.querySelectorAll('#q5Card').forEach(x => { if (!x.closest('#viewOc')) x.remove() }); /* one guide card on the page */
-    const g = q5Block().replace(/؛ مبلغ گاید را مشاور در «شرایط پرداخت» می‌نویسد\./, '.').replace('<span class="tag">برای روز جراحی</span>', '');
-    const a = '<div class="fields"><label class="f">توضیح<input id="oc3note"', i = h.indexOf(a), j = i < 0 ? -1 : h.indexOf('</label></div>', i);
-    if (j > 0) h = h.slice(0, i) + g + `<div class="fields"><label class="f">توضیحات پزشک<textarea id="oc3note" rows="3" maxlength="200" placeholder="هر توضیحی که باید به کلینیک و بیمار گفته شود">${esc(OC3.f.note || '')}</textarea></label></div>` + h.slice(j + '</label></div>'.length);
-    h = h.replace('>PDF برای کلینیک<', '>دانلود PDF برای کلینیک<') } catch (e) { }
-  return h } }
+/* (the form part of m19 — guide card + notes — is now inside oc3PlanHTML in other-clinics/oc3-per-patient-three-tabs.js) */
 /* the guide card redraws itself in place (q5Mount needs #q5Card); keep what was typed in the note */
 { const _a = api; api = function (action, payload) { try { if (action === 'oc' && payload && payload.op === 'plan3' && payload.x && m19Plan()) payload.x.note = m19Join(payload.x.note, OC3.f.h && OC3.f.h.sgd) } catch (e) { } return _a.apply(this, arguments) } }
 /* PDF */

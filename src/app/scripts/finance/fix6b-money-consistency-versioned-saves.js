@@ -2,13 +2,8 @@
 const FX6_STALE='این پرونده در این فاصله تغییر کرده است؛ دوباره باز کنید.',FX6_SK='implantStale:';
 /* A2: parts stored at confirm = what the signed texts ask for */
 function fx6bParts(r,S0,P0,T){try{if(discOn(r)){const S=Math.max(0,S0-discAmt(r,S0));return {S,P:Math.max(0,T-S)}}}catch(e){}return {S:S0+P0>0?Math.round(S0*T/(S0+P0)):0,P:S0+P0>0?T-Math.round(S0*T/(S0+P0)):0}}
-/* A9: the cash note says what the typed amount means */
-{const _cn=cashNoteRender;cashNoteRender=function(){const r=_cn.apply(this,arguments);try{const el=$('cashNote'),p=F.pay||{},raw=String(p.cash==null?'':p.cash).trim();
-  if(el&&raw!==''&&discOn(F)){const C=num(raw),net=planTotal(F),G=partS(F)+partP(F),ex=C-net;el.hidden=false;el.innerHTML='نقد '+fa(C)+' تومان = <b>۱۰۰٪ نقد با '+fa(discPct(F))+'٪ تخفیف</b> (جمع طرح '+fa(G)+' تومان، با تخفیف '+fa(net)+' تومان)'+(ex>0?' · <b>'+fa(ex)+' تومان بیشتر از جمع با تخفیف</b>':'')}}catch(e){}return r}}
+/* A9: the cash note says what the typed amount means (in cashNoteRender) */
 /* A4: the version the form was opened with travels with every save / confirm */
-{const _fd=fromDoc;fromDoc=function(id,d){const r=_fd(id,d);if(d&&typeof d._v==='string')r._v=d._v;return r}}
-{const _td=toDoc;toDoc=function(r){const o=_td(r);if(r&&typeof r._v==='string')o._v=r._v;if(r&&r._sgd)o.sgDiff=r._sgd;return o}}
-{const _sr=saveRecord;saveRecord=async function(r){const j=await _sr(r);try{if(j&&typeof j.ver==='string'){r._v=j.ver;const q=QITEMS.find(v=>v.id===r.id);if(q&&q.data)q.data._v=j.ver}}catch(e){}return j}}
 function fx6bKeep(rec,ob){try{if(!rec||!rec.id||!rec.data)return;const d=Object.assign({},rec.data);delete d.sgDiff;
   localStorage.setItem(FX6_SK+rec.id,JSON.stringify({role:ROLE,at:Date.now(),d}));ldDel(rec.id);
   if(ob){try{if(PC&&PC.id===rec.id){const s=$('pcSheet');if(s)s.hidden=true;PC=null}}catch(e){}const n=OUTBOX.length;OUTBOX=OUTBOX.filter(o=>!(o.id===rec.id&&(o.kind==='consult'||o.kind==='confirm')));if(OUTBOX.length!==n){saveOutbox();try{SENDING.delete(rec.id)}catch(e){}try{obBar()}catch(e){}}}}catch(e){}}
@@ -19,13 +14,12 @@ function fx6bStaleGet(id){try{const x=JSON.parse(localStorage.getItem(FX6_SK+id)
   throw e}}}
 {const _pc=openPostConfirm;openPostConfirm=function(snap){try{if(snap&&snap.id&&fx6bStaleGet(snap.id))return}catch(e){}return _pc.apply(this,arguments)}}
 /* a local draft based on an older version is not restored over the newer file: it is kept aside instead */
-{const _nd=newestDoc;newestDoc=function(id,serverDoc){try{const l=ldGet(id);if(l&&serverDoc&&typeof l._v==='string'&&typeof serverDoc._v==='string'&&l._v!==serverDoc._v)fx6bKeep({id,data:l},false)}catch(e){}return _nd(id,serverDoc)}}
 function fx6bBar(){let b=$('fx6Stale');if(b)b.remove();if(!F||!F.id)return;const s=fx6bStaleGet(F.id);if(!s)return;
   let when='';try{when=new Date(s.at).toLocaleString('fa-IR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){}
   b=document.createElement('div');b.id='fx6Stale';b.className='fx6stale';b.setAttribute('role','status');
   b.innerHTML='<div>تغییرات شما در این پرونده ('+esc(when)+') ثبت نشد، چون پرونده در این فاصله تغییر کرده بود. آن نسخه روی این دستگاه نگه داشته شده است.</div><div class="btns"><button class="btn sm" type="button" data-fx6st="use">بازگرداندن نسخه‌ی من</button><button class="btn sm ghost" type="button" data-fx6st="drop">دور انداختن</button></div>';
   const v=$('viewForm');if(v)v.insertBefore(b,v.firstChild)}
-{const _of=openForm;openForm=function(){const x=_of.apply(this,arguments);try{fx6bBar()}catch(e){}return x}}
+/* fix6b openForm layer (fx6bBar after opening): merged into openForm in manager/views.js */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-fx6st]');if(!t||!F||!F.id)return;const s=fx6bStaleGet(F.id);
   if(t.dataset.fx6st==='use'&&s){const cur=F,r=fromDoc(cur.id,s.d);r._v=cur._v;['status','jalali','emailStatus','pdfName','edits','surg'].forEach(k=>{if(cur[k]!==undefined)r[k]=cur[k]});F=r;CUR=1;renderForm();dirty=true;toast('نسخه‌ی شما بازگردانده شد؛ بررسی و ذخیره کنید.')}
   try{localStorage.removeItem(FX6_SK+F.id)}catch(x){}const b=$('fx6Stale');if(b)b.remove()});
@@ -36,12 +30,9 @@ function fx6bSgAsk(){return new Promise(async res=>{try{
   const d=sg?Number(sg.diff)||0:0;if(!d){delete F._sgd;return res(true)}
   const s=mkSheet('fx6SgSheet','<h3>اختلاف هزینه‌ی جراحی قبلی</h3><p>هزینه‌ی جراحیِ انجام‌شده‌ی این بیمار <b>'+fa(Math.abs(d))+' تومان '+(d>0?'بیشتر':'کمتر')+'</b> از طرح قبلی بود'+(Number(sg.settledDiff)?' و تسویه شده است':'')+'.</p><p class="note">اگر طرح تازه همان کارهای انجام‌شده را دارد، اختلاف را صفر کنید تا دو بار حساب نشود. اگر طرح تازه فقط کارهای دیگر را دارد، اختلاف بماند.</p><div class="btns" style="flex-wrap:wrap"><button class="btn" type="button" id="fx6SgKeep" style="flex:1 1 200px">اختلاف بماند (جدا از طرح تازه)</button><button class="btn ghost" type="button" id="fx6SgZero" style="flex:1 1 200px">اختلاف صفر شود (در طرح تازه آمده)</button><button class="btn ghost" type="button" id="fx6SgNo">انصراف</button></div>');
   const done=v=>{s.hidden=true;if(v)F._sgd=v;res(!!v)};$('fx6SgKeep').onclick=()=>done('keep');$('fx6SgZero').onclick=()=>done('zero');$('fx6SgNo').onclick=()=>done('');s.hidden=false;setTimeout(()=>{try{$('fx6SgKeep').focus()}catch(e){}},60)}catch(e){res(true)}})}
-{const _fz=finalize;finalize=async function(){if(busy)return;if(!(await fx6bSgAsk()))return;try{return await _fz.apply(this,arguments)}finally{if(F)delete F._sgd}}}
-{const _dc=doConfirm;doConfirm=async function(){if(busy||!lastPDF)return _dc.apply(this,arguments);if(!(await fx6bSgAsk()))return;return _dc.apply(this,arguments)}}
+/* finalize / doConfirm: the surgery-difference question (fx6bSgAsk) is now part of their single definitions in pdf/background-send-queue-doctor-never.js */
 /* A7: storekeeper — stock ↔ surgery catalog */
 const ICAT={j:null,sel:{}};
-(function(){const _s=i2Segs;i2Segs=function(){_s.apply(this,arguments);document.querySelectorAll('[data-iseg="icat"]').forEach(b=>b.hidden=ROLE!=='inventory');if(ROLE!=='inventory'&&INV.seg==='icat')INV.seg='fix'}})();
-(function(){const _r=i2Render;i2Render=function(B,force){if(INV.seg==='icat'){$('invTools').hidden=true;return fx6bCatView(B,force)}return _r.apply(this,arguments)}})();
 const fx6N=v=>toEn(String(v==null?'':v)).trim().replace(/\s+/g,' ').toLowerCase();
 const fx6Num=v=>{const t=toEn(String(v==null?'':v)).trim().replace(/[\/٫,]/g,'.');const f=parseFloat(t);return isFinite(f)&&/^[\d.]+$/.test(t)?String(f):fx6N(t)};
 function fx6bGroups(){const G={};((ICAT.j||{}).cat||[]).forEach(c=>{const g=c.b+'|'+c.sys,x=G[g]||(G[g]={b:c.b,sys:c.sys,d:{}});(x.d[c.d]=x.d[c.d]||[]).push(c.l)});

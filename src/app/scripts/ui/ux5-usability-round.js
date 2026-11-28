@@ -1,7 +1,20 @@
 /* ---------- ux5: usability round (owner, 2026-11-04) ---------- */
 /* (2) one in-app confirmation dialog: uxAsk / uxConfirm / uxPrompt; l2Ask and every «دوباره بزنید» button use it */
 var UXA=null;
-function uxAsk(o){o=o||{};return new Promise(res=>{if(UXA){try{UXA.done(null)}catch(e){}}
+/* uxAsk — merged patch layers, in call order:
+   m33 (archive/m33-paper-files-clearer-question.js): the «بیمار مشابه» question gets a clearer text (who was found, what matched);
+   m13 (archive/m13-every-leave-without-saving.js): the older «خروج بدون ذخیره» questions (paper file, archive surgery day) ask the same thing as m4Ask;
+   ux5 (base): the in-app dialog. m33Day / m4Ask / arcSave / a6Save come from those later files (only used when such a question is asked). */
+function uxAsk(o){
+  try { if (o && o.title === 'بیمار مشابه' && typeof o.msg === 'string') { const m = o.msg.match(/ثبت شده است: ([\s\S]*?)\. اگر همان بیمار/); const who = m ? m[1] : '';
+    const L = who.split(' ؛ ').map(x => x.trim()).filter(Boolean);
+    o = Object.assign({}, o, { title: 'بیمار با مشخصات مشابه پیدا شد', msg: '',
+      fields: [{ type: 'html', html: `<div class="m33dup"><p>${L.length > 1 ? 'این بیماران' : 'این بیمار'} قبلاً در بایگانی هست${L.length > 1 ? 'ند' : ''}:</p><ul>${L.map(x => `<li>${esc(faD(x.replace(/ثبت (\d{4}-\d\d-\d\d)/, (m, d) => 'ثبت ' + m33Day(d))))}</li>`).join('')}</ul><p class="note">اگر بیمار شما <b>شخص دیگری</b> است (فقط هم‌نام یا شبیه)، «بیمار دیگری است، ثبت شود» را بزنید.<br>اگر <b>همان بیمار</b> است، «نه» را بزنید و پرونده‌ی قبلی را از بایگانی باز کنید.</p></div>` }],
+      ok: 'بیمار دیگری است، ثبت شود', cancel: 'نه، همان بیمار است' }) } } catch (e) {}
+  if (o && o.title === 'خروج بدون ذخیره') {
+  const save = async () => { if (SURG && SURG.arc) { await arcSave($('fxaGo') || document.createElement('button')); return false } if (A6 && $('a6Save')) { await a6Save($('a6Save')); return false } return false };
+  return m4Ask({ save: async () => { await save(); return true } }).then(a => a === 'drop') }
+  o=o||{};return new Promise(res=>{if(UXA){try{UXA.done(null)}catch(e){}}
   const F=o.fields||[];
   const fld=(f,i)=>f.type==='html'?f.html:`<label class="f${f.full?' full':''}">${esc(f.l||'')}${f.type==='textarea'?`<textarea data-ak="${i}" rows="3">${esc(f.v||'')}</textarea>`:f.type==='select'?`<select data-ak="${i}">${(f.opts||[]).map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(f.v??'')?' selected':''}>${esc(l)}</option>`).join('')}</select>`:`<input data-ak="${i}" value="${esc(f.v??'')}"${f.type==='num'?' inputmode="numeric" dir="ltr" class="ltr"':''}${f.type==='date'?' data-jd="1" placeholder="مثلاً '+esc(jDay(tDay()))+'"':''}${f.ph?` placeholder="${esc(f.ph)}"`:''}${f.list?` list="${f.list}"`:''}>`}</label>`;
   const s=mkSheet('uxAskSh',`<h3 id="uxAskT">${esc(o.title||'تأیید')}</h3>${o.who?`<p class="uxwho">${esc(o.who)}</p>`:''}${o.msg?`<p class="uxmsg">${esc(o.msg)}</p>`:''}${F.length?`<div class="fields">${F.map(fld).join('')}</div>`:''}<div class="msg" id="uxAskM" role="alert"></div><div class="btns"><button class="btn${o.danger?' danger':''}" type="button" id="uxAskOk">${esc(o.ok||'تأیید')}</button><button class="btn ghost" type="button" id="uxAskNo">${esc(o.cancel||'انصراف')}</button></div>`);
@@ -22,8 +35,6 @@ const uxPrompt=(label,def,type,ok,title)=>uxAsk({title:title||label.replace(/[:�
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&UXA){e.preventDefault();e.stopImmediatePropagation();UXA.done(null)}},true);
 document.addEventListener('pointerdown',e=>{if(UXA&&e.target===UXA.s){e.stopImmediatePropagation();UXA.done(null)}},true);
 document.addEventListener('click',e=>{if(UXA&&e.target===UXA.s){e.stopImmediatePropagation();e.preventDefault()}},true);
-/* the lab dialogs use the same one */
-l2Ask=function(title,fields,okL){return uxAsk({title,fields:(fields||[]).map(f=>Object.assign({},f)),ok:okL||'ثبت',danger:/حذف|ابطال|باطل|لغو|برگشت/.test(okL||'')})};
 /* every «… دوباره بزنید» button: the second tap is replaced by the dialog */
 const UXARM=/دوباره بزنید|دوباره بزن/;
 document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('button,[role=button],a');if(b&&!b.dataset.armed&&!b._uxGo)b._uxTxt=b.textContent.trim()},true);
@@ -42,10 +53,7 @@ new MutationObserver(ms=>{for(const m of ms){const b=m.target;if(!b||!b.dataset|
 new MutationObserver(ms=>{for(const m of ms){const b=m.target&&(m.target.nodeType===1?m.target:m.target.parentElement);const btn=b&&b.closest&&b.closest('[data-armed]');if(btn&&!btn._uxGo&&!btn._uxBusy&&UXARM.test(btn.textContent))uxArmed(btn)}}).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
 
 /* A3: an empty admission or a wrong-looking mobile number asks first (both stay optional — owner rule pa7) */
-(function(){const _rc=rcSend;rcSend=async function(t){try{if(t&&!t._uxOk){const nm=($('rc_name')&&$('rc_name').value||'').trim(),ph=toEn(($('rc_phone')&&$('rc_phone').value)||'').replace(/[\s\-()]/g,'');
-  if(!nm&&!ph){const ok=await uxConfirm('نام و شماره‌ی موبایل خالی است. بیمار بدون نام و بدون شماره به کارتابل پزشک فرستاده شود؟','ارسال بدون نام',false,'بیمار بدون نام');if(!ok){$('rc_name').focus();return}}
-  else if(ph&&!/^(\+98|0098|98)?0?9\d{9}$/.test(ph)){const ok=await uxConfirm('شماره‌ی موبایل «'+faD(ph)+'» درست به نظر نمی‌رسد (باید ۱۱ رقم و با ۰۹ شروع شود). با همین شماره ثبت شود؟','ثبت با همین شماره',false,'شماره‌ی موبایل');if(!ok){$('rc_phone').focus();return}}}}catch(e){}
-  return _rc.apply(this,arguments)}})();
+/* rcSend: this check is merged into surgery/roles-live-queue-reception.js */
 document.addEventListener('input',e=>{const t=e.target;if(!t||t.id!=='rc_phone')return;const ph=toEn(t.value||'').replace(/[\s\-()]/g,'');let m=$('ux2PhW');if(!m){m=document.createElement('small');m.id='ux2PhW';m.className='ux2w';t.insertAdjacentElement('afterend',m)}
   m.textContent=ph&&ph.length>=2&&!/^(\+98|0098|98)?0?9\d{0,9}$/.test(ph)?'شماره‌ی موبایل باید با ۰۹ شروع شود.':ph.length>11&&/^09/.test(ph)?'شماره‌ی موبایل بیشتر از ۱۱ رقم است.':'';t.setAttribute('aria-invalid',m.textContent?'true':'false')});
 
@@ -100,7 +108,6 @@ const UX2={tc:false,role:''};
 function uxTileSync(){if(UX2.role!==ROLE){UX2.role=ROLE;UX2.tc=false}const el=$('tiles');const on=!!(UX2.tc&&ROLE&&el&&!el.hidden&&TILE);document.body.classList.toggle('ux2tc',on);
   if(el){el.querySelectorAll('.htile').forEach(b=>{const l=(b.querySelector('.hl,.tl')||{}).textContent||'',n=(b.querySelector('.hn,.tn')||{}).textContent||'';b.setAttribute('aria-label',l+(n&&n!=='—'?' ('+n+')':''));if(on)b.title=l+(n&&n!=='—'?' — '+n+' مورد':'')});
     let tt=$('ux2TT');if(!tt){tt=document.createElement('button');tt.type='button';tt.id='ux2TT';tt.textContent='همه‌ی بخش‌ها ▾';tt.setAttribute('aria-expanded','false')}if(tt.parentElement!==el)el.appendChild(tt)}}
-(function(){const _r=renderTiles;renderTiles=function(){const r=_r.apply(this,arguments);try{uxTileSync()}catch(e){}return r}})();
 document.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('#tiles [data-tile],#ux2TT');if(!t)return;
   if(t.id==='ux2TT'||(document.body.classList.contains('ux2tc')&&t.dataset.tile===TILE)){e.preventDefault();e.stopImmediatePropagation();UX2.tc=false;uxTileSync();return}
   UX2.tc=true;setTimeout(uxTileSync,0)},true);
@@ -111,7 +118,7 @@ function uxFormSync(){const on=false;/* ux7: plan form fully open */document.bod
   let bar=$('ux2FormAll');if(!bar){bar=document.createElement('div');bar.id='ux2FormAll';bar.innerHTML='<span>بخش‌های بی‌استفاده جمع شده‌اند؛ روی نام هر بخش بزنید تا باز شود.</span><button type="button" data-ux2fa="1">نمایش همه‌ی بخش‌ها</button>';sec.parentElement.insertBefore(bar,sec)}
   sec.querySelectorAll(':scope>.card[data-sec]>h2').forEach(h=>{if(!h.querySelector('.ux2fold')){const s=document.createElement('span');s.className='ux2fold';s.setAttribute('aria-hidden','true');h.appendChild(s)}const c=h.parentElement,open=c.classList.contains('used')||c.classList.contains('ux2open');if(on){h.setAttribute('role','button');h.tabIndex=0;h.setAttribute('aria-expanded',open?'true':'false')}else{h.removeAttribute('role');h.removeAttribute('tabindex');h.removeAttribute('aria-expanded')}})}
 (function(){const _f=renderForm;renderForm=function(){const r=_f.apply(this,arguments);try{uxFormSync()}catch(e){}return r};const _c=recalc;recalc=function(){const r=_c.apply(this,arguments);try{if(document.body.classList.contains('ux2cf'))uxFormSync()}catch(e){}return r}})();
-(function(){const _o=openForm;openForm=function(){UXCF.all=false;return _o.apply(this,arguments)}})();
+/* ux5 openForm layer (UXCF.all=false before opening): merged into openForm in manager/views.js */
 document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;if(t.closest('[data-ux2fa]')){UXCF.all=true;uxFormSync();return}
   if(!document.body.classList.contains('ux2cf'))return;const h=t.closest('#sections>.card[data-sec]>h2');const c=h?h.parentElement:t.closest('#sections>.card[data-sec]:not(.used):not(.ux2open)');if(!c)return;
   if(h&&t.closest('select,input,button:not(.ux2fold),a'))return;

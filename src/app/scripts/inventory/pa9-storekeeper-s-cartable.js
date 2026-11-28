@@ -1,8 +1,6 @@
 /* ---------- pa9: «خرید و بهای انبار» in the storekeeper's cartable ---------- */
 const I9={tab:'buy',from:null,to:null,res:{}};
 const i9On=()=>ROLE==='inventory';
-(function(){const _s=i2Segs;i2Segs=function(){_s.apply(this,arguments);document.querySelectorAll('[data-iseg="ifin"]').forEach(b=>b.hidden=!i9On());if(!i9On()&&INV.seg==='ifin')INV.seg='fix'}})();
-(function(){const _r=i2Render;i2Render=function(B,force){if(INV.seg==='ifin'){$('invTools').hidden=true;return i9View(B,force)}return _r.apply(this,arguments)}})();
 function i9Rng(){if(!I9.from){const td=tDay();I9.to=td;I9.from=dAdd(td,-30)}return {from:I9.from,to:I9.to}}
 function i9T(cols,rows,sum){if(!rows.length)return '<div class="empty">موردی در این بازه نیست.</div>';
   const S={};(sum||[]).forEach(k=>S[k]=rows.reduce((a,r)=>a+(Number(r[k])||0),0));

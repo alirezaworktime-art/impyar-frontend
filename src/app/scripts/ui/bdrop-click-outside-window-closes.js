@@ -5,7 +5,12 @@ const bdKey=(e,i)=>e.id||e.name||(e.dataset&&Object.keys(e.dataset).map(k=>k+'='
 const bdVal=e=>e.type==='checkbox'||e.type==='radio'?(e.checked?'1':''):String(e.value);
 const bdHead=sh=>{const h=sh.querySelector('h2,h3');return sh.id+'|'+(h?h.textContent.trim().slice(0,80):'')+(sh.id==='pfSheet'&&typeof PF!=='undefined'&&PF?'|'+PF.id:'')};
 function bdVals(sh){const o={};bdFields(sh).forEach((e,i)=>o[bdKey(e,i)]=bdVal(e));return o}
-function bdOpened(sh){BD.snap.set(sh,{vals:bdVals(sh),head:bdHead(sh)});const k=bdHead(sh),d=BD.drafts.get(k);if(!d)return;BD.drafts.delete(k);if(Date.now()-d.at>3*3600e3)return;
+/* bdOpened — merged patch layers: bdrop (base, below) + m4 (surgery/what-unsaved-screen-now-who.js, first part).
+   m4: opening rcSheet / pfSheet, the kept or live device text of the last 3 hours comes back into BD.drafts (the bdrop part restores it).
+   M4T / m4Get / m4Put live in that later file; before it has run the m4 part fails at M4T and is swallowed, as when that layer was not there yet. */
+function bdOpened(sh){try { if (['rcSheet', 'pfSheet'].includes(sh.id)) { M4T.delete(sh); const head = bdHead(sh), K = m4Get('kept'), L = m4Get('live'), x = BD.drafts.get(head) || K[head] || L[head];
+      if (x && Date.now() - x.at < 3 * 3600e3) { const cur = bdVals(sh); for (const k in x.v || {}) if (cur[k] === '' || cur[k] === undefined) x.v[k].from = cur[k] || ''; BD.drafts.set(head, x) } delete K[head]; delete L[head]; m4Put('kept', K); m4Put('live', L) } } catch (e) {}
+  BD.snap.set(sh,{vals:bdVals(sh),head:bdHead(sh)});const k=bdHead(sh),d=BD.drafts.get(k);if(!d)return;BD.drafts.delete(k);if(Date.now()-d.at>3*3600e3)return;
   let n=0;bdFields(sh).forEach((e,i)=>{const c=d.v[bdKey(e,i)];if(!c||bdVal(e)!==c.from)return;if(e.type==='checkbox'||e.type==='radio')e.checked=c.to==='1';else e.value=c.to;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));n++});
   if(n)toast('متنی که قبلاً در این پنجره نوشته بودید برگردانده شد.')}
 function bdClose(sh){if(sh.id==='cSheet'&&typeof busy!=='undefined'&&busy)return;const B=[...sh.querySelectorAll('button')].filter(x=>!x.disabled&&!x.hidden&&x.offsetParent!==null),b=B.find(x=>/(Close|Cancel|No)$/.test(x.id))||B.find(x=>/^(بستن|انصراف|بازگشت)/.test((x.textContent||'').trim()));if(b)b.click();if(!sh.hidden)sh.hidden=true}
@@ -18,6 +23,5 @@ document.addEventListener('pointerdown',e=>{BD.down=e.target&&e.target.classList
 document.addEventListener('click',e=>{const sh=e.target;if(!sh||!sh.classList||!sh.classList.contains('sheet')||sh.hidden||BD.down!==sh)return;BD.down=null;
   const kept=bdSaveDraft(sh);bdClose(sh);if(kept)toast('پنجره بسته شد؛ نوشته‌ها موقت نگه داشته شد و با باز کردن دوباره برمی‌گردد.')});
 /* the lab order form inside the patient file */
-(function(){const _o=openFile;openFile=async function(id){const r=await _o.apply(this,arguments);const d=BD.lo.get(id);
-  if(d&&PF&&PF.id===id&&!LO&&Date.now()-d.at<3*3600e3){BD.lo.delete(id);LO=d.LO;if(typeof LOF!=='undefined')LOF=d.LOF;PF.tab='pros';renderFile();toast('دستور کار نیمه‌کاره‌ی لابراتوار برگردانده شد.')}return r}})();
+/* (its restore when the file opens: in openFile, finance/patient-file-timeline.js) */
 

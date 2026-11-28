@@ -26,8 +26,6 @@ window.addEventListener('click', e => { const t = e.target && e.target.closest &
       Object.assign(x, { ri: v, grp: g, day: cur.day || '', dayJ: cur.dayJ || '', doc: cur.doc || '', teeth: [], imp: {}, n: 0, b: '' }); x.price = v ? 0 : (A6C.imp.p(x) || 0);
       if (!l.grp) sib.forEach(s => { s.grp = g }) } }
   M34A[g] = v; A6.dirty = true; const sc = window.scrollY; a6Render(); window.scrollTo(0, sc); try { a6MoneyLite() } catch (x2) {} }, true);
-/* deleting the shown tab: show another tab of the same session */
-{ const _r = a6Render; a6Render = function () { try { if (A6) for (const g of Object.keys(M34A)) { const sib = A6.lines.filter(x => x.k === 'imp' && m34G(x) === g); if (!sib.length) delete M34A[g] } } catch (e) {} return _r.apply(this, arguments) } }
 /* save: an empty tab next to a filled one is dropped; the error for an empty tab opens that tab */
 { const _s = a6Save; a6Save = function () { try { if (A6) { const G = {}; A6.lines.filter(x => x.k === 'imp' && !x.ax).forEach(x => (G[m34G(x)] = G[m34G(x)] || []).push(x));
     for (const g of Object.keys(G)) { const L = G[g]; if (L.length > 1 && L.some(x => (x.teeth || []).length)) { const drop = L.filter(x => !(x.teeth || []).length); if (drop.length) { A6.lines = A6.lines.filter(x => !drop.includes(x)); if (drop.some(x => (+x.ri || 0) === M34A[g])) delete M34A[g] } }

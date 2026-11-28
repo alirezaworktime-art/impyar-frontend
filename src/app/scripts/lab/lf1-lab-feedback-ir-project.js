@@ -7,7 +7,6 @@ Object.assign(ROLE_LBL,{lf:'تعامل لابراتوار و پزشک',lfdoc:'پ
 const LF_ST={lab:'در دست لابراتوار',doc:'منتظر پاسخ پزشک',closed:'خاتمه‌یافته'};
 const LF_SLA={normal:48,urgent:24};
 const lfLate=c=>c.st==='lab'&&(Date.now()-new Date(c.labSince||c.at).getTime())>LF_SLA[c.pri==='urgent'?'urgent':'normal']*3600e3;
-const lfMine=()=>ROLE==='lflab'?'lflab':'lfdoc';
 const lfUnread=c=>{if(!LF_ROLES[ROLE])return false;const s=(c.seen||{})[ROLE];const last=(c.thread||[])[c.thread.length-1];return !!last&&last.role!==ROLE&&(!s||s<c.upd)};
 const lfCases=()=>(LF.d&&LF.d.cases)||[];
 const lfL=()=>(LF.d&&LF.d.lists)||{clinics:[],parts:[],issues:[],causes:[],outcomes:[]};
@@ -30,7 +29,6 @@ async function lfLogin(){const m=$('lgMsg'),u=$('lf_user').value.trim().toLowerC
   catch(e){API.pw='';saveApi();LROLE='lf';lfLgUi();m.className='msg err';m.textContent=/رمز عبور اشتباه/.test(e.message)?'نام کاربری یا رمز عبور اشتباه است.':e.message}}
 /* ===== role plumbing (same pattern as «سایر کلینیک‌ها») ===== */
 (function(){const _a=applyRole;applyRole=function(){_a.apply(this,arguments);if(LF_ROLES[ROLE]){try{$('attBtn').hidden=true}catch(e){}}}})();
-(function(){const _s=showExtra;showExtra=function(v){_s(v);const el=$('viewLf');if(el)el.hidden=v!=='lf'}})();
 (function(){const _h=home;home=function(){if(!LF_ROLES[ROLE])return _h.apply(this,arguments);show('lf');goTile((TSAVE&&TSAVE[ROLE])||'')}})();
 (function(){const _p=pollQ;pollQ=function(f){if(LF_ROLES[ROLE]){if(f||Date.now()-LF.at>25000)lfLoad(true);return Promise.resolve()}return _p.apply(this,arguments)}})();
 (function(){const _l=logout;logout=function(){LF.d=null;LF.open='';LF.f=null;LF.img={};const r=_l.apply(this,arguments);try{lfLgUi()}catch(e){}return r}})();

@@ -55,6 +55,8 @@ function ffVisitBlocks(j,td){const AP=(j.appts||[]).filter(a=>a.st!=='cancel'),L
   const tk=TK.filter(t=>t.done&&['numb','week','suture','uncover','recall','fol1','fol4','pweek'].includes(t.kind)).map(t=>({d:(t.doneAt||t.due||'').slice(0,10),row:[jd(t.doneAt)||ffDay(t.due),(TLBL[t.kind]||[t.kind])[0],'—','انجام شد',ffCut(t.note,40)]}));
   const rows=past.concat(unc,tk).sort((a,b)=>a.d.localeCompare(b.d)).map(x=>x.row);
   return [ffTitle('بخیه، چکاپ، آنکاوری و پیگیری‌ها'),ffTbl(rows,[['تاریخ',0.18],['مورد',0.26],['پزشک',0.18],['نتیجه',0.14],['توضیح',0.24]])]}
+/* ffProsBlocks: base + m58a (full long notes of the steps) + m61a (ادامه درمان: tooth stages, surgeon holds, next step).
+   The early return [] needs no extra part: both added parts read j.pros, which is empty there. */
 function ffProsBlocks(j,td){const pr=j.pros,labs=j.labs||[],AP=(j.appts||[]).filter(a=>a.st!=='cancel'&&AGRP.pr.includes(a.kind)&&(a.st==='done'||a.st==='noshow'||a.day<td));
   if(!pr&&!labs.length&&!AP.length)return [];
   const B=[ffTitle('پروتز و لابراتوار')];
@@ -66,12 +68,23 @@ function ffProsBlocks(j,td){const pr=j.pros,labs=j.labs||[],AP=(j.appts||[]).fil
   if(labs.length){B.push(Object.assign(textBlock('سفارش‌های لابراتوار',[]),{keep:true}));
     B.push(ffTbl(labs.map(l=>{const d=l.data||{};return [jd(l.created),d.for&&LFOR[d.for]?LFOR[d.for]:[d.type,d.mat].filter(Boolean).join(' ')||'—',LST[l.st]||l.st,ffDay(l.due),ffCut([d.sys,d.shade&&'رنگ '+d.shade,d.note].filter(Boolean).join(' · '),40)]}),[['سفارش',0.16],['برای ساخت',0.26],['وضعیت',0.2],['سررسید',0.14],['توضیح',0.24]]))}
   if(AP.length){B.push(Object.assign(textBlock('نوبت‌های پروتز',[]),{keep:true}));B.push(ffTbl(AP.map(a=>[jDay(a.day)+(a.time?' '+faD(a.time):''),AKL[a.kind]||a.kind,a.doc||'—',FF_AST[a.st]||a.st||'—',ffCut(a.note,40)]),[['تاریخ',0.18],['مورد',0.26],['پزشک',0.18],['نتیجه',0.14],['توضیح',0.24]]))}
+  /* m58a */
+  try{const lg=((j.pros||{}).log||[]).filter(g=>String(g.note||'').replace(/\s+/g,' ').trim().length>50);
+  if(lg.length)B.push(textBlock('توضیح کامل مراحل',lg.map(g=>jt(g.at)+' · '+(PSTN[g.k]||g.k)+': '+String(g.note).replace(/\s+/g,' ').trim())))}catch(e){}
+  /* m61a */
+  try{const pr=j.pros||{},L=[];
+  if(pr.ts&&Object.keys(pr.ts).length)L.push('مرحله‌ی دندان‌ها: '+Object.keys(pr.ts).map(k=>toothTxt([k])+' '+(PSTN[pr.ts[k]]||pr.ts[k])).join('، '));
+  if(pr.hold)L.push('منتظر معاینه‌ی جراح — '+toothTxt(pr.hold.teeth||[]));
+  (pr.holds||[]).forEach(h=>L.push('معاینه‌ی جراح '+jd(h.end)+' ('+(h.decBy||'')+'): '+({ok:'مشکلی ندارد',stop:'توقف تا کاشت دوباره',pon:'پونتیک',wo:'بدون دندان'}[h.dec]||h.dec)+' — '+toothTxt(h.teeth||[])));
+  if(pr.nxt)L.push('مرحله‌ی بعد: '+(M61N[pr.nxt.st]||pr.nxt.st)+' — '+jd(pr.nxt.day+'T12:00:00Z'));
+  if(L.length)B.push(textBlock('ادامه درمان',L))}catch(e){}
   return B}
 function ffFutureBlocks(j,td){const LK=new Set((j.appts||[]).map(a=>a.task).filter(Boolean));const AP=(j.appts||[]).filter(a=>a.st==='set'&&a.day>=td).map(a=>({d:a.day+' '+(a.time||'99'),row:[jDay(a.day)+(a.time?' '+faD(a.time):''),'نوبت '+(AKL[a.kind]||a.kind),a.doc||'—',a.sms?'یادآوری رفت':'—',ffCut(a.note,40)]}));
   const TK=(j.tasks||[]).filter(t=>!t.done&&!LK.has(t.id)).map(t=>({d:t.due+' 00',row:[ffDay(t.due),t.kind==='book'&&t.info==='cont'?'ادامه‌ی جراحی؛ نوبت جلسه‌ی بعد':(TLBL[t.kind]||[t.kind])[0],'—',dDiff(t.due,td)<0?'عقب‌افتاده':'برنامه‌ریزی‌شده',ffCut(t.note,40)]}));
   const rows=AP.concat(TK).sort((a,b)=>a.d.localeCompare(b.d)).map(x=>x.row);
   return [ffTitle('نوبت‌ها و کارهای آینده'),ffTbl(rows,[['تاریخ',0.18],['مورد',0.3],['پزشک',0.16],['وضعیت',0.14],['توضیح',0.22]])]}
-async function fullFilePDF(j){
+/* fullFilePDF: base + arc6 (card readers loaded first; a paper file (arc.v6) gets its own PDF, a6Pdf) */
+async function fullFilePDF(j){try{await ensurePos()}catch(e){}const a=((j&&j.data)||{}).arc;if(a&&a.v6)return a6Pdf(j);
   try{await Promise.race([logoReady,new Promise(z=>setTimeout(z,1500))])}catch(e){}
   try{await Promise.race([Promise.all([document.fonts.load(`400 20px Vazirmatn`),document.fonts.load(`700 20px Vazirmatn`),document.fonts.load(`800 20px Vazirmatn`)]),new Promise(z=>setTimeout(z,1500))])}catch(e){}
   const r=fromDoc(j.id,j.data||{});if(j.surg)r.surg=j.surg;const sg=j.surg||{},td=tDay(),now=jalali(new Date());

@@ -16,7 +16,11 @@ function jpegPDF(pages,land){const enc=new TextEncoder(),parts=[],offs=[];let le
   push(xr+`trailer\n<< /Size ${total+1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF\n`);
   const out=new Uint8Array(len);let o=0;parts.forEach(b=>{out.set(b,o);o+=b.length});return out}
 
+/* buildPDF — one definition of the old layers: base + m48a (a saved, non-quote plan: its notes as extra blocks, via window.M48PB)
+   + m57a (patient «می‌خواهد فکر کند»: the SMS block, via window.M57PB). Both lists are set before the pages are drawn and cleared when done. */
 async function buildPDF(r,meta){
+  let pb57=[];try{if(M57.think&&r&&r.h)pb57=[m57Block(r,M57.sms||'')]}catch(e){}window.M57PB=pb57;try{
+  let pb48=[];try{if(r&&r.id&&r.status&&r.status!=='new'&&!(meta&&meta.quote)){const N=await m48Notes(r.id);if(N&&N.length)pb48=await m48NoteBlocks({notes:N})}}catch(e){}window.M48PB=pb48;try{
   try{await Promise.race([logoReady,new Promise(z=>setTimeout(z,1500))])}catch(e){}
   try{await Promise.race([Promise.all([document.fonts.load(`400 20px Vazirmatn`),document.fonts.load(`700 20px Vazirmatn`),document.fonts.load(`800 20px Vazirmatn`)]),new Promise(r=>setTimeout(r,1500))])}catch(e){}
   const SIGIMG=r.sign?await loadImg(r.sign):null;
@@ -43,5 +47,5 @@ async function buildPDF(r,meta){
   const urls=pages.map(p=>p.cv.toDataURL('image/jpeg',0.82));
   const bytes=jpegPDF(urls.map(u=>({jpg:dataUrlBytes(u),w:PW,h:PH})));
   const blob=new Blob([bytes],{type:'application/pdf'});const b64=bytesB64(bytes);
-  return {blob,b64,previews:urls}}
+  return {blob,b64,previews:urls}}finally{window.M48PB=null}}finally{window.M57PB=null}}
 

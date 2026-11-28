@@ -7,7 +7,9 @@ const oc3Svc = c => (c.svc || []).filter(s => !/^(ps_|bp_)/.test(s.k));
 const oc3SvcOf = (c, kind) => oc3Svc(c).filter(s => kind === 'pros' ? oc3Pros().includes(s.sec) : !oc3Pros().includes(s.sec));
 const oc3Qty = (x, s) => x.kind === 'items' || x.id === 'anes' ? (x.items || []).reduce((a, it) => a + itemQty(s, it), 0) : qty(s, x);
 /* the plan-form globals point at the open oc3 form while a tab form is on screen */
-function oc3Mount(secs) { if (!OC3.kf) OC3.kf = F; const f = blankForm(); f.s = secFrom(secs || {}); f.brand = 'ko'; F = f; CUR = 1; SURG = null; try { dirty = false } catch (e) { } return f }
+/* oc3Mount: oc3 base + m43d (prosthesis/m43d-temporary-prosthesis-pmma-chosen.js): that form has no prices and keeps the plain «نوع» choice of «روکش موقت» */
+function oc3Mount(secs) { if (!OC3.kf) OC3.kf = F; const f = blankForm(); f.s = secFrom(secs || {}); f.brand = 'ko'; F = f; CUR = 1; SURG = null; try { dirty = false } catch (e) { }
+  try { if (f && f.s && f.s.tmp && f.s.tmp.ip) { f.s.tmp.ip.m43d = ''; f.s.tmp.ip.es = ''; f.s.tmp.ip.dn = '' } } catch (e) { } return f }
 function oc3Unmount() { if (OC3.kf) { F = OC3.kf; OC3.kf = null } OC3.mode = ''; OC3.f = null; try { dirty = false } catch (e) { } }
 /* ===== patient page: header + tabs ===== */
 function oc2PatHTML() {
@@ -21,13 +23,23 @@ function oc2PatHTML() {
 /* the plan summary (teeth marked in the plan) shown on top of the work / prosthesis tabs */
 function oc3PlanSum() { const pl = OC2.v && OC2.v.plan; if (!pl || !Object.keys(pl.s || {}).length) return '<p class="note">برای این بیمار طرح درمان ثبت نشده است.</p>'; const S = secFrom(pl.s); return `<div class="oc3-plan-sum"><b>طرح درمان:</b> ${secLines(S).map(l => `<span><i>${esc(l.t)}:</i> ${esc(l.d)}</span>`).join('')}</div>` }
 /* ===== «طرح درمان»: all the plan sections, no price ===== */
+/* oc3PlanHTML: oc3 base + m19 (pdf/form-guide-card-notes.js: «سرجیکال گاید» card + multi-line «توضیحات پزشک» note, «دانلود PDF») */
 function oc3PlanHTML() {
+  const fresh = OC3.mode !== 'plan';
   const v = OC2.v, pl = v.plan; if (OC3.mode !== 'plan') { OC3.mode = 'plan'; OC3.f = oc3Mount(pl ? pl.s : {}); OC3.f.note = pl ? pl.note || '' : '' }
-  return `<p class="note">طرح پیشنهادی برای تحویل به ${esc(ocCl(v.pat.clinic).name)} — بدون تعرفه. درمان‌ها را مثل فرم طرح درمان علامت بزنید.</p>
+  let h = `<p class="note">طرح پیشنهادی برای تحویل به ${esc(ocCl(v.pat.clinic).name)} — بدون تعرفه. درمان‌ها را مثل فرم طرح درمان علامت بزنید.</p>
   <div class="oc3f oc3-plan" id="oc3Form">${SECTIONS.map(x => sectionHTML(x)).join('')}</div>
   <div class="fields"><label class="f">توضیح<input id="oc3note" maxlength="400" value="${esc(OC3.f.note || '')}"></label></div>
   <div class="msg" id="oc2Msg" role="alert"></div>
-  <div class="btns"><button class="btn main" type="button" id="oc3PlanSave">ذخیره‌ی طرح درمان</button><button class="btn ghost" type="button" id="oc3PlanPdf"${pl ? '' : ' disabled title="اول طرح را ذخیره کنید"'}>PDF برای کلینیک</button></div>`
+  <div class="btns"><button class="btn main" type="button" id="oc3PlanSave">ذخیره‌ی طرح درمان</button><button class="btn ghost" type="button" id="oc3PlanPdf"${pl ? '' : ' disabled title="اول طرح را ذخیره کنید"'}>PDF برای کلینیک</button></div>`;
+  /* m19 */
+  try { if (fresh) { const pl = OC2.v.plan, d = m19Split(pl ? pl.note : ''); OC3.f.note = d.note; OC3.f.h = OC3.f.h || {}; if (d.sg) OC3.f.h.sgd = d.sg; else delete OC3.f.h.sgd }
+    document.querySelectorAll('#q5Card').forEach(x => { if (!x.closest('#viewOc')) x.remove() }); /* one guide card on the page */
+    const g = q5Block().replace(/؛ مبلغ گاید را مشاور در «شرایط پرداخت» می‌نویسد\./, '.').replace('<span class="tag">برای روز جراحی</span>', '');
+    const a = '<div class="fields"><label class="f">توضیح<input id="oc3note"', i = h.indexOf(a), j = i < 0 ? -1 : h.indexOf('</label></div>', i);
+    if (j > 0) h = h.slice(0, i) + g + `<div class="fields"><label class="f">توضیحات پزشک<textarea id="oc3note" rows="3" maxlength="200" placeholder="هر توضیحی که باید به کلینیک و بیمار گفته شود">${esc(OC3.f.note || '')}</textarea></label></div>` + h.slice(j + '</label></div>'.length);
+    h = h.replace('>PDF برای کلینیک<', '>دانلود PDF برای کلینیک<') } catch (e) { }
+  return h
 }
 /* ===== «انجام کار» / «پروتز»: list of sessions + form on the clinic's services ===== */
 function oc3TabHTML(kind) {
@@ -73,9 +85,6 @@ async function oc3Pdf() {
   const v = OC2.v, c = ocCl(v.pat.clinic), pl = v.plan; if (!pl) return; const r = blankForm(); r.s = secFrom(pl.s); r.brand = 'ko'; r.h = Object.assign(r.h, { name: v.pat.name, date: jalali(new Date()).slash, doc: '' });
   const keep = SET.clinic; OC3.pdf = true; SET.clinic = c.name; try { const o = await buildPDF(r, { title: 'طرح درمان ایمپلنت', quote: true, dateLine: 'تاریخ: ' + jalali(new Date()).slash }); openForPrint(o.blob) } catch (e) { alertMsg(e.message) } finally { SET.clinic = keep; OC3.pdf = false }
 }
-/* «+ جلسه‌ی تازه (بیمار جدید)» now only asks the name and opens the patient page with the three tabs */
-oc2NewSes = function () { const c = ocCl(OC2.cl); const s = mkSheet('oc3NewSh', `<h3>بیمار جدید — ${esc(c.name)}</h3><div class="fields"><label class="f">نام و نام خانوادگی *<input id="oc3nm" list="oc2names"><datalist id="oc2names">${OC2.pats.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist></label></div><div class="msg" id="oc3nmMsg"></div><div class="btns"><button class="btn main" type="button" id="oc3nmOk">ادامه</button><button class="btn ghost" type="button" id="oc3nmX">انصراف</button></div>`); s.hidden = false; setTimeout(() => { try { $('oc3nm').focus() } catch (x) { } }, 50);
-  s.onclick = async ev => { const b = ev.target.closest('button'); if (!b) return; if (b.id === 'oc3nmX') { s.hidden = true; return } if (b.id === 'oc3nmOk') { const nm = $('oc3nm').value.trim(), m = $('oc3nmMsg'); if (!nm) { m.className = 'msg err'; m.textContent = 'نام بیمار را بنویسید.'; return } b.disabled = true; try { const r = await api('oc', { op: 'patNew', clinic: OC2.cl, name: nm }); s.hidden = true; oc3Unmount(); OC3.tab = 'plan'; await oc2Open(r.id) } catch (err) { m.className = 'msg err'; m.textContent = err.message; b.disabled = false } } } };
 /* ===== events ===== */
 document.addEventListener('click', async e => {
   const t = e.target.closest && e.target.closest('[data-oc3tab],[data-oc3new],[data-oc3ed],#oc3Back,#oc3Back2,#oc3Save,#oc3PlanSave,#oc3PlanPdf,[data-oc3q]'); if (!t || !$('viewOc') || $('viewOc').hidden) return;
@@ -92,10 +101,10 @@ document.addEventListener('click', async e => {
     catch (err) { m.className = 'msg err'; m.textContent = err.message; t.disabled = false } return }
 }, true);
 document.addEventListener('input', e => { const i = e.target; if (!i || !OC3.f) return; if (i.dataset && i.dataset.oc3p !== undefined) { const v = toEn(i.value).replace(/[^\d]/g, ''); i.value = v ? fmtInput(v) : ''; OC3.pr[i.dataset.oc3p] = Number(v) || 0; oc3Paint(); return } if (['oc3day', 'oc3note', 'oc3last'].includes(i.id)) oc3Read() }, true);
-/* leaving the «سایر کلینیک‌ها» view or the patient page restores the plan-form globals */
-{ const _r = ocRender; ocRender = function () { if (OC3.f && (!OC2.pat || OC.seg !== 'tr')) oc3Unmount(); return _r.apply(this, arguments) } }
+/* ocRender (oc3, both parts in one wrapper): before drawing, leaving the «سایر کلینیک‌ها» view or the patient page restores the plan-form globals;
+   after drawing, on tab «cl», each tariff row gets its «بخش» select (oc3SecSel, below) */
+{ const _r = ocRender; ocRender = function () { if (OC3.f && (!OC2.pat || OC.seg !== 'tr')) oc3Unmount(); const r = _r.apply(this, arguments); try { if (OC.seg === 'cl') oc3SecSel() } catch (e) { } return r } }
 /* ===== tariff editor: each service gets a «بخش» (the plan section it is marked on); the per-group implant rows are gone ===== */
 const OC3_SECL = () => [['', 'شمارشی (بدون نمودار)']].concat(oc3Secs().map(id => [id, (SEC[id] || {}).t || id]));
 function oc3SecSel() { document.querySelectorAll('.oc-clc').forEach(card => { const id = card.dataset.ocid, e = OC.edit[id]; if (!e) return; card.querySelectorAll('[data-ocsv][data-f="n"]').forEach(i => { const s = e.svc[+i.dataset.ocsv]; if (!s) return; if (s.sec === undefined) { const o = (ocCl(id).svc || []).find(v => v.k === s.k); s.sec = o ? o.sec || '' : '' } const row = i.closest('.oc-row'); if (!row || row.querySelector('[data-f="sec"]')) return; if (s.k === 'imp') { s.sec = 'imp'; i.readOnly = true; i.title = 'ردیف ثابت — فقط تعرفه را عوض کنید'; const del = row.querySelector('[data-ocsvdel]'); if (del) del.remove(); row.dataset.fixed = '1'; return } if (/^ps_/.test(s.k)) return; const sel = document.createElement('select'); sel.dataset.ocsv = i.dataset.ocsv; sel.dataset.f = 'sec'; sel.className = 'oc3-sec'; sel.setAttribute('aria-label', 'بخش ' + s.n); sel.innerHTML = OC3_SECL().map(([k, l]) => `<option value="${k}"${(s.sec || '') === k ? ' selected' : ''}>${esc(l)}</option>`).join(''); i.after(sel) }) }) }
-{ const _r = ocRender; ocRender = function () { const r = _r.apply(this, arguments); try { if (OC.seg === 'cl') oc3SecSel() } catch (e) { } return r } }
 document.addEventListener('change', e => { const s = e.target; if (s && s.dataset && s.dataset.f === 'sec' && s.dataset.ocsv !== undefined) { const card = s.closest('.oc-clc'), ed = card && OC.edit[card.dataset.ocid]; if (ed && ed.svc[+s.dataset.ocsv]) ed.svc[+s.dataset.ocsv].sec = s.value } }, true);

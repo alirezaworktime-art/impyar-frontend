@@ -22,15 +22,10 @@ const m54Read = (pre, F) => { const x = {}; F.forEach(f => { if (f[0] === 'h') r
 const m54Hide = id => { const s = $(id); if (s) s.hidden = true };
 /* patient file */
 async function m54Load(id, force) { if (!force && M54.c[id]) return M54.c[id]; try { const j = await api('m54Pat', { id, op: 'get' }, { prio: 'bg', timeout: 12000 }); M54.c[id] = { p: j.p || {}, s: j.s || {}, c: j.c || null } } catch (e) { M54.c[id] = M54.c[id] || { p: {}, s: {}, c: null } } return M54.c[id] }
+/* m54Card: m54a's card, replaced by m54c (core/m54c-extra-fields-m54a-not.js): only the «بستن پرونده» banner and the close / open button */
 function m54Card() { const B = $('pfBody'); if (!B || !PF || !PF.j || PF.sess) return; const D = M54.c[PF.id]; const old = $('m54Card'); if (old) old.remove(); if (!D) return;
-  const p = D.p || {}, s = D.s || {}, c = D.c, L = [];
-  M54_F.forEach(f => { const k = f[0]; if (k === 'h' || M54_AL[k] || !p[k]) return; L.push(`<span>${esc(f[1])}: <b>${f[2] === 'chk' ? 'بله' : esc(faD(String(p[k])))}</b></span>`) });
-  const AL = Object.keys(M54_AL).filter(k => p[k]).map(k => `<span class="m54al">⚠ ${M54_AL[k]}</span>`).join('');
-  const SG = Object.keys(s).sort((a, b) => a - b).map(n => { const x = s[n] || {}, T = []; M54_SF.forEach(f => { if (x[f[0]]) T.push(esc(f[1]) + ': <b>' + esc(faD(String(x[f[0]]))) + '</b>') });
-    Object.keys(x.imp || {}).forEach(t => { const v = x.imp[t]; T.push('دندان ' + esc(t) + ': ' + [v.lot && 'LOT ' + esc(v.lot), v.exp && 'انقضا ' + esc(faD(v.exp)), v.tq && 'تورک ' + esc(faD(v.tq)), v.isq && 'ISQ ' + esc(faD(v.isq)), v.bone && 'استخوان ' + esc(v.bone)].filter(Boolean).join('، ')) });
-    return T.length ? `<div class="m54ln">ثبت تکمیلی جراحی · جلسه‌ی ${fa(Number(n))}: ${T.join(' · ')}</div>` : '' }).join('');
-  if (!c && !AL && !L.length && !SG && !m54Can()) return;
-  B.insertAdjacentHTML('afterbegin', `<div class="m54card" id="m54Card">${c ? `<div class="m54cl">پرونده بسته شده است: ${esc(c.why || '')}${c.note ? ' — ' + esc(c.note) : ''}${c.by ? ' · ' + esc(c.by) : ''}</div>` : ''}${AL}${L.length ? `<div class="m54ln">${L.join(' · ')}</div>` : ''}${SG}${m54Can() ? `<div class="btns"><button type="button" class="btn sm ghost" id="m54Edit">مشخصات تکمیلی</button>${c ? '<button type="button" class="btn sm" id="m54Open">باز کردن دوباره‌ی پرونده</button>' : '<button type="button" class="btn sm ghost" id="m54CloseB">بستن پرونده</button>'}</div>` : ''}</div>`) }
+  const c = D.c; if (!c && !m54Can()) return;
+  B.insertAdjacentHTML('afterbegin', `<div class="m54card" id="m54Card">${c ? `<div class="m54cl">پرونده بسته شده است: ${esc(c.why || '')}${c.note ? ' — ' + esc(c.note) : ''}${c.by ? ' · ' + esc(c.by) : ''}</div>` : ''}${m54Can() ? `<div class="btns">${c ? '<button type="button" class="btn sm" id="m54Open">باز کردن دوباره‌ی پرونده</button>' : '<button type="button" class="btn sm ghost" id="m54CloseB">بستن پرونده</button>'}</div>` : ''}</div>`) }
 { const _f = renderFile; renderFile = function () { const r = _f.apply(this, arguments); try { m54Card() } catch (e) { console.error('m54a', e) } return r } }
 { const _o = openFile; openFile = function (id) { const r = _o.apply(this, arguments); try { if (id) m54Load(id, true).then(() => { if (PF && PF.id === id) m54Card() }) } catch (e) { } return r } }
 function m54Sheet(vals, title, onSave) { const s = fxSheet('m54Sh', `<h3>${esc(title)}</h3><div class="fields">${M54_F.map(f => m54In('m54_', f, (vals || {})[f[0]])).join('')}</div><div class="msg" id="m54Msg"></div><div class="btns"><button type="button" class="btn" id="m54Save">ذخیره</button><button type="button" class="btn ghost" id="m54No">انصراف</button></div>`); s._save = onSave; return s }

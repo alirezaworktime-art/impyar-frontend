@@ -25,9 +25,8 @@ window.addEventListener('click',async e=>{const el=e.target&&e.target.closest&&e
   const who=ux8Who(t);const yes=await uxAsk({title:hit.t,who:who?('بیمار: '+who):'',msg:t._ux8m||hit.m,ok:hit.ok,cancel:'نه، برگرد',danger:hit.danger!==false});
   if(yes){UX8.ok.add(t);if(t.id==='tabOut'){UX8.dirty=false;try{dirty=false}catch(x){}}t.click()}},true);
 /* undo toast: 10 s, and a plain message no longer wipes a live «برگرداندن» button (it goes to a second line) */
-{const _tu=toastUndo;toastUndo=function(text,undo){const r=_tu.apply(this,arguments);const el=$('toast');clearTimeout(el._t);el._ux8u=Date.now()+10000;el._t=setTimeout(()=>{el.hidden=true;el._ux8u=0},10000);return r}}
-{const _t=toast;toast=function(t,bad){const el=$('toast');const live=el&&el._ux8u&&el._ux8u>Date.now()&&!el.hidden&&el.querySelector('.tundo:not(:disabled)');
-  if(!live)return _t.apply(this,arguments);let s=el.querySelector('.ux8m');if(!s){s=document.createElement('div');s.className='ux8m';el.appendChild(s)}s.textContent=t;s.classList.toggle('err',!!bad)}}
+/* (the 10 s undo toast is merged into toastUndo in reception/patch-ux.js) */
+/* toast: the second message line under a live undo button is now part of the single definition in pdf/background-send-queue-doctor-never.js */
 /* (2) accuracy: Jalali years outside 1350–1430 are not dates (a Gregorian 2026/11/04 or a typo like 140/8/1) */
 {const _p=parseJ;parseJ=function(s){const r=_p.apply(this,arguments);if(!r)return r;const y=+String(r).slice(0,4);if(y&&(y<1971||y>2052))return '';return r}}
 /* more money fields take digits only (same check and message as the fx7 ones) */
@@ -37,7 +36,7 @@ window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('
   const c=t.closest('.sheet,form,.card,[role=dialog]');if(!c)return;const bad=[...c.querySelectorAll(UX8_AMT)].find(i=>!i.disabled&&i.offsetParent&&fx7AmtBad(i.value));if(!bad)return;
   e.preventDefault();e.stopImmediatePropagation();fx7Mark(bad,true);try{bad.focus()}catch(x){}toast(FX7_AMT_MSG,true)},true);
 /* the cash box closes only the day whose totals are on the screen, and asks with expected vs counted */
-{const _lc=loadCash;loadCash=function(){try{const v=$('ac_day').value.trim();UX8.cashDay=v?parseJ(v):tDay()}catch(e){}return _lc.apply(this,arguments)}}
+/* (UX8.cashDay is set in loadCash in reception/p5-online-intake-post-op.js) */
 UX8_ASK.push({s:'#acClose',t:'بستن صندوق',m:'',ok:'بله، صندوق بسته شود',danger:false,when:t=>{const m=$('acMsg'),v=$('ac_day').value.trim(),d=v?parseJ(v):tDay();
   if(v&&!d){m.className='msg err';m.textContent='تاریخ صندوق درست نیست (مثل ۱۴۰۵/۰۸/۱۵).';t._ux8block=1;return true}
   if(UX8.cashDay&&d!==UX8.cashDay){m.className='msg err';m.textContent='تاریخ عوض شده؛ اول «نمایش» را بزنید تا جمع همان روز دیده شود، بعد ببندید.';t._ux8block=1;return true}
@@ -65,4 +64,4 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.matches||!t.mat
   if(t.closest('.sheet:not([hidden])')||UX8_F.test(t.id||'')||t.closest('#viewFin,#viewInv,#viewLab,#viewAcc,#viewArc6'))UX8.dirty=true},true);
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.sheet .btn.ghost,[id$="Cancel"],[id$="Close"]:not(#acClose)');if(t&&/انصراف|بستن|بی‌خیال|لغو/.test(t.textContent||''))setTimeout(()=>{if(!document.querySelector('.sheet:not([hidden]):not(#uxAskSh)'))UX8.dirty=false},0)},true);
 window.addEventListener('beforeunload',e=>{if(UX8.dirty&&ROLE){e.preventDefault();e.returnValue=''}});
-{const _sd=sendToDoctor;sendToDoctor=async function(){try{if(ROLE==='staff'&&!RC_EDIT&&((($('rc_name')||{}).value||'').trim()||(($('rc_phone')||{}).value||'').trim())){const ok=await uxAsk({title:'فرم پذیرش نیمه‌کاره',msg:'فرم پذیرش «'+($('rc_name').value.trim()||$('rc_phone').value.trim())+'» هنوز ارسال نشده و پاک می‌شود. ادامه می‌دهید؟',ok:'بله، پاک شود',cancel:'نه، برگرد',danger:true});if(!ok)return}}catch(e){}return _sd.apply(this,arguments)}}
+/* (sendToDoctor: the half-filled form question is merged into surgery/roles-live-queue-reception.js) */

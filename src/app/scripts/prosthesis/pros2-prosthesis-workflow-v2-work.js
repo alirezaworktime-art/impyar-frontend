@@ -18,7 +18,10 @@ let QPDEC=[],P2={id:'',f:'',teeth:[],kind:'',meth:'',shade:'',abut:'',ret:'',oth
 const pr2InDis=id=>{try{return sdItems().some(x=>x.id===id)}catch(e){return false}};
 const pr2T=pr=>pr&&PR2.PATH[pr.type]?pr.type:'fix';
 const pr2Lbl=(s,t)=>s==='tryin'&&t==='ovd'?'تست چیدمان دندان':s==='tryin'&&t==='aox'?'تست چیدمان / رزین':s==='deliv'&&t==='ovd'?'تحویل و نصب اتچمنت':s==='impr'&&t==='aox'?'قالب نهایی':(PSTN[s]||s);
-function pr2Next(t,st){const P=PR2.PATH[t]||PR2.PATH.fix,i=P.indexOf(st);if(i<0)return null;const n=P[i+1];if(n!=='lab')return {st:n};let j=i+2;while(j<P.length-1&&(PR2.OPT[t]||[]).includes(P[j]))j++;return {st:'lab',for:P[j]}}
+/* pr2Next: base + fix6a (lab/lab7-stage-tabs-removed-cards.js: after an approved test (PR2.TEST) the next piece goes to the lab first, skipping F6_DEFSKIP steps) */
+function pr2Next(t,st){const P=PR2.PATH[t]||PR2.PATH.fix,i=P.indexOf(st);if(i<0)return null;const n=P[i+1];
+  if(n!=='lab'){if(!PR2.TEST.includes(st)||n==='done')return {st:n};let j=i+1;while(j<P.length-1&&(P[j]==='lab'||(F6_DEFSKIP[t]||[]).includes(P[j])))j++;return {st:'lab',for:P[j]}}
+  let j=i+2;while(j<P.length-1&&(PR2.OPT[t]||[]).includes(P[j]))j++;return {st:'lab',for:P[j]}}
 function pr2LabFor(t){const P=PR2.PATH[t]||PR2.PATH.fix,i=P.indexOf('lab');return P.slice(i+1).filter((s,k,a)=>s!=='lab'&&s!=='done'&&a.indexOf(s)===k)}
 function pr2TaskNote(k){if(k.kind==='labready'){const s=(k.info||'').split('|')[2];return s&&PR2.BK[s]?PR2.BK[s][1]:''}return k.kind==='pfail'?'برداشتن ایمپلنت':k.kind==='repair'?'ترمیم بعد از تحویل'+(PR2.REP[k.info]?' — '+PR2.REP[k.info]:''):k.kind==='book'&&k.info==='reimp'?'کاشت دوباره (شکست ایمپلنت)':''}
 function pr2LabNeedWhy(x){return x.redo?`اصلاح ${esc(pr2Lbl(x.after))} (بار ${fa(x.redo)})؛ سفارش اصلاح به لابراتوار ثبت نشده`:x.repair?'ترمیم بعد از تحویل؛ سفارش دوباره‌ی لابراتوار ثبت نشده':x.after&&x.after!=='tryin'?`مرحله‌ی بعد: ساخت ${esc(pr2Lbl(x.after))}؛ سفارش لابراتوار ثبت نشده`:'قالب گرفته شده؛ سفارش لابراتوار ثبت نشده'}
@@ -38,9 +41,6 @@ function f3Items(R,td){
       act:`<button class="btn sm main" type="button" data-pbook="${esc(x.id)}" data-pbn="${esc(x.name)}" data-pbp="${esc(x.phone||'')}" data-pbk="${b[0]}" data-pbnote="${esc(b[1])}">تعیین نوبت ${esc(b[1]||AKL[b[0]]||'')}</button>`,extra:tel(x.phone)+fileBtn(x.id,x.name,'pros')})});
   QLAB.forEach(l=>R.push({pid:l.plan,c:'pros',name:l.name,why:`کار لابراتوار ${fa(f3Days(l.due))} روز از موعد گذشته · ${esc(LST[l.st]||l.st)}`,w:30+Math.min(f3Days(l.due),20),act:fileBtn(l.plan,l.name,'pros').replace('class="btn sm ghost"','class="btn sm main"'),extra:''}));
 }
-/* lab order specs: impression method, redo count */
-function labSpecs(d){const S=[d.for&&LFOR[d.for]&&'ساخت: '+LFOR[d.for],d.pon&&d.pon.length&&'پونتیک: '+toothTxt(d.pon),d.type,d.mat,d.meth&&PR2.METH[d.meth]&&'قالب: '+PR2.METH[d.meth],d.abut&&'اباتمنت '+d.abut,d.ret,d.shade&&'رنگ '+d.shade,d.sys].filter(Boolean).map(v=>`<span>${esc(v)}</span>`).join('');
-  return (d.redo?`<span class="p2redo">اصلاح ${fa(d.redo)}${d.redoFor?' · '+esc(pr2Lbl(d.redoFor)):''}</span>`:'')+S}
 /* prosthesis board / list cards */
 function pr2Flag(x){return x.stage==='pause'?`<div class="meta"><b class="late">متوقف${x.pause&&x.pause.stop?' — ادامه نمی‌دهد':''}</b>${x.pause&&x.pause.until&&!x.pause.stop?' · تماس '+esc(jDay(x.pause.until)):''}</div>`:x.stage==='fail'?'<div class="meta"><b class="late">شکست ایمپلنت</b></div>':x.repair?`<div class="meta"><b class="late">مشکل بعد از تحویل: ${esc(PR2.REP[x.repair]||'')}</b></div>`:x.wait?'<div class="meta"><b>نتیجه‌ی تست ثبت نشده</b></div>':''}
 function prBoardCard(x){const td=tDay(),days=x.at?Math.max(0,dDiff(td,x.at.slice(0,10))):0,l=x.lab,late=l&&l.due&&l.due<td&&l.st!=='ready',rd=['heal','tmpd'].includes(x.stage)&&x.ready&&x.ready<=td,rn=x.redo&&x.redo[x.stage==='lab'?x.after:x.stage];
@@ -116,9 +116,12 @@ function pr2Form(j,pr,t){const f=P2.f,ch=(attr,v,on,l)=>`<button type="button" c
       <div class="grp"><span>اباتمنت</span><div class="chips">${PR2.ABUT.map(s=>ch('p2ab',s,P2.abut===s)).join('')}</div></div><div class="grp"><span>نوع اتصال</span><div class="chips">${PR2.RET.map(s=>ch('p2rt',s,P2.ret===s)).join('')}</div></div>
       <div class="msg" id="p2Msg"></div><div class="btns"><button class="btn" type="button" data-p2go="impr">ثبت جزئیات</button><button class="btn ghost" type="button" data-p2f="">بستن</button></div></div>`}
   return ''}
-async function p2Do(op,x,btn){if(!PF&&!(x&&x.id))return;const id=(x&&x.id)||PF.id;if(btn)btn.disabled=true;
-  try{const r=await api('prosAct',Object.assign({id,op,by:($('rc_asst')||{}).value||ROLE_LBL[ROLE]},x||{}));P2.f='';P2.teeth=[];P2.kind='';toast(r&&r.evt?r.evt[0]:'ثبت شد.');if(PF&&!$('pfSheet').hidden)refreshFile();if(!$('viewPros').hidden)loadPros();pollQ(true);return r}
-  catch(e){const m=$('p2Msg');if(m){m.className='msg err';m.textContent=e.message}else alertMsg(e.message)}finally{if(btn)btn.disabled=false}}
+/* p2Do: base + fix6a (lab/lab7-stage-tabs-removed-cards.js: after «ok»/«skip» lands on the lab stage, the order form opens via f6OpenOrder) */
+async function p2Do(op,x,btn){if(!PF&&!(x&&x.id))return;const id=(x&&x.id)||PF.id;if(btn)btn.disabled=true;let res;
+  try{const r=await api('prosAct',Object.assign({id,op,by:($('rc_asst')||{}).value||ROLE_LBL[ROLE]},x||{}));P2.f='';P2.teeth=[];P2.kind='';toast(r&&r.evt?r.evt[0]:'ثبت شد.');if(PF&&!$('pfSheet').hidden)refreshFile();if(!$('viewPros').hidden)loadPros();pollQ(true);res=r}
+  catch(e){const m=$('p2Msg');if(m){m.className='msg err';m.textContent=e.message}else alertMsg(e.message)}finally{if(btn)btn.disabled=false}
+  /* fix6a: only after a successful «ok» / «skip» to the lab stage (res is undefined on the early return and on error) */
+  try{const id=(x&&x.id)||(PF&&PF.id);if(res&&res.ok&&(op==='ok'||op==='skip')&&res.pros&&res.pros.stage==='lab'&&id&&['surgery','doctor','consultant'].includes(ROLE))await f6OpenOrder(id)}catch(e){}return res}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;const D=t.dataset;
   if(D.p2type&&PF){if(t.getAttribute('aria-pressed')==='true')return;p2Do('type',{type:D.p2type},t);return}
   if(D.p2op&&PF){if(['rlab','reimp'].includes(D.p2op)&&!D.armed){D.armed='1';const o=t.textContent;t.textContent=o+' — دوباره بزنید';setTimeout(()=>{if(t.isConnected){delete t.dataset.armed;t.textContent=o}},4000);return}p2Do(D.p2op,{},t);return}

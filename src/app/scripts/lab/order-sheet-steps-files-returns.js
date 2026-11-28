@@ -1,7 +1,9 @@
 /* ---------- order sheet: steps, files, returns ---------- */
-async function l2Open(lid){L2.ord={id:lid};const s=mkSheet('l2Sheet','<div id="l2In"><div class="empty">در حال بارگذاری…</div></div><div class="btns"><button class="btn ghost" type="button" id="l2Close">بستن</button></div>');s.classList.add('l2sheet');s.hidden=false;
+/* l2Open: base + lab5 (l5Seen) */
+async function l2Open(lid){l5Seen(lid);L2.ord={id:lid};const s=mkSheet('l2Sheet','<div id="l2In"><div class="empty">در حال بارگذاری…</div></div><div class="btns"><button class="btn ghost" type="button" id="l2Close">بستن</button></div>');s.classList.add('l2sheet');s.hidden=false;
   $('l2Close').onclick=()=>{s.hidden=true;L2.ord=null};await l2Load(lid)}
 async function l2Load(lid,quiet){try{const [j]=await Promise.all([api('labOrder',{lid}),l2Defs().catch(()=>null)]);if(!L2.ord||L2.ord.id!==lid)return;if(j.me)L2.me=j.me;j.id=lid;L2.ord=j;l2Render()}catch(e){if(!quiet)$('l2In').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+/* l2Render: base + lab4 + lab6 + lab7 + lab8 (each added part has its own try/catch, as before). arc10 (pdf), pk3 (plan) and m36 still wrap it. */
 function l2Render(){const J=L2.ord,o=J.order,d=o.data||{},me=L2.me||{},lab=ROLE==='lab',steps=J.steps||[],rec=lab&&(me.recep||me.sup);
   const info=[['پزشک',d.doc||o.doc],['نوع کار',d.wt],['پروسه',d.procName],['طراح',d.designer&&d.designer.name],['جعبه',d.box&&faD(d.box)],['تحویل',jDay(o.due)],['ثبت',jd(o.created)],['رنگ',d.shade],['اولویت',d.prio==='urgent'?'فوری':'']].filter(r=>r[1]);
   const xo=Object.assign({},o,{steps});
@@ -24,14 +26,41 @@ function l2Render(){const J=L2.ord,o=J.order,d=o.data||{},me=L2.me||{},lab=ROLE=
     ${canUp?`<div class="l2up"><select id="l2fk">${Object.entries(L2_FKL).map(([k,l])=>`<option value="${k}"${(lab?'design':'scan')===k?' selected':''}>${l}</option>`).join('')}</select><label class="btn sm">افزودن فایل<input type="file" id="l2file" multiple hidden accept=".webm,.ogg,.m4a,.mp3,.wav,.aac,.stl,.ply,.obj,.zip,.rar,.7z,.dcm,.3oxz,.constructioninfo,.jpg,.jpeg,.jfif,.png,.webp,.heic,.heif,.gif,.bmp,.tif,.tiff,.pdf,.mp4,.mov,.html,.htm,.txt"></label><span class="meta" id="l2upM"></span></div>`:''}`;
   const R=J.rets||[];if(R.length)h+=`<h3 class="pf-h">برگشت‌ها و اصلاح‌ها</h3><ul class="llog">${R.map(r=>`<li><b>${esc(L2_RK[r.kind]||r.kind)}</b>${r.dname?' · مرحله‌ی '+esc(r.dname):''}${r.designer?' · طراح: '+esc(r.designer):''}${r.suser?' · کارمند مرحله: '+esc(r.suser):''}${r.reason?' — '+esc(r.reason):''}<small>${esc(jt(r.at))}${r.by?' · '+esc(r.by):''}</small></li>`).join('')}</ul>`;
   h+=`<h3 class="pf-h">پیام‌ها و سابقه</h3>${labLog((o.log||[]).slice().reverse().slice(0,40).reverse())||'<div class="empty">—</div>'}`;
-  $('l2In').innerHTML=h;const fi=$('l2file');if(fi)fi.onchange=()=>l2UpFiles(o.id,[...fi.files])}
+  $('l2In').innerHTML=h;const fi=$('l2file');if(fi)fi.onchange=()=>l2UpFiles(o.id,[...fi.files])
+  /* lab4: stage and clinic above the info */
+  try{const box=$('l2In'),o=L2.ord.order,d=o.data||{};const p=box&&box.querySelector('.l2info');
+  if(p&&!box.querySelector('.l4st'))p.insertAdjacentHTML('beforebegin',`<div class="meta l4st">مرحله: <b>${esc(l4Lbl(l4F(o)))}</b>${d.clinic?' · کلینیک <b>'+esc(d.clinic)+'</b>':''}</div>`)}catch(e){}
+  /* lab6: parts on the steps, deleted / test / typed notes / tooth brands / notes / parts table (only when the sheet is there) */
+  try{const box=$('l2In'),J=L2.ord,o=J.order,d=o.data||{},steps=J.steps||[],P=d.parts||[],lab=ROLE==='lab',sup=lab&&l5Sup();if(box){
+  const rows=box.querySelectorAll('.l2st tbody tr');if(P.length)rows.forEach((tr,i)=>{const s=steps[i],c=tr.children[1];if(s&&s.part&&c){const p=P.find(q=>q.p===s.part);if(p)c.insertAdjacentHTML('afterbegin',`<small class="l6pt">${l6Esc(p.label)}</small> `)}});
+  let h='';if(d.del)h+=`<div class="qwarn">این سفارش حذف شده: ${l6Esc(d.del.reason)} · ${l6Esc(d.del.by)} · ${l6Esc(jt(d.del.at))}${sup?` <button type="button" class="btn sm main" data-l6a="undel" data-lid="${l6Esc(o.id)}">برگرداندن</button>`:''}</div>`;
+  if(d.test)h+=`<div class="qwarn l6tw">در حال تست (${l6Esc(jt(d.test.at))}): ${l6Esc(d.test.items.join('، '))}${d.test.note?' — '+l6Esc(d.test.note):''}</div>`;
+  if(d.txt)h+=`<div class="l6blk"><b>توضیحات تایپ‌شده</b><div>${l6Esc(d.txt)}</div></div>`;
+  if(d.tbrand&&Object.keys(d.tbrand).length)h+=`<div class="l6blk"><b>برند هر دندان</b><div>${Object.keys(d.tbrand).map(k=>`<span class="pill" dir="ltr">${l6Fdi(k)}: ${l6Esc(d.tbrand[k])}</span>`).join(' ')}</div></div>`;
+  if((d.notes||[]).length)h+=`<div class="l6blk"><b>یادداشت‌ها</b><ul class="llog">${d.notes.slice().reverse().map(n=>`<li>${l6Esc(n.t)}<small>${l6Esc(jt(n.at))} · ${l6Esc(n.by)}</small></li>`).join('')}</ul></div>`;
+  if(P.length)h+=`<div class="l6blk"><b>بخش‌های سفارش</b><div class="l5tw"><table class="tbl l5t"><thead><tr><th>بخش</th><th>دندان</th><th>نوع کار</th><th>پروسه</th><th>مرحله‌ی فعلی</th><th></th></tr></thead><tbody>${P.map(p=>{const ss=steps.filter(s=>s.part===p.p),c=ss.find(s=>s.st==='acc')||ss.find(s=>s.st==='pend'&&l2Av(steps,s));
+      return `<tr><td><b>${l6Esc(p.label)}</b></td><td>${l6Cross(p.teeth)}</td><td>${l6Esc(p.wt)}</td><td>${l6Esc(p.procName||'')}</td><td>${c?l6Esc(c.dname)+' <span class="meta">('+l6Esc(L2_STL[c.st])+')</span>':(ss.length&&ss.every(l2Done)?'<span class="pill done">تمام</span>':'—')}</td><td>${lab&&o.st==='making'?`<button type="button" class="btn sm ghost" data-l6a="reproc" data-lid="${l6Esc(o.id)}" data-part="${l6Esc(p.p)}">تغییر پروسه از این مرحله</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>`;
+  else if(lab&&o.st==='making'&&steps.length&&(me=>me.sup||me.recep)(L2.me||{}))h+=`<div class="acts"><button type="button" class="btn sm ghost" data-l6a="reproc" data-lid="${l6Esc(o.id)}">تغییر پروسه از این مرحله</button>${sup?`<button type="button" class="btn sm ghost" data-l6a="finish" data-lid="${l6Esc(o.id)}">تکمیل همه مراحل</button>`:''}<button type="button" class="btn sm ghost" data-l6a="test" data-lid="${l6Esc(o.id)}">موارد کنترل مشتری (تست)</button><button type="button" class="btn sm ghost" data-l6a="note" data-lid="${l6Esc(o.id)}">یادداشت</button></div>`;
+  if(h){const hd=[...box.querySelectorAll('h3.pf-h')].find(x=>x.textContent==='مراحل ساخت');if(hd)hd.insertAdjacentHTML('beforebegin',`<div class="l6det">${h}</div>`);else box.insertAdjacentHTML('beforeend',`<div class="l6det">${h}</div>`)}}}catch(e){}
+  /* lab7: trim the sheet */
+  try{l7Trim($('l2In'))}catch(e){}
+  /* lab8: implant and implant crown in the info, step buttons */
+  try{const d=((L2.ord||{}).order||{}).data||{},el=$('l2In');if(el&&(d.implant||(d.ctype||[]).length)){const i=el.querySelector('.l2info');if(i)i.insertAdjacentHTML('beforeend',`<div><small>ایمپلنت</small><b>${esc(d.implant||'—')}</b></div><div><small>روکش ایمپلنت</small><b dir="auto">${esc([(d.ctype||[]).join('، '),(d.cmat||[]).join('، ')].filter(Boolean).join(' · ')||'—')}</b></div>`)}
+  l8StepBtns()}catch(e){}}
 async function l2UpFiles(lid,files){const M=$('l2upM'),k=$('l2fk')?$('l2fk').value:'other';for(const f of files){try{await l2Upload(lid,f,k,p=>{if(M)M.textContent=f.name+' — '+fa(Math.round(p*100))+'٪'})}catch(e){alertMsg(e.message);toast(e.message,1);break}}if(M)M.textContent='';toast('فایل بارگذاری شد.');l2Load(lid,true);if(ROLE==='lab')pollLab(true)}
 const l2B64=u8=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(new Error('خواندن فایل ناموفق بود'));r.readAsDataURL(new Blob([u8]))});
-async function l2Upload(lid,file,kind,onp){if(file.size>120*1024*1024)throw new Error('حجم «'+file.name+'» بیش از ۱۲۰ مگابایت است.');
+/* l2Upload: base + voice (voice notes go as «other») + lab8 (long names cut, progress rows, errors shown in the row) + up2 (a failed file is thrown when the caller follows the progress) + m36 (photo kind of the work order) */
+async function l2Upload(lid,file,kind,onp){try { if (M36.upk && kind === 'photo') kind = /^برگه-دستورکار-/.test(file.name || '') ? 'ophoto' : M36.upk } catch (e) { }
+  const n0 = (L8.up || []).length;if(file&&file.name&&file.name.length>120){const m=file.name.match(/(\.[A-Za-z0-9]{1,16})$/),ext=m?m[1]:'';file=new File([file],file.name.slice(0,119-ext.length).trim()+'…'+ext,{type:file.type})}
+  const r=l8UpRow(file);r.retry=()=>l2Upload(lid,file,kind);
+  try{const k=file&&V9EXT.test(file.name)?'other':kind,up=q=>{l8UpSet(r,q);if(onp)onp(q)};if(file.size>120*1024*1024)throw new Error('حجم «'+file.name+'» بیش از ۱۲۰ مگابایت است.');
   let buf=new Uint8Array(await file.arrayBuffer()),gz=0;
   if(window.CompressionStream&&!/\.(jpe?g|png|webp|heic|mp4|mov|zip|rar|7z|pdf)$/i.test(file.name)){try{const z=new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());if(z.length<buf.length*0.92){buf=z;gz=1}}catch(e){}}
-  const CH=1050000,n=Math.max(1,Math.ceil(buf.length/CH));const b=await api('labFile',{op:'begin',lid,kind,name:file.name,size:file.size,gz,n});
-  for(let i=0;i<n;i++){const d=await l2B64(buf.subarray(i*CH,(i+1)*CH));let ok=false,err=null;for(let t=0;t<3&&!ok;t++){try{await api('labFile',{op:'chunk',fid:b.id,i,d},{timeout:120000});ok=true}catch(e){err=e;await new Promise(r=>setTimeout(r,1500))}}if(!ok)throw err;if(onp)onp((i+1)/n)}}
+  const CH=1050000,n=Math.max(1,Math.ceil(buf.length/CH));const b=await api('labFile',{op:'begin',lid,kind:k,name:file.name,size:file.size,gz,n});
+  for(let i=0;i<n;i++){const d=await l2B64(buf.subarray(i*CH,(i+1)*CH));let ok=false,err=null;for(let t=0;t<3&&!ok;t++){try{await api('labFile',{op:'chunk',fid:b.id,i,d},{timeout:120000});ok=true}catch(e){err=e;await new Promise(r=>setTimeout(r,1500))}}if(!ok)throw err;up((i+1)/n)}
+    l8UpSet(r,1,'')}catch(e){l8UpSet(r,null,(e&&e.message)||'خطا')}
+  const u = (L8.up || [])[n0];
+  if (u && u.el && u.el.classList.contains('bad')) { const e = new Error(((u.el.querySelector('.l8upp') || {}).textContent || 'خطا').replace(/^خطا: /, '')); if (onp) throw e; }}
 async function l2Fetch(f,onp){if(L2.blobs.has(f.id))return L2.blobs.get(f.id);const P=[];for(let i=0;i<f.n;i++){const j=await api('labFile',{op:'get',fid:f.id,i},{timeout:120000});const s=atob(j.d),u=new Uint8Array(s.length);for(let k=0;k<s.length;k++)u[k]=s.charCodeAt(k);P.push(u);if(onp)onp((i+1)/f.n)}
   let bl=new Blob(P);if(f.gz){if(!window.DecompressionStream)throw new Error('این مرورگر فایل فشرده را باز نمی‌کند؛ Chrome را به‌روز کنید.');bl=await new Response(bl.stream().pipeThrough(new DecompressionStream('gzip'))).blob()}
   if(L2.blobs.size>4)L2.blobs.delete(L2.blobs.keys().next().value);L2.blobs.set(f.id,bl);return bl}

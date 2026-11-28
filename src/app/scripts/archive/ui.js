@@ -66,17 +66,29 @@ const TILES={
 const TILE_HD={staff:{plan:'بیماران امروز برای طرح درمان',fol:'پیگیری‌ها و تماس‌ها',surg:'نوبت جراحی',sdone:'جراحی‌شده‌ی امروز',chk:'چکاپ و بخیه',unc:'انکاوری',pros:'نوبت پروتز'},
   consultant:{cons:'بیماران منتظر مشاور',chq:'چک‌های سررسید (تا یک هفته‌ی آینده)',und:'بیماران مردد (طرح تأییدنشده)'},
   surgery:{surg:'جراحی امروز',chk:'ویزیت و کشیدن بخیه — امروز',unc:'انکاوری — امروز'},doctor:{plan:'بیماران امروز برای طرح درمان'}};
-function tileList(){const f=TILES[ROLE];return f?f():[]}
-function renderTiles(){let el=$('tiles');if(!el){el=document.createElement('div');el.id='tiles';el.className='hts';const w=document.querySelector('.wrap');if(!w)return;w.insertBefore(el,w.firstChild)}
-  const L=tileList();el.dataset.n=L.length;el.hidden=!ROLE||!L.length||TILE_HIDE;
-  el.innerHTML=L.map(t=>`<button type="button" class="htile tc-${t.c}" data-tile="${t.k}" aria-current="${TILE===t.k}"><span class="tn">${t.n?fa(t.n):''}</span><span><span class="tl">${esc(t.l)}</span><span class="ts">${esc(t.s)}</span></span></button>`).join('');
+/* tileList — layers: archive/ui base + surgery/queue (the home tile first for the MQ_HOME roles) */
+function tileList(){const f=TILES[ROLE],L=f?f():[];if(!MQ_HOME[ROLE])return L;const n=ROLE==='manager'?0:mqItems().length;return [{k:'q',c:'q',l:ROLE==='manager'?'تابلو':'صف من',s:'',n,tab:'tabQueue',view:ROLE==='staff'?'recep':undefined}].concat(L)}
+/* renderTiles — layers: reception/patch-ux (the icon tiles; replaced the first archive/ui version) + reception/patch-walk (renderPi)
+   + ui/ux5 (uxTileSync) + ui/ttl1 (app-bar title; signed out: only clean the sign-in page). TCOUNT and tIco live in reception/patch-ux. */
+function renderTiles(){if(!ROLE){ttlLoginClean();return}
+  let el=$('tiles');if(!el){el=document.createElement('div');el.id='tiles';el.className='hts';const w=document.querySelector('.wrap');if(w)w.insertBefore(el,w.firstChild);else el=null}
+  if(el){const L=tileList(),C=TCOUNT[ROLE]||[];el.dataset.n=L.length;el.hidden=!ROLE||!L.length||TILE_HIDE;
+  el.innerHTML=L.map(t=>{const counted=C.includes(t.k),zero=counted&&!t.n;
+    return `<button type="button" class="htile x tc-${t.c}${zero?' zero':''}${t.k==='q'?' hq':''}" data-tile="${t.k}" aria-current="${TILE===t.k}" title="${esc(t.s||'')}"><span class="hi">${tIco(t.k)}</span><span class="hn">${t.n?fa(t.n):counted?'—':''}</span><span class="hl">${esc(t.l)}</span><span class="hs">${esc(t.s||'')}</span></button>`}).join('');
   tileHead()}
+  try{renderPi()}catch(e){}
+  try{uxTileSync()}catch(e){}
+  ttlSet()}
 let TILE_HIDE=false;
-function tileHead(){const L=tileList(),t=L.find(x=>x.k===TILE);document.querySelectorAll('.tilehd').forEach(h=>h.remove());if(!t)return;
-  const H=(TILE_HD[ROLE]||{})[TILE];if(!H)return;
-  const host=ROLE==='staff'?$('rAll'):$('viewQueue');if(!host)return;
-  const acts={staff:{surg:'<button class="btn sm" type="button" data-rfab="book">+ اخذ نوبت جراحی</button>',chk:'<button class="btn sm" type="button" data-tnew="chks">+ نوبت چکاپ</button>',unc:'<button class="btn sm" type="button" data-tnew="uncover">+ نوبت انکاوری</button>',pros:'<button class="btn sm" type="button" data-tnew="impr">+ نوبت پروتز</button>'}}[ROLE]||{};
+/* tileHead — layers: archive/ui base + appointments/appt1 (staff: the big booking buttons) + archive/fx2 (staff: list / week / month switch) */
+function tileHead(){const L=tileList(),t=L.find(x=>x.k===TILE);document.querySelectorAll('.tilehd').forEach(h=>h.remove());
+  const H=t&&(TILE_HD[ROLE]||{})[TILE],host=H&&(ROLE==='staff'?$('rAll'):$('viewQueue'));
+  if(host){const acts={staff:{surg:'<button class="btn sm" type="button" data-rfab="book">+ اخذ نوبت جراحی</button>',chk:'<button class="btn sm" type="button" data-tnew="chks">+ نوبت چکاپ</button>',unc:'<button class="btn sm" type="button" data-tnew="uncover">+ نوبت انکاوری</button>',pros:'<button class="btn sm" type="button" data-tnew="impr">+ نوبت پروتز</button>'}}[ROLE]||{};
   const h=document.createElement('div');h.className='tilehd tc-'+t.c;h.innerHTML=`<h2><i></i>${esc(H)}${t.n?` <span class="tnow">(${fa(t.n)} مورد)</span>`:''}</h2><div class="acts">${acts[TILE]||''}</div>`;host.insertBefore(h,host.firstChild)}
+  if(ROLE==='staff'){const h=document.querySelector('.tilehd');if(h){
+  if(TILE==='surg'){const a=h.querySelector('.acts');if(a)a.innerHTML='<button class="btn main bkbig" type="button" data-rfab="book">📅 نوبت‌دهی</button>'}
+  if(TILE==='bkd'){const a=h.querySelector('.acts');if(a)a.innerHTML='<button class="btn sm" type="button" data-rfab="book">📅 نوبت‌دهی</button><button class="btn sm ghost" type="button" data-bkdre="1">به‌روزرسانی</button>'}}}
+  try{fx2Head()}catch(e){console.error('fx2',e)}}
 function goTile(k,opt={}){const L=tileList(),t=L.find(x=>x.k===k)||L[0];if(!t)return;if(t.act){const b=$(t.tab);if(b)b.click();return}if(dirty&&!$('viewForm').hidden&&t.tab){$(t.tab).click();if(dirty&&!$('viewForm').hidden)return}TILE=t.k;TSAVE[ROLE]=TILE;try{localStorage.setItem('implantTile',JSON.stringify(TSAVE))}catch(e){}
   document.body.dataset.tile=TILE;
   if(t.view==='recep'){if($('viewRecep').hidden){show('recep');pollQ(true)}else renderQ()}
@@ -91,13 +103,12 @@ function tileEmpty(){const host=ROLE==='staff'?$('rAll'):null;document.querySele
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-tile].htile');if(t){goTile(t.dataset.tile);return}
   const n=e.target.closest&&e.target.closest('[data-tnew]');if(n&&ROLE==='staff'){openAppt({kind:n.dataset.tnew,grp:'all'});return}});
 /* wrap the existing navigation so the tiles stay in sync */
-const _applyRole=applyRole;applyRole=function(){_applyRole();try{renderTiles()}catch(e){}};
-const _home=home;home=function(){_home();try{if(!TILE||!tileList().some(t=>t.k===TILE))TILE=TSAVE[ROLE]||'';goTile(TILE||(tileList()[0]||{}).k,{keep:1})}catch(e){console.error(e)}};
+/* applyRole: the tiles layer is merged into surgery/roles-live-queue-reception.js */
+/* home: the tiles layer is merged into surgery/roles-live-queue-reception.js */
 const _show=show;show=function(v){_show(v);try{TILE_HIDE=v==='login';const el=$('tiles');if(el)el.hidden=TILE_HIDE||!ROLE;if(v==='login'){TILE='';delete document.body.dataset.tile}
   if(v==='queue'||v==='recep'){const L=tileList(),want=v==='recep'?(x=>x.view==='recep'):(x=>x.tab==='tabQueue'),cur=L.find(x=>x.k===TILE);if(!cur||!want(cur)){const t=L.find(want);if(t){TILE=t.k;document.body.dataset.tile=TILE;renderTiles();tileEmpty()}}}}catch(e){}};
-const _renderQ=renderQ;renderQ=function(){_renderQ();try{renderTiles();if(ROLE==='staff')renderSd();if(ROLE==='surgery')renderSurgAppts2();tileEmpty()}catch(e){console.error(e)}};
-const _tidySecs=tidySecs;tidySecs=function(){_tidySecs();try{tileEmpty()}catch(e){}};
-const _logout=logout;logout=function(){TILE='';delete document.body.dataset.tile;const el=$('tiles');if(el)el.hidden=true;_logout()};
+/* renderQ: the tiles layer is merged into surgery/roles-live-queue-reception.js */
+/* logout layer (tiles reset before logout): merged into logout in manager/views.js */
 /* staff: flatten the reception panes into one column and tag every section with its tile */
 function tileInitStaff(){const v=$('viewRecep');if(!v||$('rAll'))return;
   const all=document.createElement('div');all.id='rAll';$('rTabs').insertAdjacentElement('afterend',all);
@@ -119,7 +130,8 @@ function tileInitStaff(){const v=$('viewRecep');if(!v||$('rAll'))return;
   const nb=S('nbList');if(nb){nb.querySelector('.rsh').textContent='نوبت کشیدن بخیه'}}
 /* staff: the surgery-day discharge list */
 let SDNX_C=null,SDNX_T=null;const SDNX=()=>{if(SDNX_T!==TASKS){SDNX_T=TASKS;SDNX_C=new Set(TASKS.filter(t=>!t.done&&(t.kind==='suture'||t.kind==='week')).map(t=>t.plan))}return SDNX_C};
-function renderSd(){const L=$('sdList');if(!L)return;const ae=document.activeElement;if(ae&&L.contains(ae)&&ae.dataset&&(ae.dataset.sdnote||ae.dataset.fxsdin))return;const R0=sdItems(),td=tDay();L.dataset.n=R0.length;SD_TOT=R0.length;const R=R0.slice(0,SDCAP);
+/* renderSd — layers: archive/ui base + surgery/appt2 (row cap and its «more» button); finance/m35 and finance/m50a still wrap it */
+function renderSd(){SD_TOT=0;try{const L=$('sdList');if(!L)return;const ae=document.activeElement;if(ae&&L.contains(ae)&&ae.dataset&&(ae.dataset.sdnote||ae.dataset.fxsdin))return;const R0=sdItems(),td=tDay();L.dataset.n=R0.length;SD_TOT=R0.length;const R=R0.slice(0,SDCAP);
   L.innerHTML=R.length?R.map(x=>{const sg=x.sg||{},rx=!!sg.rxAt&&tDay(new Date(sg.rxAt))>=(sg.lastDay||td),st=x.settle==='pending',nx=SDNX().has(x.id),cont=x.queue==='surgpart',care=!!(SDC[x.id]||{}).care;
     const row=(ok,tx,sub,act)=>`<div class="sdr${ok?' ok':''}"><span class="ck">${ok?'✓':''}</span><div class="tx">${tx}${sub?`<small>${sub}</small>`:''}</div>${act||''}</div>`;
     return `<div class="item sdone" data-sd="${esc(x.id)}"><div class="row1"><div><span class="nm">${esc(x.name)}</span><div class="meta">${x.phone?esc(faD(x.phone))+' · ':''}${fa(x.surgN||0)} جلسه · ${cont?'<b class="late">جراحی ناتمام؛ جلسه‌ی بعد لازم است</b>':'پایان درمان جراحی'}</div></div><span class="pill ${cont?'cont':'done'}">${cont?'ادامه دارد':'جراحی انجام شد'}</span></div>
@@ -132,7 +144,7 @@ function renderSd(){const L=$('sdList');if(!L)return;const ae=document.activeEle
       ${fxSdRow(x)}
       <label class="f full">توضیحات ترخیص<input data-sdnote="${esc(x.id)}" value="${esc((SDC[x.id]||{}).note||'')}" placeholder="مثلاً: همراه دارد، داروها تحویل شد"></label>
       <div class="acts">${rx?`<button class="btn" type="button" data-sdgo="${esc(x.id)}"${(care&&!st&&x.fno)?'':' disabled'}>ترخیص</button>`:`<button class="btn" type="button" data-sdall="${esc(x.id)}" data-sdn="${esc(x.name)}"${(care&&!st&&x.fno)?'':' disabled'}>چاپ نسخه و ترخیص</button>`}${x.phone?`<a class="btn sm ghost" href="tel:${esc(toEn(x.phone))}">تماس</a>`:''}<button class="btn sm ghost" type="button" data-file="${esc(x.id)}" data-fname="${esc(x.name)}">پرونده</button></div></div>`}).join(''):'<div class="empty">امروز بیماری جراحی نشده.</div>';
-  try{tidySecs()}catch(e){}}
+  try{tidySecs()}catch(e){}}finally{const L=$('sdList');if(L&&SD_TOT>SDCAP&&!L.querySelector('.capmore')){L.dataset.n=SD_TOT;L.insertAdjacentHTML('beforeend',capBtn('sd',SD_TOT,SDCAP))}}}
 const SDC={};
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.sdcare){SDC[t.dataset.sdcare]=Object.assign(SDC[t.dataset.sdcare]||{},{care:t.checked});renderSd()}});
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.sdnote)SDC[t.dataset.sdnote]=Object.assign(SDC[t.dataset.sdnote]||{},{note:t.value})});
@@ -140,8 +152,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   if(t.dataset.sdrx){rxOpen(t.dataset.sdrx,t.dataset.sdn);return}
   if(t.dataset.sdbk){openAppt({plan:t.dataset.sdbk,name:t.dataset.sdn,phone:t.dataset.sdp,kind:'suture',day:dAdd(tDay(),10),lock:1});return}
   if(t.dataset.sdgo){t.disabled=true;try{const c=SDC[t.dataset.sdgo]||{};await api('discharge',{id:t.dataset.sdgo,care:!!c.care,note:c.note||'',by:$('rc_asst').value||''});toast('بیمار ترخیص شد.');delete SDC[t.dataset.sdgo];pollQ(true)}catch(err){toast(err.message);t.disabled=false}return}});
-/* after a prescription is printed from the discharge list, refresh so the row turns green */
-const _rxOpen=rxOpen;rxOpen=async function(pid,name){await _rxOpen(pid,name);if(ROLE==='staff'){const g=$('rxGo');if(g)g.addEventListener('click',()=>setTimeout(()=>pollQ(true),1500))}};
+/* (the refresh after a printed prescription is merged into rxOpen in reception/p5-online-intake-post-op.js) */
 /* surgery role («پزشک»): today's checkups and uncoverings, recorded with the doctor who did them */
 function renderSurgAppts2(){const el=$('qAppt');if(!el||ROLE!=='surgery')return;
   const A=QAPPT.filter(a=>a.day===tDay()&&a.st==='set').sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
@@ -150,9 +161,11 @@ function renderSurgAppts2(){const el=$('qAppt');if(!el||ROLE!=='surgery')return;
   const blk=(tile,ttl,L,sg,emp)=>`<div data-tile="${tile}"><div class="qhead"><h2>${ttl}</h2></div><div class="list">${L.length?L.map(a=>card(a,sg)).join(''):`<div class="empty">${emp}</div>`}</div></div>`;
   el.innerHTML=blk('surg','نوبت‌های جراحی امروز',A.filter(a=>SG_K.includes(a.kind)),true,'امروز نوبت جراحی ثبت نشده.')+blk('chk','ویزیت و کشیدن بخیه',A.filter(a=>CK_K.includes(a.kind)),false,'امروز بیماری برای چکاپ یا بخیه ارجاع نشده.')+blk('unc','انکاوری',A.filter(a=>a.kind==='uncover'),false,'امروز بیماری برای انکاوری ارجاع نشده.')}
 let ADOC=null;
+/* docPick — layers: archive/ui base + surgery/q6 (uncover / visit: the patient's radiographs and photos above the message) */
 function docPick(aid,name){ADOC={aid};const docs=[SURGEON(),...ASSTS()].filter((v,i,a)=>v&&a.indexOf(v)===i);
   const s=mkSheet('dpkSheet',`<div class="dpk"><h3>ثبت انجام · ${esc(name||'')}</h3><p class="note">کدام پزشک این کار را انجام داد؟</p><div class="chips">${docs.map(d=>`<button type="button" class="chip" data-dpk="${esc(d)}">${esc(d)}</button>`).join('')}</div><label class="f">پزشک دیگر<input id="dpk_other" placeholder="نام پزشک"></label><div class="msg" id="dpkMsg"></div>
-    <div class="btns"><button class="btn" type="button" id="dpkGo">ثبت</button><button class="btn ghost" type="button" id="dpkClose">بستن</button></div></div>`);s.hidden=false}
+    <div class="btns"><button class="btn" type="button" id="dpkGo">ثبت</button><button class="btn ghost" type="button" id="dpkClose">بستن</button></div></div>`);s.hidden=false;
+  try{const a=(typeof QAPPT!=='undefined'?QAPPT:[]).find(v=>v.id===aid);const pid=a&&a.plan;const s=$('dpkSheet');if(pid&&s){q6Files(pid).then(files=>{const m=$('dpkMsg');if(m&&!s.hidden&&!s.querySelector('.q6strip'))m.insertAdjacentHTML('beforebegin',q6StripHTML(files,pid))})}}catch(e){}}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.dataset.adoc){docPick(t.dataset.adoc,t.dataset.adn);p5DocFail(t.dataset.adp,t.dataset.adk);return}
   if(t.dataset.dpk){document.querySelectorAll('[data-dpk]').forEach(b=>b.setAttribute('aria-pressed',b===t));$('dpk_other').value='';return}
@@ -165,6 +178,4 @@ function tileInitQueue(){const v=$('viewQueue');if(!v||v.dataset.tiled)return;v.
   const qh=v.querySelector('.qhead');const w=document.createElement('div');w.dataset.tile='cons plan surg';qh.parentNode.insertBefore(w,qh);w.appendChild(qh);w.appendChild($('qList'));w.insertBefore($('kpiStrip'),qh);$('qAppt').dataset.tile='surg chk unc';$('qWaitW').dataset.tile='surg';
   const cx=$('conxW');cx.dataset.tile='chq und';const H=[...cx.querySelectorAll(':scope>.qhead')];const w1=document.createElement('div');w1.dataset.tile='chq';cx.insertBefore(w1,H[0]);w1.appendChild(H[0]);w1.appendChild($('chqList'));const w2=document.createElement('div');w2.dataset.tile='und';cx.appendChild(w2);w2.appendChild(H[1]);w2.appendChild($('folList'))}
 try{tileInitStaff();tileInitQueue()}catch(e){console.error(e)}
-/* reception: national id (10 digits) and mobile (11 digits, 09…) are required and checked */
-function phoneOk(v){const d=toEn(v||'').replace(/\D/g,'');return /^09\d{9}$/.test(d)}
 

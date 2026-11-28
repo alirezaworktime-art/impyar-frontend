@@ -29,7 +29,9 @@ function fxPad(cv){const cx=cv.getContext('2d');let dn=false,last=null,dirty=fal
   cv.onpointerup=cv.onpointercancel=cv.onpointerleave=()=>{dn=false};
   return {clear:reset,dirty:()=>dirty,load(src){if(!src)return;const im=new Image();im.onload=()=>{cx.drawImage(im,0,0,cv.width,cv.height);dirty=true};im.src=src},
     data(){let u=cv.toDataURL('image/png');if(u.length>600000)u=cv.toDataURL('image/jpeg',.8);return u}}}
-async function ntOpen(plan,o={}){if(!FXW[ROLE])return;let stage=o.stage||'',note=o.note||null;
+/* ntOpen — layers: archive/fx1 base + finance/nt2 (date automatic, writer + recipients) + plan/pk3 (the lab: stage fixed)
+   + finance/layer m15 (a doctor's new note: the default writer). The added parts also run when the role may not write notes. */
+async function ntOpen(plan,o={}){if(FXW[ROLE]){let stage=o.stage||'',note=o.note||null;
   if(!stage&&!note){if(PF&&PF.id===plan&&PF.j&&PF.j.ntStage)stage=PF.j.ntStage;else{try{const r=await api('fxNote',{op:'list',id:plan});stage=r.stage||''}catch(e){}}}
   if(note)stage=note.stage;NT={plan,nid:note?note.id:'',kind:note?note.kind:(o.kind||'text')};
   const opts=Object.keys(FXST).map(k=>`<option value="${k}"${k===(stage||'other')?' selected':''}>${FXST[k]}</option>`).join('');
@@ -43,6 +45,12 @@ async function ntOpen(plan,o={}){if(!FXW[ROLE])return;let stage=o.stage||'',note
   <div class="msg" id="fxNtMsg"></div>
   <div class="btns" style="flex-wrap:wrap"><button class="btn" type="button" id="fxNtGo" style="flex:1">ذخیره</button>${note?'<button class="btn ghost danger" type="button" id="fxNtDel">حذف</button>':''}<button class="btn ghost" type="button" data-fxclose="fxNtSheet">انصراف</button></div>`);
   FXPAD=fxPad($('fxNtCv'));if(note&&note.kind==='pen')FXPAD.load(note.img);ntKind(NT.kind);setTimeout(()=>{try{if(NT.kind==='text')$('fxNtTx').focus()}catch(e){}},80)}
+  try { const n = o.note || null, st = $('fxNtSt'); if (st && NT) {
+    NT2 = { to: n && n.tos ? (() => { try { return JSON.parse(n.tos) } catch (e) { return [] } })() : [] };
+    st.closest('label').insertAdjacentHTML('afterend', `${nt2DL()}<div class="nt2r"><label class="f">تاریخ<input value="${esc(n ? jt(n.at) : 'امروز — خودکار')}" disabled></label><label class="f">نویسنده *<input id="nt2By" list="nt2Names" maxlength="60" value="${esc(n ? (n.author || n.by || '') : '')}" placeholder="نام نویسنده" autocomplete="off"></label></div>
+      <div class="grp"><span>برای (گیرنده)</span><div class="chips" role="group">${nt2To(NT2.to, 'data-nt2to')}</div></div>`) } } catch (e) { }
+  try{if(ROLE==='lab'){const s=$('fxNtSt');if(s){s.value='lab';s.disabled=true}}}catch(e){}
+  try { if (ROLE === 'doctor' && !(o && o.note)) { const b = $('nt2By'); if (b) b.value = 'دکتر علویکیا' } } catch (e) { }}
 function ntKind(k){NT.kind=k;document.querySelectorAll('[data-fxnk]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fxnk===k)));$('fxNtTxW').hidden=k!=='text';$('fxNtPenW').hidden=k!=='pen'}
 async function ntSave(btn){if(!NT)return;const m=$('fxNtMsg'),stage=$('fxNtSt').value,b={op:NT.nid?'edit':'add',id:NT.plan,nid:NT.nid,stage,kind:NT.kind,by:fxBy()};
   if(NT.kind==='text'){b.text=$('fxNtTx').value.trim();if(!b.text){m.className='msg err';m.textContent='متن توضیح خالی است.';return}}
@@ -51,7 +59,9 @@ async function ntSave(btn){if(!NT)return;const m=$('fxNtMsg'),stage=$('fxNtSt').
   catch(e){m.className='msg err';m.textContent=e.message}finally{btn.disabled=false}}
 async function ntDel(btn){if(!NT||!NT.nid)return;if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='برای حذف دوباره بزنید';setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent='حذف'}},4000);return}
   btn.disabled=true;try{await api('fxNote',{op:'del',id:NT.plan,nid:NT.nid,by:fxBy()});fxClose('fxNtSheet');toast('توضیح حذف شد.');const p=NT.plan;NT=null;if(PF&&PF.id===p)refreshFile()}catch(e){$('fxNtMsg').className='msg err';$('fxNtMsg').textContent=e.message;btn.disabled=false}}
-function ntItem(n){const can=FXW[ROLE];return `<div class="fxn"><div class="fxn-h"><b>${esc(FXST[n.stage]||'سایر')}</b><small>${esc(jt(n.at))} · ${esc(n.by||ROLE_LBL[n.role]||'')}${n.upd?' · ویرایش '+esc(jt(n.upd))+(n.updBy?' ('+esc(n.updBy)+')':''):''}</small>${can?`<button class="btn sm ghost" type="button" data-fxnedit="${esc(n.id)}">ویرایش</button>`:''}</div>${n.kind==='pen'&&n.img?`<img class="fxn-img" src="${esc(n.img)}" alt="نوشته‌ی دستی ${esc(FXST[n.stage]||'')}">`:''}${n.text?`<p>${esc(n.text)}</p>`:''}</div>`}
+/* ntItem — finance/nt2 (writer and recipients) replaced the first archive/fx1 version */
+function ntItem(n) { const can = FXW[ROLE]; let to = []; try { to = JSON.parse(n.tos || '[]') } catch (e) { }
+  return `<div class="fxn"><div class="fxn-h"><b>${esc(FXST[n.stage] || 'سایر')}</b><small>${esc(jt(n.at))} · نویسنده: ${esc(n.author || n.by || ROLE_LBL[n.role] || '')}${to.length ? ' · برای ' + esc(to.map(k => A10T[k] || k).join('، ')) : ''}${n.upd ? ' · ویرایش ' + esc(jt(n.upd)) + (n.updBy ? ' (' + esc(n.updBy) + ')' : '') : ''}</small>${can ? `<button class="btn sm ghost" type="button" data-fxnedit="${esc(n.id)}">ویرایش</button>` : ''}</div>${n.kind === 'pen' && n.img ? `<img class="fxn-img" src="${esc(n.img)}" alt="نوشته‌ی دستی ${esc(FXST[n.stage] || '')}">` : ''}${n.text ? `<p>${esc(n.text)}</p>` : ''}</div>` }
 function ntSection(id,j){const N=(j.notes||[]).slice().reverse(),all=PF&&PF.ntAll,show=all?N:N.slice(0,3);
   return `<section class="fxnotes" aria-label="توضیحات"><div class="fxn-top"><h3 class="pf-h">توضیحات${N.length?' <small>('+fa(N.length)+')</small>':''}</h3>${FXW[ROLE]?`<button class="btn sm" type="button" data-ntadd="${esc(id)}">+ توضیح</button>`:''}</div>
    ${N.length?show.map(ntItem).join(''):'<p class="note">هنوز توضیحی ثبت نشده.'+(FXW[ROLE]?' برای هر مرحله (روی نام مرحله در نوار بالا بزنید) می‌توانید تایپی یا با قلم توضیح بنویسید.':'')+'</p>'}
@@ -78,7 +88,8 @@ function fxImpRow(x,i){const dl=x.dayJ!==undefined?x.dayJ:(x.day?jDay(x.day):'')
   <label>تاریخ جراحی<input data-k="day" placeholder="۱۴۰۲/۰۵/۱۰" value="${esc(dl)}"></label><label>جراح<input data-k="by" list="fxDocs" value="${esc(x.by||'')}"></label><button class="btn sm ghost x" type="button" data-fxirm="${i}" aria-label="حذف این ایمپلنت">✕</button></div>`}
 function fxArcRead(){const g=id=>($(id)||{}).value||'';const A=FXA;A.name=g('fxa_name').trim();A.phone=toEn(g('fxa_phone')).trim();A.nid=toEn(g('fxa_nid')).trim();A.age=toEn(g('fxa_age')).trim();A.city=g('fxa_city').trim();A.doc=g('fxa_doc').trim();A.file=toEn(g('fxa_file')).trim();A.dayJ=g('fxa_day').trim();A.other=g('fxa_other');A.note=g('fxa_note');A.type=g('fxa_type')||A.type||'fix';A.stage=g('fxa_stage')||A.stage;A.dueJ=g('fxa_due').trim();
   A.imps=[...document.querySelectorAll('#fxArcSheet .fximp')].map(r=>{const v=k=>(r.querySelector('[data-k="'+k+'"]')||{}).value||'';return {t:fxKey(v('t')),tRaw:v('t'),b:v('b').trim(),d:toEn(v('d')).trim(),l:toEn(v('l')).trim(),dayJ:v('day').trim(),day:parseJ(v('day')),by:v('by').trim()}});A.visits=fx2VisitsRead();return A}
-function fxArcRender(){const A=FXA,br=[...new Set((SET.catalog||[]).map(c=>c.b).filter(Boolean))],docs=SET.docs||[];
+/* fxArcRender: base + arc3 (archive surgery-day page) */
+function fxArcRender(){if(SURG&&SURG.arc)return arcRender();const A=FXA,br=[...new Set((SET.catalog||[]).map(c=>c.b).filter(Boolean))],docs=SET.docs||[];
   fxSheet('fxArcSheet',`<h3>${A.id?'ویرایش اطلاعات پرونده‌ی جا مانده':'افزودن پرونده‌ی جا مانده (بیماران قبلی / پرونده‌ی کاغذی)'}</h3>
   <p class="note">برای بیماران قبلی که پرونده‌ی کاغذی دارند. اگر درمانشان تمام نشده (مثلاً روکش را تحویل نگرفته‌اند) «باز» را بزنید تا از همان مرحله در سایت ادامه دهند. بعد از ذخیره، اسکن یا عکس پرونده‌ی کاغذی را در بخش «تصاویر» پرونده اضافه کنید.</p>
   <datalist id="fxBrands">${br.map(b=>`<option value="${esc(b)}">`).join('')}</datalist><datalist id="fxDocs">${docs.map(b=>`<option value="${esc(b)}">`).join('')}</datalist>
@@ -99,9 +110,10 @@ function fxArcRender(){const A=FXA,br=[...new Set((SET.catalog||[]).map(c=>c.b).
    <label class="f">تاریخ پیگیری / نوبت (برای آنکاوری یا قالب)<input id="fxa_due" placeholder="امروز" value="${esc(A.dueJ||'')}"></label></div>`}
   <div class="msg" id="fxaMsg"></div>
   <div class="btns"><button class="btn" type="button" id="fxaGo" style="flex:1">${A.id?'ذخیره‌ی تغییرات':'ثبت در بایگانی'}</button><button class="btn ghost" type="button" data-fxclose="fxArcSheet">انصراف</button></div>`)}
-function fxArcOpen(j){if(j){const d=j.data||{},h=d.h||{},a=d.arc||{};FXA={id:j.id,name:h.name||'',phone:h.phone||'',nid:h.nid||'',age:h.age||'',city:h.city||'',doc:h.doc||'',file:h.file||'',dayJ:a.day?jDay(a.day):'',other:a.other||'',note:a.note||'',imps:(a.imps||[]).map(x=>Object.assign({},x)),visits:(a.visits||[]).map(x=>Object.assign({},x))}}
-  else FXA={open:false,type:'fix',stage:'imprw',imps:[{}],visits:[{}]};fxArcRender();fx2Svcs().then(()=>{const s=$('fxArcSheet');if(FXA&&s&&!s.hidden){fxArcRead();fxArcRender()}})}
-async function fxArcSave(btn){const A=fxArcRead(),m=$('fxaMsg'),err=t=>{m.className='msg err';m.textContent=t};
+/* fxArcOpen: base + arc3 (surgery-day page) + arc6 (replaced by the a6 editor) */
+function fxArcOpen(j){a6Open(j)}
+/* fxArcSave: base + arc3 (archive surgery-day page) */
+async function fxArcSave(btn){if(SURG&&SURG.arc)return arcSave(btn);const A=fxArcRead(),m=$('fxaMsg'),err=t=>{m.className='msg err';m.textContent=t};
   if(!A.name)return err('نام بیمار را بنویسید.');
   const bad=A.imps.find(x=>(x.tRaw||x.b||x.d||x.l||x.dayJ)&&!x.t);if(bad)return err('شماره‌ی دندان «'+(bad.tRaw||'خالی')+'» درست نیست؛ شماره‌ی دو رقمی بین‌المللی بنویسید (مثلاً ۳۶).');
   const bd=A.imps.find(x=>x.dayJ&&!x.day);if(bd)return err('تاریخ «'+bd.dayJ+'» درست نیست؛ مثل ۱۴۰۲/۰۵/۱۰ بنویسید.');
@@ -110,13 +122,25 @@ async function fxArcSave(btn){const A=fxArcRead(),m=$('fxaMsg'),err=t=>{m.classN
     visits:(A.visits||[]).filter(x=>x.day).map(x=>({day:x.day,svc:x.svc,teeth:x.teeth,doc:x.doc,cost:x.cost,paid:x.paid,method:x.method,no:x.no,note:x.note})),imps:A.imps.filter(x=>x.t).map(x=>{const c=(SET.catalog||[]).find(c=>c.b===x.b);return {t:x.t,b:x.b,sys:c?c.sys||'':'',g:c?c.g||'':'',d:x.d,l:x.l,day:x.day,by:x.by}})};
   btn.disabled=true;try{const r=await api('fxArc',{id:A.id||'',arc,by:fxBy()},{timeout:20000});fxClose('fxArcSheet');toast(A.id?'اطلاعات بایگانی ذخیره شد.':'پرونده‌ی کاغذی ثبت شد؛ اسکن پرونده را در «تصاویر» اضافه کنید.');
     FXA=null;try{loadList()}catch(e){}pollQ(true);openFile(r.id,arc.name,A.id?'tl':'img')}catch(e){err(e.message)}finally{btn.disabled=false}}
-function fxArcBar(){const el=$('fxArcBar');if(!el)return;const n=(ARCHIVE||[]).filter(d=>d.arc).length;
-  el.innerHTML=(fxCanFile()?'<button class="btn sm" type="button" id="fxArcNew">+ ورود پرونده‌ی کاغذی</button>':'')+`<button class="chip" type="button" id="fxArcOnly" aria-pressed="${FXARC}">فقط پرونده‌های کاغذی (${fa(n)})</button>`}
 {const _rl=renderList;renderList=function(){try{fxArcBar()}catch(e){}if(!FXARC)return _rl();const all=ARCHIVE;ARCHIVE=all.filter(d=>d.arc);try{return _rl()}finally{ARCHIVE=all}}}
-function fxArcInfo(id,j){const d=j.data||{},a=d.arc;if(!a)return '';const I=(a.imps||[]).map(x=>toothTxt([x.t])+' '+[x.b,x.d&&x.l?x.d+'×'+x.l:'',x.day?jDay(x.day):'',x.by].filter(Boolean).join(' · '));
+/* fxArcInfo — layers: archive/fx1 (older paper files) + archive/arc6 (v6 paper files) + ui/m30 (sub-stage and re-implant months, before the table).
+   h = the box html; the v6 branch has its own h (= d.h) inside its block. */
+function fxArcInfo(id,j){let h=(()=>{const d=j.data||{},a=d.arc;
+  if(a&&a.v6){const h=d.h||{},mo=a6Money0()&&a.cost!=null,can=['staff','consultant','accountant'].includes(ROLE);
+  const L=(a.lines||[]).slice().sort((x,y)=>String(x.day).localeCompare(String(y.day)));
+  return `<div class="fxarcinfo a6info"><b>پرونده‌ی کاغذی (بایگانی)</b>${h.pfile?' · شماره‌ی کاغذی '+esc(faD(h.pfile)):''}${a.day?' · اولین درمان '+esc(jDay(a.day)):''}
+   <table class="fx2vt"><thead><tr><th>تاریخ</th><th>درمان</th><th>دندان / تعداد</th><th>پزشک</th>${mo?'<th>تعرفه</th><th>مبلغ</th>':''}</tr></thead><tbody>${L.map(l=>`<tr><td>${esc(jDay(l.day))}</td><td>${esc(a6Lab(l))}${l.k==='imp'||l.k==='sub'||l.k==='reimp'?arbBr(l,1):''}</td><td>${l.teeth&&l.teeth.length?esc(toothTxt(l.teeth)):fa(l.n)}</td><td>${esc(l.doc||'')}</td>${mo?`<td>${fa(l.price||0)}</td><td>${fa(l.amt||0)}</td>`:''}</tr>`).join('')}</tbody>
+   ${mo?`<tfoot><tr><td colspan="5">هزینه‌ی کل${a.dc||a.dd?' · تخفیف کلینیک '+fa(a.dc)+' / پزشک '+fa(a.dd)+' · پس از تخفیف '+fa(a.net):''}${a.imp?' · تسویه‌ی قبلی طبق پرونده '+fa(a.imp):''}${a.settled?' · حساب تسویه است':''}</td><td>${fa(a.cost)}</td></tr></tfoot>`:''}</table>
+   ${(L.find(l=>l.sut)||{}).sut?'<p>بخیه: '+esc(A6SUT[(L.find(l=>l.sut)||{}).sut]||'')+'</p>':''}${a.other?'<p>درمان‌های دیگر: '+esc(a.other)+'</p>':''}${a.note?'<p>توضیح: '+esc(a.note)+'</p>':''}
+   <small>ثبت ${esc(jt(a.at))}${a.by?' · '+esc(a.by):''}${a.upd?' · ویرایش '+esc(jt(a.upd))+(a.updBy?' · '+esc(a.updBy):''):''}</small>${can?` <button class="btn sm ghost" type="button" data-fxarced="${esc(id)}">ویرایش پرونده‌ی جا مانده</button>`:''}</div>`}
+  if(!a)return '';const I=(a.imps||[]).map(x=>toothTxt([x.t])+' '+[x.b,x.d&&x.l?x.d+'×'+x.l:'',x.day?jDay(x.day):'',x.by].filter(Boolean).join(' · '));
   return `<div class="fxarcinfo"><b>پرونده‌ی کاغذی (بایگانی)</b>${(d.h||{}).file?' · شماره '+esc(faD(d.h.file)):''}${a.day?' · اولین مراجعه '+esc(jDay(a.day)):''}
    ${I.length?'<p>ایمپلنت‌ها: '+esc(I.join(' | '))+'</p>':''}${a.other?'<p>درمان‌های دیگر: '+esc(a.other)+'</p>':''}${a.note?'<p>توضیح: '+esc(a.note)+'</p>':''}${(a.visits||[]).length?(()=>{const mo=['staff','consultant','manager','accountant'].includes(ROLE),V=a.visits;return `<table class="fx2vt"><thead><tr><th>تاریخ</th><th>کار انجام‌شده</th><th>دندان</th><th>پزشک</th>${mo?'<th>هزینه</th><th>پرداختی</th>':''}</tr></thead><tbody>${V.map(v=>`<tr><td>${esc(jDay(v.day))}</td><td>${esc(v.svc||'')}${v.note?' — '+esc(v.note):''}</td><td>${esc(v.teeth||'')}</td><td>${esc(v.doc||'')}</td>${mo?`<td>${v.cost?fa(v.cost):''}</td><td>${v.paid?fa(v.paid)+' ('+esc(FX2M[v.method]||'')+')':''}</td>`:''}</tr>`).join('')}</tbody>${mo?`<tfoot><tr><td colspan="4">جمع · مانده ${fa(V.reduce((s,v)=>s+(v.cost||0)-(v.paid||0),0))}</td><td>${fa(V.reduce((s,v)=>s+(v.cost||0),0))}</td><td>${fa(V.reduce((s,v)=>s+(v.paid||0),0))}</td></tr></tfoot>`:''}</table>`})():''}
-   <small>ثبت ${esc(jt(a.at))}${a.by?' · '+esc(a.by):''}${a.upd?' · ویرایش '+esc(jt(a.upd)):''}</small>${fxCanFile()?` <button class="btn sm ghost" type="button" data-fxarced="${esc(id)}">ویرایش اطلاعات بایگانی</button>`:''}</div>`}
+   <small>ثبت ${esc(jt(a.at))}${a.by?' · '+esc(a.by):''}${a.upd?' · ویرایش '+esc(jt(a.upd)):''}</small>${fxCanFile()?` <button class="btn sm ghost" type="button" data-fxarced="${esc(id)}">ویرایش اطلاعات بایگانی</button>`:''}</div>`})();
+  try{const a=((j||{}).data||{}).arc||{},sb=a.sub,X=[];
+  if(sb&&M29_SUB[sb.k])X.push('مرحله‌ی بعد (فرعی): '+M29_SUB[sb.k]+' — '+jDay(sb.due));
+  (a.lines||[]).forEach(l=>{if(l&&l.k==='ifail'&&l.rm)X.push('فیلد شدن ایمپلنت '+toothTxt(l.teeth||[])+': کاشت مجدد '+fa(l.rm)+' ماه بعد'+(l.rmDue?' ('+jDay(l.rmDue)+')':''))});
+  if(X.length&&typeof h==='string'){const i=h.indexOf('<table');const box=`<div class="m30sub">${X.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`;h=i>=0?h.slice(0,i)+box+h.slice(i):h+box}}catch(e){}return h}
 /* ---- patient file: file number, notes section, path-bar note buttons, archive box ---- */
 {const _rf=renderFile;renderFile=function(){_rf();try{fxAfterFile()}catch(e){console.error('fx1',e)}}}
 function fxAfterFile(){if(!PF||!PF.j)return;const {id,j}=PF,h=(j.data||{}).h||{},B=$('pfBody');if(!B)return;

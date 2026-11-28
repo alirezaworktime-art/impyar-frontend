@@ -3,8 +3,6 @@
 try{L5MENU[1].items.push(['o/outs','دپارتمان‌های برون‌سپاری‌شده']);L5T['o/outs']='دپارتمان‌های برون‌سپاری‌شده'}catch(e){}
 const m27Can=()=>{const me=L2.me||{};return l5Sup()||!!me.recep};
 const m27O=(x,sid)=>{const o=x&&x.data&&x.data.outs&&x.data.outs[sid];return o&&o.st==='out'?o:null};
-{const _b=l6BenchOp;l6BenchOp=async function(b){const r=await _b.apply(this,arguments);try{if(b&&b.dataset.l6b==='more'&&m27Can()){const lid=b.dataset.lid,sid=b.dataset.sid,x=LB.items.find(i=>i.id===lid),s=x&&(x.steps||[]).find(v=>v.id===sid),sh=$('l6MenuSh'),box=sh&&!sh.hidden&&sh.querySelector('.l6mbtn');
-  if(box&&s&&(s.st==='pend'||s.st==='acc')&&!box.querySelector('[data-m27]')){const o=m27O(x,sid);box.insertAdjacentHTML('beforeend',`<button type="button" class="btn ghost" data-m27="${o?'back':'out'}" data-lid="${l6Esc(lid)}" data-sid="${l6Esc(sid)}">${o?'برگشت از برون‌سپاری ('+l6Esc(o.co)+')':'برون‌سپاری دپارتمان'}</button>`)}}}catch(e){}return r}}
 let M27C=[];
 async function m27Out(lid,sid){const x=LB.items.find(i=>i.id===lid),s=x&&(x.steps||[]).find(v=>v.id===sid);if(!s)return;const ms=$('l6MenuSh');if(ms)ms.hidden=true;
   const r=await l2Ask(`برون‌سپاری «${s.dname}» — #${l2No(x.no)} ${x.name}`,[{k:'co',l:'نام شرکت / لابراتوار بیرونی',v:M27C[0]||'',full:1},{k:'note',l:'توضیح (اختیاری)',type:'textarea',full:1}],'ثبت برون‌سپاری');if(!r)return;

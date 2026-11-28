@@ -1,6 +1,8 @@
 /* ---------- start / restart an order ---------- */
-async function l2StartOpen(lid){const x=LB.items.find(i=>i.id===lid)||(L2.ord&&L2.ord.order&&L2.ord.order.id===lid?Object.assign({},L2.ord.order,{steps:L2.ord.steps}):null);if(!x)return;
-  let D;try{D=await l2Defs()}catch(e){alertMsg(e.message);return}const d=x.data||{},steps=x.steps||[],redo=steps.length>0;
+/* l2StartOpen: base + lab4 (resin process preselected) + lab6 (multi-part order) + lab7 (part names on the redo chips) + lab8 (box select) + m36 (first step assigned to a person) */
+async function l2StartOpen(lid){const x4=LB.items.find(i=>i.id===lid)||(L2.ord&&L2.ord.order&&L2.ord.order.id===lid?L2.ord.order:null);
+  open:{const x=LB.items.find(i=>i.id===lid)||(L2.ord&&L2.ord.order&&L2.ord.order.id===lid?Object.assign({},L2.ord.order,{steps:L2.ord.steps}):null);if(!x)break open;
+  let D;try{D=await l2Defs()}catch(e){alertMsg(e.message);break open}const d=x.data||{},steps=x.steps||[],redo=steps.length>0;
   const W=D.wts.filter(w=>w.active),P=D.procs.filter(p=>p.active),S=D.staff.filter(s=>s.active||s.designer),key='l2wt:'+(d.for||'');let lastW='';try{lastW=localStorage.getItem(key)||''}catch(e){}
   const wt0=d.wtid||Number(lastW)||'',firstD=steps.find(s=>/طراح/.test(s.dname));
   const sh=mkSheet('l2StSh',`<h3>${redo?'شروع اصلاح':'دریافت و شروع کار'} — ${esc(x.name)} <span class="meta">#${l2No(x.no)}</span></h3>
@@ -20,6 +22,40 @@ async function l2StartOpen(lid){const x=LB.items.find(i=>i.id===lid)||(L2.ord&&L
   $('l2StNo').onclick=()=>sh.hidden=true;
   $('l2StOk').onclick=async()=>{const B=$('l2StOk');B.disabled=true;try{const wt=$('l2wt').value;await api('labStart',{lid,wt,proc:$('l2proc').value,from:from>=0?from:'',designer:$('l2des').value,box:toEn($('l2box').value.trim()),note:$('l2note').value.trim(),prio:$('l2prio').checked?'urgent':''});
       try{if(wt)localStorage.setItem(key,wt)}catch(e){}sh.hidden=true;toast('کار شروع شد؛ مراحل در میز کار دپارتمان‌ها آمد.');await pollLab(true);if(L2.ord&&L2.ord.order)l2Load(lid,true)}catch(e){$('l2StM').className='msg err';$('l2StM').textContent=e.message}finally{B.disabled=false}}}
+  try{const w=$('l2wt'),sh=$('l2StSh');if(x4&&l4F(x4)==='tryin'&&w&&!(x4.data||{}).wtid&&sh&&!sh.hidden&&w.querySelector(`option[value="${L4RS}"]`)){w.value=String(L4RS);if(w.onchange)w.onchange()}}catch(e){}
+  part:try{const sh=$('l2StSh');if(!sh||sh.hidden||sh.querySelector('#l6mp'))break part;
+  const x=LB.items.find(i=>i.id===lid)||(L2.ord&&L2.ord.order&&L2.ord.order.id===lid?L2.ord.order:null);if(!x)break part;const steps=x.steps||(L2.ord&&L2.ord.order&&L2.ord.order.id===lid?L2.ord.steps:[])||[];if(steps.length&&$('l2From'))break part;
+  const D=await l2Defs(),d=x.data||{},T=(d.teeth||[]).filter(l6IsT),U=T.filter(k=>k[0]==='U'),Lw=T.filter(k=>k[0]==='L');
+  const st={on:false,parts:U.length&&Lw.length?[{label:'فک بالا',teeth:U,wt:d.wtid||'',proc:''},{label:'فک پایین',teeth:Lw,wt:d.wtid||'',proc:''}]:[{label:'بخش ۱',teeth:T,wt:d.wtid||'',proc:''},{label:'بخش ۲',teeth:[],wt:'',proc:''}]};
+  const W=D.wts.filter(w=>w.active),P=D.procs.filter(p=>p.active);
+  const draw=()=>{const b=$('l6mpB');if(!b)return;b.hidden=!st.on;b.innerHTML=st.parts.map((p,i)=>`<div class="l6part" data-pi="${i}"><div class="row1"><input class="l6pl" data-pf="label" value="${l6Esc(p.label)}" aria-label="نام بخش">${st.parts.length>2?`<button type="button" class="btn sm ghost" data-pdel="${i}">حذف بخش</button>`:''}</div>
+      <div class="chips">${T.map(k=>`<button type="button" class="chip" data-pt="${k}" aria-pressed="${p.teeth.includes(k)}">${l6Fdi(k)}</button>`).join('')||'<small class="meta">دندانی در سفارش نیست</small>'}</div>
+      <div class="fields"><label class="f">نوع کار<select data-pf="wt"><option value="">— انتخاب —</option>${W.map(w=>`<option value="${w.id}"${String(w.id)===String(p.wt)?' selected':''}>${l6Esc(w.name)}</option>`).join('')}</select></label>
+      <label class="f">پروسه<select data-pf="proc"><option value="">— پروسه‌ی خود نوع کار —</option>${P.map(q=>`<option value="${q.id}"${String(q.id)===String(p.proc)?' selected':''}>${l6Esc(q.name)}</option>`).join('')}</select></label></div></div>`).join('')+`<button type="button" class="btn sm ghost" id="l6mpAdd">＋ بخش دیگر</button>`};
+  const box=document.createElement('div');box.className='grp l6mp';box.id='l6mp';box.innerHTML=`<label class="chk"><input type="checkbox" id="l6mpOn"> سفارش چندبخشی (فک بالا / فک پایین / گروه دندان — هر بخش پروسه‌ی خودش)</label><div id="l6mpB" hidden></div>`;
+  const f=sh.querySelector('#l2StF');(f||sh.querySelector('.fields')).insertAdjacentElement('beforebegin',box);draw();
+  $('l6mpOn').onchange=e=>{st.on=e.target.checked;if(f)f.hidden=st.on;draw()};
+  box.addEventListener('click',e=>{const t=e.target.closest('[data-pt],[data-pdel],#l6mpAdd');if(!t)return;if(t.id==='l6mpAdd'){st.parts.push({label:'بخش '+fa(st.parts.length+1),teeth:[],wt:'',proc:''});draw();return}
+    if(t.dataset.pdel){st.parts.splice(Number(t.dataset.pdel),1);draw();return}const i=Number(t.closest('[data-pi]').dataset.pi),k=t.dataset.pt;st.parts.forEach((p,j)=>{if(j!==i)p.teeth=p.teeth.filter(v=>v!==k)});const p=st.parts[i];p.teeth=p.teeth.includes(k)?p.teeth.filter(v=>v!==k):p.teeth.concat(k);draw()});
+  box.addEventListener('input',e=>{const t=e.target.closest('[data-pf]');if(!t)return;st.parts[Number(t.closest('[data-pi]').dataset.pi)][t.dataset.pf]=t.value});box.addEventListener('change',e=>{const t=e.target.closest('[data-pf]');if(!t)return;st.parts[Number(t.closest('[data-pi]').dataset.pi)][t.dataset.pf]=t.value});
+  const ok=$('l2StOk'),orig=ok.onclick;ok.onclick=async function(){if(!st.on)return orig.apply(this,arguments);ok.disabled=true;const m=$('l2StM');
+    try{await api('labStart',{lid,parts:st.parts.map(p=>({label:p.label,teeth:p.teeth,wt:p.wt,proc:p.proc})),box:toEn(($('l2box')||{}).value||'').trim(),note:(($('l2note')||{}).value||'').trim(),prio:$('l2prio')&&$('l2prio').checked?'urgent':''});sh.hidden=true;l6Done('کار چندبخشی شروع شد؛ هر بخش در میز کار جدا پیش می‌رود.')}
+    catch(e){if(m){m.className='msg err';m.textContent=e.message}ok.disabled=false}}}catch(e){}
+  chips:try{const sh=$('l2StSh'),c=sh&&sh.querySelector('#l2From');if(!c)break chips;const o=(L2.ord&&L2.ord.order&&L2.ord.order.id===lid)?L2.ord:null,x=LB.items.find(i=>i.id===lid),steps=(x&&x.steps)||(o&&o.steps)||[],P=(((x||o&&o.order)||{}).data||{}).parts||[];
+  if(!P.length)break chips;c.querySelectorAll('[data-from]').forEach(b=>{const s=steps.find(v=>String(v.idx)===b.dataset.from),p=s&&P.find(q=>q.p===s.part);if(p)b.insertAdjacentHTML('afterbegin',`<small class="l6pt">${esc(p.label)}</small> `)})}catch(e){}
+  try{const i=$('l2box');if(i&&i.tagName==='INPUT'){await l5Boot(true).catch(()=>{});const s=document.createElement('select');s.id='l2box';s.setAttribute('aria-label','شماره جعبه');s.innerHTML=l8BoxOpts(i.value);if(!s.value&&i.value)s.insertAdjacentHTML('beforeend',`<option value="${esc(i.value)}" selected>${esc(fa(i.value))}</option>`);i.replaceWith(s)}}catch(e){}
+  try { const sh = $('l2StSh'); if (!sh || sh.hidden || sh.querySelector('#m36asg') || sh.querySelector('#l2From')) return;
+    const x = (LB.items || []).find(i => i.id === lid) || (L2.ord && L2.ord.order && L2.ord.order.id === lid ? L2.ord.order : null), d = (x && x.data) || {}, D = await l2Defs(), wt = $('l2wt'), pr = $('l2proc');
+    if (wt && !wt.value && !d.wtid && M36.stwt[d.for] && [...wt.options].some(o => o.value === String(M36.stwt[d.for]))) { wt.value = String(M36.stwt[d.for]); wt.dispatchEvent(new Event('change', { bubbles: true })) }
+    const F = sh.querySelector('.fields:last-of-type') || sh.querySelector('.fields'); if (!F) return;
+    F.insertAdjacentHTML('beforebegin', '<div class="fields" id="m36asgF"><label class="f full">مرحله‌ی اول به چه کسی ارجاع شود؟<select id="m36asg"></select><small class="note" id="m36asgN"></small></label></div>');
+    const fill = () => { const s = $('m36asg'); if (!s) return; const w = D.wts.find(v => String(v.id) === (wt ? wt.value : '')), p = D.procs.find(v => String(v.id) === ((pr && pr.value) || String((w && w.proc) || ''))), d0 = p && p.steps.length ? D.depts.find(z => z.id === p.steps[0].d) : null, keep = s.value;
+      if (!d0) { s.innerHTML = '<option value="">— اول نوع کار را انتخاب کنید —</option>'; $('m36asgN').textContent = ''; return }
+      const o = m36StaffOpts(D, d0.id); s.innerHTML = (o.A.length === 1 ? '' : '<option value="">— انتخاب کنید —</option>') + o.opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('') + (o.A.length === 1 ? '<option value="">بعداً در میز کار</option>' : '');
+      if (keep && [...s.options].some(q => q.value === keep)) s.value = keep; else if (o.A.length === 1) s.value = o.A[0].id;
+      $('m36asgN').textContent = 'مرحله‌ی اول: «' + d0.name + '»' + (o.A.length === 1 ? ' — تنها کارمند این دپارتمان خودکار انتخاب شد.' : o.opts.length ? '' : ' — هنوز کارمند فعالی تعریف نشده.'); s.dataset.need = o.A.length > 1 ? '1' : '' };
+    fill(); if (wt) wt.addEventListener('change', fill); if (pr) pr.addEventListener('change', fill);
+    const ok = $('l2StOk'), old = ok && ok.onclick; if (ok && old) ok.onclick = function (ev) { const s = $('m36asg'); if (s && s.dataset.need && !s.value && !s.closest('[hidden]')) { const m = $('l2StM'); if (m) { m.className = 'msg err'; m.textContent = 'انجام‌دهنده‌ی مرحله‌ی اول را انتخاب کنید.' } return } return old.call(this, ev) } } catch (e) { console.error('m36 start', e) }}
 async function l2StepAct(b){const lid=b.dataset.lid,sid=b.dataset.sid,op=b.dataset.l2step;const x=LB.items.find(i=>i.id===lid)||(L2.ord&&L2.ord.order&&Object.assign({},L2.ord.order,{steps:L2.ord.steps}));const s=x&&(x.steps||[]).find(v=>v.id===sid);if(!s)return;
   const p={lid,sid,op};
   if(op==='done'){const r=await l2Ask('تکمیل «'+s.dname+'» — #'+l2No(x.no),[{k:'text',l:'یادداشت (اختیاری)',type:'textarea',full:1}],'تکمیل');if(!r)return;p.text=r.text}

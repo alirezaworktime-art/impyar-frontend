@@ -74,7 +74,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('button,a')
 });
 function pyRead(){const g=id=>($(id)||{}).value;['amount','note','due','no','bank','repl'].forEach(k=>{const v=g('py_'+k);if(v!==undefined)PYF[k]=v})}
 function pyDueHint(){const v=$('py_due').value.trim(),iso=parseJ(v),h=$('py_dueH');h.className='dhint'+(v&&!iso?' bad':'');h.textContent=v?(iso?dayHint(iso):'تاریخ را به شکل ۱۴۰۵/۰۹/۱۵ بنویسید.'):''}
-async function pyAdd(t){pyRead();const m=$('pyMsg'),amount=num(PYF.amount);if(!amount){m.className='msg err';m.textContent='مبلغ را وارد کنید.';return}
+/* pyAdd: base + fix7d M7 (the payments tab checks the amount itself too; the form may be redrawn between typing and the click) */
+async function pyAdd(t){const i=$('py_amount');if(i&&fx7IsBad(i)){fx7Mark(i,true);const m=$('pyMsg');if(m){m.className='msg err';m.textContent=FX7_AMT_MSG}return}
+  pyRead();const m=$('pyMsg'),amount=num(PYF.amount);if(!amount){m.className='msg err';m.textContent='مبلغ را وارد کنید.';return}
   const due=PYF.kind==='chq'?parseJ(PYF.due||''):'';if(PYF.kind==='chq'&&!due){m.className='msg err';m.textContent='تاریخ سررسید چک را درست وارد کنید.';return}
   if(PYF.kind==='card'&&!PYF.pos){m.className='msg err';m.textContent='کارتخوان (یا کارت‌به‌کارت) را انتخاب کنید.';return}if(PYF.kind==='card'&&PYF.pos==='xfer'&&!PYF.acct){m.className='msg err';m.textContent='حساب مقصد کارت‌به‌کارت را انتخاب کنید.';return}if(PYF.kind==='chq'&&(!PYF.ctype||!PYF.payee)){m.className='msg err';m.textContent='نوع چک (صیادی / دیجیتال) و «در وجه» را انتخاب کنید.';return}
   t.disabled=true;if(!t.dataset.sid)t.dataset.sid=uuid();

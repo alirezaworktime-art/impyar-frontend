@@ -9,8 +9,6 @@ const comp=(l,t)=>(A6&&A6.lines||[]).find(x=>x!==l&&x.k==='imp'&&same(x,l)&&!(+x
 /* teeth of row l that are the second fixture of a failed tooth in another row */
 const twins=l=>(l.teeth||[]).filter(t=>!(((l.imp||{})[t]||{}).f)&&(A6.lines||[]).some(x=>x!==l&&x.k==='imp'&&same(x,l)&&(((x.imp||{})[t]||{}).f)));
 {const _o=arbOpen;arbOpen=function(l,t){const r=_o.apply(this,arguments);try{if(ARB.p&&l&&l.k==='imp'){ARB.p.m44=!!(m3F(l,t)&&comp(l,t));ARB.p.m44l=1;arbDraw()}}catch(e){console.error('m44b open',e)}return r}}
-{const _d=arbDraw;arbDraw=function(){const r=_d.apply(this,arguments);try{const s=$('arbSh'),P=ARB.p;if(s&&P&&P.m44l&&!s.querySelector('#m44bRow')){const m=s.querySelector('#arbMsg');
-    if(m)m.insertAdjacentHTML('beforebegin',`<div class="arbg m44brow" id="m44bRow"${P.f?'':' hidden'}><span>بعد از فیل، روی همین دندان دوباره کاشته شد؟</span><div class="chips"><button type="button" class="chip" data-m44b="0" aria-pressed="${!P.m44}">نه</button><button type="button" class="chip" data-m44b="1" aria-pressed="${!!P.m44}">بله، فیکسچر دوم کاشته شد</button></div><small class="note">با «ثبت»، پنجره‌ی برند و سایز فیکسچر دوم باز می‌شود؛ فیکسچر دوم ردیف جدا با تعرفه‌ی خودش می‌شود.</small></div>`)}}catch(e){}return r}}
 const pick=e=>{const b=e.target&&e.target.closest&&e.target.closest('[data-m44b],[data-m3f]');if(!b||!ARB.p)return false;
   if(b.dataset.m3f!==undefined){const w=$('m44bRow');if(w)w.hidden=b.dataset.m3f!=='1';return false}
   e.preventDefault();ARB.p.m44=b.dataset.m44b==='1';b.closest('.chips').querySelectorAll('[data-m44b]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));return true};

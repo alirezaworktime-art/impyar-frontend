@@ -46,12 +46,14 @@ function rxDoc(name,items){const ph=SET.phone?esc(faD(SET.phone)):'',d=todayJ();
   <div class="hd"><div><b>${esc(SET.clinic||'')}</b><br><small>${esc(SET.doctor||'')}</small></div><div><small>تاریخ: ${esc(d)}</small><br><small>بیمار: <b>${esc(name)}</b></small></div></div>
   ${items.map(x=>`<h2>${x.kind==='rx'?'℞ ':''}${esc(x.title)}</h2><${x.kind==='rx'?'ol class="rx"':'ul'}>${String(x.text||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</${x.kind==='rx'?'ol':'ul'}>`).join('')}
   ${items.some(x=>x.kind==='rx')?'<div class="sg">مهر و امضای پزشک</div>':''}<div class="ft"><span>${ph?'تلفن کلینیک: '+ph:''}</span><span>در صورت خونریزی شدید، تب یا تورم رو به افزایش تماس بگیرید.</span></div></body></html>`}
+/* rxOpen — p5 base + archive/ui.js (reception: after printing from the discharge list, refresh so the row turns green) */
 async function rxOpen(pid,name){const s=mkSheet('rxSheet',`<h3>دستور بعد از جراحی و نسخه · ${esc(name||'')}</h3><div id="rxPick"><div class="empty">در حال بارگذاری…</div></div><div class="msg" id="rxMsg"></div>
   <div class="btns" style="flex-wrap:wrap"><button class="btn" type="button" id="rxGo">ثبت در پرونده و چاپ</button><button class="btn ghost" type="button" id="rxClose">بستن</button></div>`);s.hidden=false;RX.give={pid,name};
   try{const j=await api('rxGet');RX.tpl=j.tpl;const T=j.tpl;
     $('rxPick').innerHTML=(T.approved?'':'<div class="msg err">پزشک هنوز قالب‌ها را تأیید نکرده؛ از پزشک بخواهید یک بار بخش «نسخه‌ها» را بازبینی و ذخیره کند.</div>')+
       (T.items||[]).map(x=>`<label class="agree rxp"><input type="checkbox" data-rxpick="${esc(x.id)}"${T.approved&&(x.kind==='rx'||/ایمپلنت/.test(x.title))?' checked':''}${T.approved?'':' disabled'}> <span><b>${esc(x.title)}</b> <small class="note">${esc(rxKL[x.kind])}</small></span></label>`).join('');
-    $('rxGo').disabled=!T.approved}catch(e){$('rxPick').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+    $('rxGo').disabled=!T.approved}catch(e){$('rxPick').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+  if(ROLE==='staff'){const g=$('rxGo');if(g)g.addEventListener('click',()=>setTimeout(()=>pollQ(true),1500))}}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.id==='tabRx'){if(dirty&&!$('viewForm').hidden){alertMsg('اول فرم را ذخیره کنید.');return}show('rx');return}
   if(t.id==='rxAdd'){RX.edit.push({id:'',kind:'post',title:'',text:''});renderRx();return}
@@ -66,7 +68,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.datase
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.rxf==='kind'&&RX.edit){const x=RX.edit[+t.dataset.rxi];if(x){x.kind=t.value;renderRx()}}});
 
 /* -- win-back: patients who drifted away -- */
-const WB={items:[],k:'all'};
+const WB={items:[],k:'all',n:300,q:''};
 const WBK={lost:['تصمیم نگرفت یا انصراف','wait'],nosurg:['طرح را پذیرفت، جراحی نشد','surg'],recall:['چکاپ دوره‌ای عقب افتاده','rev'],pros:['پروتز نیمه‌کاره مانده','mod']};
 function wbMsg(x){const n=x.name||'',c=SET.clinic||'کلینیک',p=SET.phone?' '+faD(SET.phone):'';
   return x.kind==='lost'?`سلام ${n} عزیز، از ${c} پیام می‌دهیم. اگر هنوز درباره‌ی درمان ایمپلنت سؤال یا نگرانی دارید، خوشحال می‌شویم دوباره در خدمتتان باشیم.${p}`
@@ -74,7 +76,8 @@ function wbMsg(x){const n=x.name||'',c=SET.clinic||'کلینیک',p=SET.phone?' 
     :x.kind==='recall'?`سلام ${n} عزیز، زمان چکاپ دوره‌ای ایمپلنت‌های شما در ${c} رسیده است. برای گرفتن نوبت با ما تماس بگیرید.${p}`
     :`سلام ${n} عزیز، برای ادامه‌ی مرحله‌ی پروتز ایمپلنت‌ها در ${c} منتظر شما هستیم. برای گرفتن نوبت با ما تماس بگیرید.${p}`}
 async function loadWb(){try{const j=await api('winback');WB.items=j.items||[];renderWb()}catch(e){$('wbList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
-function renderWb(){const A=WB.items,cnt={};A.forEach(x=>cnt[x.kind]=(cnt[x.kind]||0)+1);
+/* renderWb: base (p5 win-back list, now the inner wbDraw) + m18 (3) (search box + page-by-page «نمایش بیشتر») */
+function renderWb(){function wbDraw(){const A=WB.items,cnt={};A.forEach(x=>cnt[x.kind]=(cnt[x.kind]||0)+1);
   $('wbF').innerHTML=[['all','همه',A.length],...Object.keys(WBK).map(k=>[k,WBK[k][0],cnt[k]||0])].map(([k,l,n])=>`<button type="button" class="chip" data-wbk="${k}" aria-pressed="${WB.k===k}">${esc(l)} <b>${fa(n)}</b></button>`).join('');
   const V=WB.k==='all'?A:A.filter(x=>x.kind===WB.k);
   $('wbList').innerHTML=V.length?V.slice(0,300).map((x,i)=>{const tx=wbMsg(x),wa=x.phone?waLink(x.phone,tx):'',sm=x.phone?smsLink(x.phone,tx):'';
@@ -82,6 +85,14 @@ function renderWb(){const A=WB.items,cnt={};A.forEach(x=>cnt[x.kind]=(cnt[x.kind
       <div class="meta">${x.phone?esc(faD(x.phone))+' · ':''}${x.since?'از '+esc(x.since.length>10?jd(x.since):jDay(x.since)):''}${x.info?' · '+esc(x.kind==='pros'?(PSTN[x.info]||x.info):x.info):''}</div></div>
       <div class="acts">${x.phone?`<a class="btn sm" href="tel:${esc(String(x.phone).replace(/[^\d+]/g,''))}">تماس</a>`:''}${wa?`<a class="btn sm ghost" target="_blank" rel="noopener" href="${esc(wa)}">واتس‌اپ</a>`:''}${sm?`<a class="btn sm ghost" href="${esc(sm)}">پیامک</a>`:''}
       <button class="btn sm ghost" type="button" data-wbfile="${esc(x.id)}" data-wbn="${esc(x.name)}">پرونده</button><button class="btn sm ghost" type="button" data-wbsn="${esc(x.id)}" data-wbkind="${x.kind}" data-days="30">یک ماه بعد</button><button class="btn sm ghost" type="button" data-wbsn="${esc(x.id)}" data-wbkind="${x.kind}" data-days="3650">دیگر پیگیری نشود</button></div></div></div>`}).join('')+(V.length>300?`<p class="note">${fa(V.length-300)} مورد دیگر هم هست.</p>`:''):'<div class="empty">موردی نیست.</div>'}
+  const all = WB.items; try { let q = $('wbQ'); if (!q) { $('wbList').insertAdjacentHTML('beforebegin', '<input id="wbQ" type="search" placeholder="جستجوی نام یا موبایل" autocomplete="off">'); q = $('wbQ'); q.addEventListener('input', () => { WB.q = q.value.trim(); WB.n = 300; renderWb() }) }
+      const k = toEn(WB.q || '').replace(/\s+/g, ''), V0 = WB.q ? all.filter(x => String(x.name || '').includes(WB.q) || (k && toEn(String(x.phone || '')).includes(k))) : all, V = WB.k === 'all' ? V0 : V0.filter(x => x.kind === WB.k);
+      if (V.length <= 300) { WB.items = V0; wbDraw(); WB.items = all; return }
+      /* long list: draw it page by page with the original card of each row */
+      const cut = V.slice(0, WB.n); WB.items = cut; const k0 = WB.k; WB.k = 'all'; wbDraw(); WB.k = k0; WB.items = V0; const cnt = {}; V0.forEach(x => cnt[x.kind] = (cnt[x.kind] || 0) + 1);
+      $('wbF').innerHTML = [['all', 'همه', V0.length], ...Object.keys(WBK).map(z => [z, WBK[z][0], cnt[z] || 0])].map(([z, l, n]) => `<button type="button" class="chip" data-wbk="${z}" aria-pressed="${WB.k === z}">${esc(l)} <b>${fa(n)}</b></button>`).join('');
+      WB.items = all; if (V.length > WB.n) $('wbList').insertAdjacentHTML('beforeend', `<div class="btns"><button class="btn ghost" type="button" id="wbMore">نمایش ${fa(Math.min(300, V.length - WB.n))} مورد بعدی (از ${fa(V.length - WB.n)} مورد مانده)</button></div>`) }
+    catch (e) { WB.items = all; wbDraw() } }
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.id==='tabWb'){if(dirty&&!$('viewForm').hidden){alertMsg('اول فرم را ذخیره کنید.');return}show('wb');return}
   if(t.dataset.wbk){WB.k=t.dataset.wbk;renderWb();return}
@@ -135,7 +146,9 @@ const EXPC=[['salary','حقوق و دستمزد'],['rent','اجاره'],['supply
 const PAYM={cash:'نقد',card:'کارت',bank:'واریز بانکی',chq:'چک'};
 const ACC={day:'',from:'',to:''};
 function accInit(){if(!$('ac_day').value)$('ac_day').value=todayJ();if(!$('ae_day').value)$('ae_day').value=todayJ();$('ae_cat').innerHTML=EXPC.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');loadCash();loadAccRep()}
-async function loadCash(){const day=parseJ($('ac_day').value.trim())||tDay();
+/* loadCash — p5 base + ui/ux8 (UX8.cashDay = the day whose totals are on screen; the cash close checks it; ux8 is a later script, so any error here is ignored) */
+async function loadCash(){try{const v=$('ac_day').value.trim();UX8.cashDay=v?parseJ(v):tDay()}catch(e){}
+  const day=parseJ($('ac_day').value.trim())||tDay();
   try{await ensurePos();const j=await api('cashDay',{day}),c=j.closed;ACC.cash=j;
     $('acBox').innerHTML=`<div class="kpis"><div class="kpi"><b>${fa(j.cashIn)}</b><span>دریافت نقدی</span></div><div class="kpi"><b>${fa(j.cardIn)}</b><span>کارتخوان</span></div><div class="kpi"><b>${fa(j.chqSum)}</b><span>${fa(j.chqN)} چک دریافتی</span></div><div class="kpi"><b>${fa(j.cashOut)}</b><span>هزینه‌ی نقدی</span></div></div>
       ${posBreak(j.pays)}<div class="diffbox" style="margin-top:10px">نقد مورد انتظار در صندوق: <b>${money(j.expected)}</b>${c?`<br>صندوق بسته شد: شمرده‌شده <b>${money(c.counted)}</b> · ${c.diff===0?'<b>بدون اختلاف</b>':c.diff>0?'<b>'+money(c.diff)+' بیشتر</b>':'<b class="late">'+money(-c.diff)+' کمتر</b>'} · ${esc(c.by||'')} ${esc(jt(c.at))}${c.note?' · «'+esc(c.note)+'»':''}`:''}</div>

@@ -34,7 +34,7 @@ function m50Mount() { const f = $('stForm'); if (!f || !ST || !(ST.d > 0)) retur
     <p class="note" id="m50Sum"></p></div>`;
   if (!M50.bank) M50.bank = ($('m50Bank') || {}).value || ''; m50Draw(); try { m48Hint($('m50Cash')) } catch (e) { }
   ensurePos().then(() => { if (M50 && $('m50Pos')) $('m50Pos').innerHTML = posChips('m50pos', M50.via, { cash: 1 }) }).catch(() => { }) }
-{ const _o = openDone; openDone = function (rec, sg, settle) { M50 = null; const r = _o.apply(this, arguments); try { if (settle && ROLE === 'staff' && ST && ST.d > 0) m50Mount() } catch (e) { console.error('m50a settle', e) } return r } }
+/* (openDone: M50 reset + m50Mount merged into surgery/surgery-day.js) */
 window.addEventListener('click', e => { const t = e.target.closest && e.target.closest('button'); if (!t || !M50 || !$('m50F')) return; const d = t.dataset;
   if (d.m50pos !== undefined) { M50.via = posPick(t, 'm50pos'); fin1Show('m50acct', M50.via === 'xfer'); return }
   if (d.m50acct !== undefined) { M50.acct = fin1Pick(t, 'm50acct'); return }

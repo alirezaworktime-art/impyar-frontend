@@ -8,8 +8,7 @@
 try { const i = M11_NB.indexOf('ko'); if (i >= 0) M11_NB.splice(i, 1) } catch (e) { }
 const M57_AT = 'برای All on X فقط برند ایتالیایی یا کره‌ای';
 const m57Tit = root => { try { (root || document).querySelectorAll('.m11off').forEach(b => { if (b.title) b.title = M57_AT }) } catch (e) { } };
-{ const _b = m11Brands; m11Brands = function () { const r = _b.apply(this, arguments); m57Tit($('brandTotals')); return r } }
-{ const _b = pl10BrandSheet; pl10BrandSheet = function () { const r = _b.apply(this, arguments); m57Tit($('pl10BrSh')); return r } }
+/* m57Tit runs at the end of m11Brands (layer.js) and pl10BrandSheet (pl10) */
 /* (2) */
 const M57 = { think: false, sms: null, tabs: [] };
 async function m57SmsNo(force) { if (M57.sms !== null && !force) return M57.sms; try { const j = await api('m57Sms', { op: 'get' }, { prio: 'bg', timeout: 10000 }); M57.sms = String(j.v || '') } catch (e) { if (M57.sms === null) M57.sms = '' } return M57.sms }
@@ -17,8 +16,9 @@ function m57Units(R) { try { return M11_UX.reduce((a, k) => a + (R && R.s && R.s
 function m57Block(R, no) { const nm = String((R && R.h && R.h.name) || '').trim(), n = m57Units(R);
   const txt = `${nm} مایل به درمان ${n ? fa(n) + ' واحد ایمپلنت ' : ''}در یزد می‌باشم.`;
   return textBlock('برای شروع درمان', [no ? `هر وقت تصمیم به انجام درمان گرفتید، متن زیر را به شماره‌ی ${faD(no)} پیامک کنید:` : 'هر وقت تصمیم به انجام درمان گرفتید، متن زیر را برای کلینیک پیامک کنید:', '«' + txt + '»']) }
-{ const _s = sendUndecided; sendUndecided = async function () { M57.think = !(UN && UN.mode === 'lost'); try { if (M57.think) await m57SmsNo(true) } catch (e) { } try { return await _s.apply(this, arguments) } finally { M57.think = false } } }
-{ const _b = buildPDF; buildPDF = async function (r) { let pb = []; try { if (M57.think && r && r.h) pb = [m57Block(r, M57.sms || '')] } catch (e) { } window.M57PB = pb; try { return await _b.apply(this, arguments) } finally { window.M57PB = null } } }
+/* sendUndecided sets M57.think (and loads the number) in its single definition (consultant/consultant-undecided-plans-cheques-due.js), from here on */
+var M57_SU = 1;
+/* buildPDF: the SMS block (window.M57PB) is now part of the single definition in pdf/built-pdf-writer-a4-pages.js */
 /* settings: the number (manager) */
 function m57SetMount() { const p = $('set_phone'); if (!p || $('m57sms')) return; const l = p.closest('label'); (l || p).insertAdjacentHTML('afterend', '<label class="f">شماره‌ی پیامک برای اعلام آمادگی درمان (در PDF بیمارِ «می‌خواهد فکر کند»)<input id="m57sms" inputmode="numeric" class="ltr" placeholder="09xxxxxxxxx" maxlength="15"></label>') }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('#tabSet'); if (!t) return; setTimeout(async () => { try { m57SetMount(); const i = $('m57sms'); if (!i) return; i.dataset.v = await m57SmsNo(true); i.value = i.dataset.v } catch (x) { } }, 50) });
@@ -36,7 +36,7 @@ function m57Add() { if (ROLE !== 'consultant' || !F || !F.id) return; m57Load();
   if (i >= 0) M57.tabs[i].name = nm || M57.tabs[i].name; else { M57.tabs.push({ id: F.id, name: nm }); if (M57.tabs.length > M57_MAX) { const j = M57.tabs.findIndex(t => t.id !== F.id); M57.tabs.splice(j, 1) } } m57Keep() }
 function m57Drop(id) { m57Load(); M57.tabs = M57.tabs.filter(t => t.id !== id); m57Keep() }
 { const _o = openForm; openForm = function () { try { if (ROLE === 'consultant' && F && F.id && dirty) ldSave() } catch (e) { } const r = _o.apply(this, arguments); try { m57Add(); m57Bar() } catch (e) { } return r } }
-{ const _l = leaveForm; leaveForm = function () { const id = F && F.id; const r = _l.apply(this, arguments); try { if (id) { m57Drop(id); m57Bar() } } catch (e) { } return r } }
+/* leaveForm: closing the patient's tab is now part of the single definition in pdf/background-send-queue-doctor-never.js */
 { const _s = show; show = function (v) { try { if (ROLE === 'consultant' && v !== 'form' && F && F.id && dirty && !$('viewForm').hidden) ldSave() } catch (e) { } const r = _s.apply(this, arguments); try { m57Load(); m57Bar() } catch (e) { } return r } }
 async function m57Open(id) { if (F && F.id === id && !$('viewForm').hidden) return; try { if (F && F.id && dirty) ldSave() } catch (e) { }
   const x = (typeof QITEMS !== 'undefined' ? QITEMS : []).find(v => v.id === id);

@@ -4,7 +4,9 @@ function show(v){try{if(v!=='surg')sgDraftSave()}catch(e){}try{showExtra(v)}catc
   $('tabQueue').setAttribute('aria-current',v==='queue');$('tabRecep').setAttribute('aria-current',v==='recep');
   $('tabList').setAttribute('aria-current',v==='list');$('tabNew').setAttribute('aria-current',v==='form'&&!F.id);
   if(v==='queue'||v==='recep')renderQ();window.scrollTo(0,0)}
-function openForm(r){F=r;CUR=1;dirty=false;PK.undo=null;renderForm();show('form');loadPhoto()}
+/* openForm layers merged here: ux5 (compact form reset), base, fix6b (stale-save bar). Later layers (q5, consultant/layer, m57a)
+   stay wrappers in their files: boot.js can open the form at load time before those scripts run. */
+function openForm(r){UXCF.all=false;F=r;CUR=1;dirty=false;PK.undo=null;renderForm();show('form');loadPhoto();try{fx6bBar()}catch(e){}}
 /* consultant adds a patient photo (shown on the surgery-day page) */
 function loadPhoto(){const card=$('photoCard'),img=$('fPhoto');card.hidden=!(ROLE==='consultant'&&CF_ON&&F.id);img.hidden=true;img.removeAttribute('src');$('photoDel').hidden=true;$('photoMsg').textContent='';
   if(card.hidden)return;const id=F.id;api('get',{id},{prio:'bg'}).then(j=>{if(F.id===id&&j.photo){img.src=j.photo;img.hidden=false;$('photoDel').hidden=false}}).catch(()=>{})}
@@ -13,9 +15,12 @@ function shrinkPhoto(file){return new Promise((ok,no)=>{const u=URL.createObject
 document.addEventListener('change',async e=>{if(e.target.id!=='photoIn')return;const f=e.target.files[0];e.target.value='';if(!f||!F.id)return;const m=$('photoMsg');m.className='msg';m.textContent='در حال ذخیره‌ی عکس…';
   try{const d=await shrinkPhoto(f);await api('setPhoto',{id:F.id,photo:d},{timeout:20000});$('fPhoto').src=d;$('fPhoto').hidden=false;$('photoDel').hidden=false;m.className='msg ok';m.textContent='عکس ذخیره شد.'}catch(err){m.className='msg err';m.textContent=err.message}});
 document.addEventListener('click',async e=>{if(e.target.id!=='photoDel')return;const m=$('photoMsg');try{await api('setPhoto',{id:F.id,photo:''});$('fPhoto').hidden=true;$('photoDel').hidden=true;m.className='msg ok';m.textContent='عکس حذف شد.'}catch(err){m.className='msg err';m.textContent=err.message}});
-function logout(){API.pw='';API.t='';ROLE='';USERNAME='';RQ.list.forEach(j=>{j.aborted=true;j.no(new Error('aborted'))});RQ.list=[];if(RQ.cur){RQ.cur.aborted=true;RQ.cur.ctrl&&RQ.cur.ctrl.abort()}QV='';QSEEN=null;QITEMS=[];stopPoll();saveApi();show('login');$('lg_pw').type='password';$('lgShow').checked=false;pwPrefill();$('lgUrlWrap').hidden=!!API_URL_DEFAULT||IN_GAS;$('lg_url').value=API.url||''}
+/* logout layers merged here: archive/ui (tiles reset first), base. Later layers (lf1, m42, m42d, m43b) stay wrappers: boot.js calls
+   logout at load time before those scripts run, and they use their own private state. */
+function logout(){TILE='';delete document.body.dataset.tile;const el=$('tiles');if(el)el.hidden=true;API.pw='';API.t='';ROLE='';USERNAME='';RQ.list.forEach(j=>{j.aborted=true;j.no(new Error('aborted'))});RQ.list=[];if(RQ.cur){RQ.cur.aborted=true;RQ.cur.ctrl&&RQ.cur.ctrl.abort()}QV='';QSEEN=null;QITEMS=[];stopPoll();saveApi();show('login');$('lg_pw').type='password';$('lgShow').checked=false;pwPrefill();$('lgUrlWrap').hidden=!!API_URL_DEFAULT||IN_GAS;$('lg_url').value=API.url||''}
+/* applySettings layers merged here: base, ux6 (attendance button by account type, at the end) */
 function applySettings(s){if(s)SET={...DEFAULT_SET,...s};SET.prices=SET.prices||{};try{fillRecep()}catch(e){}try{$('lgClinic').textContent=SET.clinic||'';if(ROLE)$('whoami').textContent=(USERNAME?USERNAME+' · ':'')+(ROLE_LBL[ROLE]||'')+(SET.clinic?' · '+SET.clinic:'')}catch(e){}try{localStorage.setItem('implantPlanSettings',JSON.stringify(SET))}catch(e){}
-  if(F.status==='new'&&!dirty){F=blankForm();renderForm()}}
+  if(F.status==='new'&&!dirty){F=blankForm();renderForm()}ux6Att()}
 async function sha(t){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('implant|'+t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return null}}
 const AUTHC=()=>{try{return JSON.parse(localStorage.getItem('implantAuth')||'{}')}catch(e){return {}}};
 function enter(j){ROLE=j.role;if(j.user!==undefined)USERNAME=j.user||'';API.role=ROLE;saveApi();if(j.settings)applySettings(j.settings);if(j.queue)applyQueue(j.queue);if(j.sender)$('cFrom').textContent=j.sender;$('lgMsg').textContent='';applyRole();home();startPoll();beep0();processOutbox()}

@@ -20,8 +20,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 {const _r=recalc;recalc=function(){const r=_r.apply(this,arguments);try{q7RefCard()}catch(e){}return r}}
 /* plan-later skips the «which plan?» sheet at the final confirmation */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#confirmBtn');if(!t||ROLE!=='consultant'||!q7PL()||t.dataset.picked)return;t.dataset.picked='1';setTimeout(()=>{try{delete t.dataset.picked}catch(x){}},0)},true);
-/* the «which plan?» sheet also offers «پذیرش روز جراحی انتخاب می‌کند» */
-{const _p=pkRender;pkRender=function(){const r=_p.apply(this,arguments);try{if(ROLE==='consultant'){const b=$('pkSheet').querySelector('.btns');if(b&&!b.querySelector('#q7Later'))b.insertAdjacentHTML('afterbegin','<button class="btn ghost" id="q7Later" type="button">پذیرش روز جراحی انتخاب می‌کند</button>')}}catch(e){}return r}}
+/* the «which plan?» sheet also offers «پذیرش روز جراحی انتخاب می‌کند» (its button: in pkRender, finance/fin2.js) */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#q7Later');if(!t||!F||!F.pay)return;e.preventDefault();F.pay.plater=1;touch();$('pkSheet').hidden=true;const b=PK.btn;if(b){b.dataset.picked='1';b.click();delete b.dataset.picked}},true);
 /* (3) reception: plan sheet before the brand sheet */
 function q7PlanSheet(snap){const id=snap.id,all=[{no:1,s:snap.s}].concat(((snap.sx&&snap.sx.length)?snap.sx:(snap.s2?[snap.s2]:[])).map((s,i)=>({no:i+2,s})));
@@ -29,9 +28,13 @@ function q7PlanSheet(snap){const id=snap.id,all=[{no:1,s:snap.s}].concat(((snap.
   const s=mkSheet('q7PlSh',`<h3>طرح درمان بیمار · ${esc((snap.h||{}).name||'')}</h3><p class="note">مشاور «ارجاع به پذیرش» زده است. طرحی را که بیمار انتخاب کرده بزنید؛ بعد برند ایمپلنت پرسیده می‌شود.</p><div class="brand-totals q7pl">${all.map(p=>`<button type="button" class="tot" data-q7pick="${p.no}"><small>طرح</small><b>طرح ${fa(p.no)}</b><small>${esc(sum(p).txt)}</small></button>`).join('')}</div>${snap.alt&&snap.alt.text?`<p class="note">توضیح پزشک: ${esc(snap.alt.text)}</p>`:''}<div class="msg" id="q7PlMsg"></div><div class="btns"><button class="btn ghost" type="button" id="q7PlX">بعداً</button></div>`);s.hidden=false;
   s.onclick=async ev=>{const b=ev.target.closest('button');if(!b)return;if(b.id==='q7PlX'){s.hidden=true;return}const n=Number(b.dataset.q7pick);if(!n)return;const m=$('q7PlMsg');b.disabled=true;m.className='msg';m.textContent='در حال ثبت…';
     try{const p=all.find(x=>x.no===n),r2=Object.assign({},snap,{s:p.s,sx:[],s2:null,alt:{mode:'none',text:''}});let body={id,pick:n};if(snap.brand&&snap.brand!=='ref'){const T2=totals(PV(r2,1));body.total=planTotal(r2);body.parts={S:T2.surg[snap.brand]||0,P:T2.pros||0};if(typeof pl10O3==='function'&&pl10O3(r2))body.cash=pl10Cash(r2,T2.surg[snap.brand]||0,T2.pros||0)}
-      await api('q7Plan',body);s.hidden=true;toast('طرح '+fa(n)+' ثبت شد.');const j=await api('get',{id});openPostConfirm(fromDoc(id,j.data||{}))}catch(err){m.className='msg err';m.textContent=err.message;b.disabled=false}}}
+      await api('q7Plan',body);s.hidden=true;toast('طرح '+fa(n)+' ثبت شد.');const j=await api('get',{id});openPostConfirm(fromDoc(id,j.data||{}))}catch(err){m.className='msg err';m.textContent=err.message;b.disabled=false}}
+  /* m46b: under the plan buttons, the content of every plan (q7PlanSheet: base q7 + m46b) */
+  try{const s=$('q7PlSh');if(s&&snap&&!s.querySelector('.m46bw')){
+    const all=[{no:1,s:snap.s}].concat(((snap.sx&&snap.sx.length)?snap.sx:(snap.s2?[snap.s2]:[])).map((x,i)=>({no:i+2,s:x})));
+    const h='<div class="m46bw"><p class="note">جزئیات هر طرح (برای انتخاب، دکمه‌ی همان طرح را در بالا بزنید):</p>'+all.map(p=>`<details class="m46bd" open><summary>طرح ${fa(p.no)}</summary><div class="pview">${planViewHTML(p.s)}</div></details>`).join('')+'</div>';
+    const m=s.querySelector('#q7PlMsg');if(m)m.insertAdjacentHTML('beforebegin',h);const inn=s.querySelector('.in');if(inn)inn.classList.add('m46bin')}}catch(e){console.error('m46b',e)}}
 {const _a=api;api=function(action,payload){const p=_a.apply(this,arguments);if(!(action==='toSurgery'||action==='sendDoc'||action==='apptSet'))return p;
   return Promise.resolve(p).catch(async e=>{if(ROLE==='staff'&&/طرح درمان بیمار هنوز انتخاب نشده/.test((e&&e.message)||'')&&payload&&payload.id){try{const j=await _a('get',{id:payload.id});if(j&&j.data&&j.data.pay&&j.data.pay.plater)setTimeout(()=>q7PlanSheet(fromDoc(payload.id,j.data)),350)}catch(x){}}throw e})}}
 /* the archived plans travel with the record */
-{const _t=toDoc;toDoc=function(r){const o=_t.apply(this,arguments);try{if(r&&r.alts&&r.alts.plans)o.alts=Object.assign({},r.alts,{plans:r.alts.plans.map(p=>({no:p.no,s:secDoc(p.s)}))})}catch(e){}return o}}
 {const _f=fromDoc;fromDoc=function(id,d){const r=_f.apply(this,arguments);try{if(d&&d.alts&&Array.isArray(d.alts.plans))r.alts=Object.assign({},d.alts,{plans:d.alts.plans.map(p=>({no:p.no,s:secFrom(p.s)}))})}catch(e){}return r}}
