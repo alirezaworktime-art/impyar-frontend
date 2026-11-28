@@ -8,7 +8,6 @@ Object.keys(L5W).forEach(k=>delete L5W[k]);PK4_TY.forEach(([k,n])=>L5W[k]=n);
 const pk4N=v=>{const n=Math.round(Number(toEn(String(v==null?'':v)).replace(/[^\d.]/g,'')));return isFinite(n)&&n>0?n:0};
 const pk4Roles=pt=>{const a=Object.keys(pt).filter(t=>pt[t]==='a'),p=Object.keys(pt).filter(t=>pt[t]==='p');return (a.length?'پایه: '+toothTxt(a):'')+(a.length&&p.length?' · ':'')+(p.length?'پونتیک: '+toothTxt(p):'')};
 function pk4Reset(){if(!L5)return;L5.pt={};L5.redo=false;L5.cem='';L5.amt='';L5.pk4=1;try{const m=l4Map(PF&&PF.j);Object.keys(m||{}).forEach(k=>{if(m[k]==='a'||m[k]==='p')L5.pt[k]=m[k]})}catch(e){}}
-{const _o=l5Open;l5Open=async function(){const r=await _o.apply(this,arguments);try{if(L5&&!L5.pk4){pk4Reset();renderFile()}}catch(e){}return r}}
 function pk4Block(){const s=L5,w=s.work;if(!w)return '';const tt=!!PK4_TEETH[w],free=tt&&s.redo;
   let h='<div class="pk4b">';
   if(tt)h+=`<div class="pk4ch"><p class="note">روی دندان بزنید: یک بار = <b class="a13ka">پایه</b> · دو بار = <b class="a13kp">پونتیک</b> · سه بار = برداشتن${Object.keys(s.pt).length?' — '+esc(pk4Roles(s.pt)):''}</p><div class="pk4teeth">${PK4_Q.map(([q,L])=>`<div class="pk4q"><small>${QNAME[q]}</small>${L.map(n=>{const k=q+n,r=s.pt[k]||'';return `<button type="button" class="t${r==='a'?' a13pa':r==='p'?' a13pp':''}" data-pk4t="${k}" aria-pressed="${!!r}">${fa(n)}</button>`}).join('')}</div>`).join('')}</div>

@@ -18,10 +18,8 @@ document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.
 /* fix6a: prosthesis path in the owner's order; after an approved test the order form opens for the next piece */
 (function(){const F=['heal','impr','lab','tryin','rabt','frame','deliv','done'];PR2.PATH.fix.splice(0,PR2.PATH.fix.length,...F);PR2.PATH.tmp1.splice(0,PR2.PATH.tmp1.length,'tmpd',...F)})();
 const F6_DEFSKIP={fix:['frame'],tmp1:['frame']};
-{const _n=pr2Next;pr2Next=function(t,st){const n=_n(t,st);if(!n||!PR2.TEST.includes(st)||n.st==='lab'||n.st==='done')return n;const P=PR2.PATH[t]||PR2.PATH.fix;let j=P.indexOf(st)+1;while(j<P.length-1&&(P[j]==='lab'||(F6_DEFSKIP[t]||[]).includes(P[j])))j++;return {st:'lab',for:P[j]}}}
 async function f6OpenOrder(id){try{if(!PF||PF.id!==id||$('pfSheet').hidden){await openFile(id,'','pros');if(!PF||PF.id!==id)return}else{const j=await api('get',{id},{timeout:12000});if(!PF||PF.id!==id)return;PF.j=j}
   PF.tab='pros';LO=null;LOF=[];loInit(PF.j);renderFile();setTimeout(()=>{const f=$('loSend');if(f){const p=f.closest('.payform');(p||f).scrollIntoView({behavior:'smooth',block:'start'})}},80);toast('سفارش مرحله‌ی بعد را برای لابراتوار ثبت کنید.')}catch(e){}}
-{const _p=p2Do;p2Do=async function(op,x){const r=await _p.apply(this,arguments);try{const id=(x&&x.id)||(PF&&PF.id);if(r&&r.ok&&(op==='ok'||op==='skip')&&r.pros&&r.pros.stage==='lab'&&id&&['surgery','doctor','consultant'].includes(ROLE))await f6OpenOrder(id)}catch(e){}return r}}
 /* fix6a: «سفارش لاب ثبت نشده» — reception (prosthesis tile) and the doctor («پروتز») */
 let QF6=[];
 {const _a=applyQueue;applyQueue=function(j){if(j&&!j.same&&j.items){QF6=Array.isArray(j.f6no)?j.f6no:[];if(Array.isArray(j.pidle)&&QF6.length){const ids=new Set(QF6.map(x=>x.id));j.pidle=j.pidle.filter(x=>!(x.stage==='lab'&&ids.has(x.id)))}}const r=_a.apply(this,arguments);try{f6RenderStaff();f6RenderSurg()}catch(e){}return r}}
@@ -32,7 +30,6 @@ function f6RenderStaff(){if(ROLE!=='staff')return;const pi=$('piList');if(!pi)re
 function f6RenderSurg(){if(ROLE!=='surgery')return;const pd=$('pdList');if(!pd)return;let b=$('f6SecS');
   if(!b){b=document.createElement('div');b.id='f6SecS';pd.parentNode.insertBefore(b,pd)}
   b.hidden=!QLABN.length;b.innerHTML=QLABN.length?`<div class="qhead"><h2>سفارش لاب ثبت نشده <small class="note">${fa(QLABN.length)} بیمار</small></h2></div><div class="list">${QLABN.map(x=>f6Row(x,`<button class="btn sm main" type="button" data-l3lab="${esc(x.id)}" data-l3n="${esc(x.name||'')}" data-aid="">ثبت سفارش لابراتوار</button><button class="btn sm ghost" type="button" data-file="${esc(x.id)}" data-fname="${esc(x.name||'')}" data-ftab="pros">پرونده</button>`)).join('')}</div>`:''}
-{const _r=renderPday;renderPday=function(){const r=_r.apply(this,arguments);try{f6RenderSurg()}catch(e){}return r}}
 {const _r=renderPi;renderPi=function(){const r=_r.apply(this,arguments);try{f6RenderStaff()}catch(e){}return r}}
 {const _t=TILES.staff;TILES.staff=()=>_t().map(t=>t.k==='pros'?Object.assign({},t,{n:(t.n||0)+QF6.length}):t)}
 {const _t=TILES.surgery;TILES.surgery=()=>_t().map(t=>t.k==='pros'?Object.assign({},t,{n:(t.n||0)+QLABN.length,s:QLABN.length&&!(t.n)?fa(QLABN.length)+' سفارش لاب ثبت نشده':t.s}):t)}

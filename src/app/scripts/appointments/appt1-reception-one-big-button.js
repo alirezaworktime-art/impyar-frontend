@@ -27,8 +27,6 @@ TILE_HD.staff.surg='نوبت‌دهی';TILE_HD.staff.bkd='نوبت‌های دا
 (function(){const _h=tileHead;tileHead=function(){_h.apply(this,arguments);if(ROLE!=='staff')return;const h=document.querySelector('.tilehd');if(!h)return;
   if(TILE==='surg'){const a=h.querySelector('.acts');if(a)a.innerHTML='<button class="btn main bkbig" type="button" data-rfab="book">📅 نوبت‌دهی</button>'}
   if(TILE==='bkd'){const a=h.querySelector('.acts');if(a)a.innerHTML='<button class="btn sm" type="button" data-rfab="book">📅 نوبت‌دهی</button><button class="btn sm ghost" type="button" data-bkdre="1">به‌روزرسانی</button>'}}})();
-/* the prosthesis doctor's day view: today only the referred appointments */
-(function(){const _l=loadPday;loadPday=async function(){const r=await _l.apply(this,arguments);try{if(ROLE==='surgery'&&PD&&PD.appts){const td=tDay();PD.appts=PD.appts.filter(a=>a.day!==td||a.ref||l3Of(a.plan)||a.st==='done');renderPday()}}catch(e){}return r}})();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-bkm],#bkmX,[data-apref],[data-bkdf],[data-bkdre]');if(!t)return;
   if(t.dataset.bkm){bkOpen(t.dataset.bkm);return}
   if(t.id==='bkmX'){$('bkmSheet').hidden=true;return}
