@@ -3,7 +3,7 @@ var UX6={pay:{},mr:false};
 /* (2) «⏱ حضور» only for a personal account; the manager keeps it (clinic internet setup lives in that sheet) */
 function ux6Att(){try{document.body.classList.toggle('ux6nouser',!!ROLE&&!USERNAME&&ROLE!=='manager')}catch(e){}}
 /* (applyRole → ux6Att(): merged into surgery/roles-live-queue-reception.js) */
-{const _as=applySettings;applySettings=function(){const r=_as.apply(this,arguments);ux6Att();return r}}
+/* ux6 applySettings layer (ux6Att after): merged into applySettings in manager/views.js */
 /* (4) tiles: no «مالی بیماران» (= بایگانی), no reception «بازگشت بیماران»; «نوبت‌های داده‌شده» becomes the calendar tile;
    manager «داشبورد» + «گزارش‌های مدیریتی» in one tile */
 {const _s=TILES.staff;TILES.staff=()=>_s().filter(t=>t.k!=='pay'&&t.k!=='wb').map(t=>t.k==='bkd'?Object.assign({},t,{l:'تقویم نوبت‌ها',s:'فهرست روزها، هفته و ماه'}):t)}

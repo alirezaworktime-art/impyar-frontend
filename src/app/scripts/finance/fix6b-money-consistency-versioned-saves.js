@@ -19,7 +19,7 @@ function fx6bBar(){let b=$('fx6Stale');if(b)b.remove();if(!F||!F.id)return;const
   b=document.createElement('div');b.id='fx6Stale';b.className='fx6stale';b.setAttribute('role','status');
   b.innerHTML='<div>تغییرات شما در این پرونده ('+esc(when)+') ثبت نشد، چون پرونده در این فاصله تغییر کرده بود. آن نسخه روی این دستگاه نگه داشته شده است.</div><div class="btns"><button class="btn sm" type="button" data-fx6st="use">بازگرداندن نسخه‌ی من</button><button class="btn sm ghost" type="button" data-fx6st="drop">دور انداختن</button></div>';
   const v=$('viewForm');if(v)v.insertBefore(b,v.firstChild)}
-{const _of=openForm;openForm=function(){const x=_of.apply(this,arguments);try{fx6bBar()}catch(e){}return x}}
+/* fix6b openForm layer (fx6bBar after opening): merged into openForm in manager/views.js */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-fx6st]');if(!t||!F||!F.id)return;const s=fx6bStaleGet(F.id);
   if(t.dataset.fx6st==='use'&&s){const cur=F,r=fromDoc(cur.id,s.d);r._v=cur._v;['status','jalali','emailStatus','pdfName','edits','surg'].forEach(k=>{if(cur[k]!==undefined)r[k]=cur[k]});F=r;CUR=1;renderForm();dirty=true;toast('نسخه‌ی شما بازگردانده شد؛ بررسی و ذخیره کنید.')}
   try{localStorage.removeItem(FX6_SK+F.id)}catch(x){}const b=$('fx6Stale');if(b)b.remove()});
