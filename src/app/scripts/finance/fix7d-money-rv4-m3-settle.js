@@ -20,6 +20,5 @@ window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('
 /* W2: deleting / bouncing a payment that a refund relies on asks first */
 {const _a=api;api=async function(action,payload={},opt={}){try{return await _a(action,payload,opt)}catch(e){const m=/^FX7RF\|(\d+)\|([\s\S]*)$/.exec((e&&e.message)||'');if(!m||action!=='paySet')throw e;
   if(!(await uxConfirm(m[2],'ادامه',true,'این پرداخت پشتوانه‌ی استرداد است')))throw new Error('تغییری ثبت نشد.');return await _a(action,Object.assign({},payload||{},{rfAck:1}),opt)}}}
-/* M7: the payments tab checks the amount itself too (the form may be redrawn between typing and the click) */
-{const _py=pyAdd;pyAdd=async function(t){const i=$('py_amount');if(i&&fx7IsBad(i)){fx7Mark(i,true);const m=$('pyMsg');if(m){m.className='msg err';m.textContent=FX7_AMT_MSG}return}return _py.apply(this,arguments)}}
+/* M7: the payments-tab amount check now lives in pyAdd itself (appointments/events.js) */
 

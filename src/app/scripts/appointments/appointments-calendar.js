@@ -7,10 +7,11 @@ const weekStart=d=>{const g=new Date(d+'T12:00:00Z').getUTCDay();return dAdd(d,-
 async function loadCal(){if(!CAL.start){CAL.sel=tDay();CAL.start=weekStart(CAL.sel)}const td=tDay(),R0=CAL.mode==='month'?jMonth(CAL.sel):[CAL.start,dAdd(CAL.start,6)],from=R0[0]<td?R0[0]:td,end=R0[1],to=end>dAdd(td,1)?end:dAdd(td,1);
   try{const j=await api('apptList',{from,to});CAL.items=j.items||[];CAL.loaded=true;renderCal()}catch(e){if(e.message!=='aborted')$('calList').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 function apptMsg(a){const c=SET.clinic||'کلینیک';return `${a.name?a.name+' عزیز':'بیمار عزیز'}، سلام. یادآوری نوبت ${AKL[a.kind]||'ویزیت'} شما در ${c}: ${wDay(a.day)} ${jDay(a.day)}${a.time?' ساعت '+faD(a.time):''}.${SET.phone?' هماهنگی: '+SET.phone:''}`}
+/* apptCard: base + pl10 (opt 3: remaining 30 % on the impression card) + chart-teeth §4 (prosthesis remainder on try-in/abutment/delivery cards) */
 function apptCard(a,o={}){const n=dDiff(a.day,tDay()),st=a.st||'set',can=canAppt();
   const stp=st==='done'?'<span class="pill done">انجام شد</span>':st==='cancel'?'<span class="pill">لغو شد</span>':st==='noshow'?'<span class="pill settle">نیامد</span>':a.sms?'<span class="pill done">یادآوری رفت</span>':'';
   const sms=a.phone&&smsLink(a.phone,apptMsg(a));
-  return `<div class="item appt st-${st} kg-${kGrp(a.kind)}">${a.note==='جراحی خارج نوبت'?'<div class="xnob">جراحی خارج نوبت</div>':''}<div class="row1"><div><span class="tm">${a.time?faD(a.time):'بدون ساعت'}</span><span class="nm">${esc(a.name)}</span>
+  let h=`<div class="item appt st-${st} kg-${kGrp(a.kind)}">${a.note==='جراحی خارج نوبت'?'<div class="xnob">جراحی خارج نوبت</div>':''}<div class="row1"><div><span class="tm">${a.time?faD(a.time):'بدون ساعت'}</span><span class="nm">${esc(a.name)}</span>
     <div class="meta">${!a.time&&a.st==='set'&&can?'<b class="late">ساعت را تعیین کنید</b> · ':''}${a.by==='خودکار'?'ثبت خودکار از روز جراحی · ':''}${o.date?esc(wDay(a.day)+' '+jDay(a.day))+' · ':''}${a.dur?fa(a.dur)+' دقیقه':''}${a.doc?' · '+esc(a.doc):''}${a.phone?' · '+esc(faD(a.phone)):''}</div>${a.note?`<div class="meta">${esc(a.note)}</div>`:''}</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill kp-${kGrp(a.kind)}">${esc(AKL[a.kind]||a.kind)}</span>${a.onl==='1'?'<span class="pill done">طرح آنلاین دارد</span>':a.onl==='0'?'<span class="pill">بدون طرح آنلاین</span>':''}${stp}</div></div>
     <div class="acts">${st==='set'&&sms&&n>=0&&n<=2?`<a class="btn sm${a.sms?' ghost':''}" href="${sms}" data-asms="${esc(a.id)}">${a.sms?'پیامک دوباره':'پیامک یادآوری'}</a>`:''}${a.phone?`<a class="btn sm ghost" href="tel:${esc(toEn(a.phone))}">تماس</a>`:''}
@@ -18,7 +19,13 @@ function apptCard(a,o={}){const n=dDiff(a.day,tDay()),st=a.st||'set',can=canAppt
       ${moreMenu((st==='set'&&can&&n<=0?`<button class="btn sm ghost" data-ast="noshow" data-aid="${esc(a.id)}" type="button">نیامد</button>`:'')
       +(st==='set'&&can?`<button class="btn sm ghost" data-aedit="${esc(a.id)}" type="button">جابه‌جایی / ویرایش</button><button class="btn sm ghost danger" data-ast="cancel" data-aid="${esc(a.id)}" type="button">لغو نوبت</button>`:'')
       +(st!=='set'&&can?`<button class="btn sm ghost" data-ast="set" data-aid="${esc(a.id)}" type="button">برگرداندن</button>`:'')
-      +(a.plan&&!o.nofile?`<button class="btn sm ghost" data-file="${esc(a.plan)}" data-fname="${esc(a.name)}" type="button">پرونده</button>`:''))}</div></div>`}
+      +(a.plan&&!o.nofile?`<button class="btn sm ghost" data-file="${esc(a.plan)}" data-fname="${esc(a.name)}" type="button">پرونده</button>`:''))}</div></div>`;
+  /* pl10: the remaining 30 % (option 3) shows on the impression appointment card for reception */
+  try { if (a && a.owe > 0 && a.kind === 'impr' && ROLE === 'staff' && a.plan && (a.st || 'set') === 'set' && h.indexOf('data-p4rest') < 0) h = h.replace('<div class="acts">', `<div class="acts"><button class="btn sm main" type="button" data-p4rest="${esc(a.plan)}">تعیین تکلیف مالی (${fa(a.owe)} مانده)</button>`) } catch (e) { }
+  /* chart-teeth §4: the prosthesis remainder on try-in / resin / abutment / delivery cards (data-m10pp is read by chart-teeth's click listener) */
+  try { if (a && a.owe > 0 && a.oweP && ROLE === 'staff' && a.plan && (a.st || 'set') === 'set' && ['tryin', 'rscr', 'rabt', 'deliv'].includes(a.kind) && h.indexOf('data-p4rest') < 0)
+  h = h.replace('<div class="acts">', `<div class="acts"><button class="btn sm main" type="button" data-p4rest="${esc(a.plan)}" data-m10pp="1">تعیین تکلیف مالی پروتز (${fa(a.owe)} مانده)</button>`) } catch (e) { }
+  return h}
 function moreMenu(h){return h?`<details class="more"><summary class="btn sm ghost">⋯ بیشتر</summary><div class="menu">${h}</div></details>`:''}
 document.addEventListener('click',e=>{const d=e.target.closest&&e.target.closest('details.more');document.querySelectorAll('details.more[open]').forEach(x=>{if(x!==d)x.open=false});if(d&&e.target.closest('.menu'))setTimeout(()=>{d.open=false},0)});
 function renderCal(){const td=tDay(),cap=Number(SET.cap)||0,days=[...Array(7)].map((_,i)=>dAdd(CAL.start,i));

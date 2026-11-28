@@ -16,9 +16,7 @@ function ux6DashSeg(){const v=$('viewDash');if(!v||ROLE!=='manager')return;const
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ux6d]');if(!b)return;UX6.mr=b.dataset.ux6d==='1';mrApply();window.scrollTo(0,0)});
 /* manager «صندوق و هزینه»: the debtors list is in «حسابداری کامل» and «گزارش‌های مدیریتی» */
 (function(){const B=$('arBox');if(!B)return;new MutationObserver(()=>{B.querySelectorAll('h3.pf-h').forEach(h=>{if(/^بدهکاران \(پرداخت/.test(h.textContent.trim())){const n=h.nextElementSibling;if(n&&n.classList.contains('list'))n.remove();h.remove()}})}).observe(B,{childList:true})})();
-/* (3) reception «کارهای الان»: only in «صف من», without the late-appointment rows that «صف من» already lists */
-{const _rn=renderNow;renderNow=function(){const r=_rn.apply(this,arguments);try{const el=$('rNow');if(el&&!el.hidden){el.querySelectorAll('.rn').forEach(x=>{if(x.querySelector('[data-ast]'))x.remove()});
-  const n=el.querySelectorAll('.rn').length;if(!n){el.hidden=true;el.innerHTML=''}else{const b=el.querySelector('.rnh b');if(b)b.textContent=fa(n);const m=el.querySelector('[data-nowall]');if(m&&n<=4&&!NOW_ALL)m.remove()}}}catch(e){}return r}}
+/* (3) reception «کارهای الان»: merged into renderNow (appointments/views-polling.js) */
 /* booking tiles: one time control — امروز | فردا | هفته | ماه; the calendar tile keeps فهرست | هفته | ماه + «تقویم کامل» */
 const UX6_AT={surg:1,chk:1,unc:1,pros:1};
 function ux6Cv(){if(ROLE!=='staff')return;const h=$('rAll')&&$('rAll').querySelector('.tilehd');if(!h)return;const a=h.querySelector('.acts');if(!a)return;

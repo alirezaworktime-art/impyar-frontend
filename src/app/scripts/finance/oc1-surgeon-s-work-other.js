@@ -22,7 +22,6 @@ TILES.oclin=()=>{const d=OC.d,td=tDay(),tw=d?d.works.filter(w=>w.day===td):[],so
 (function(){const _g=goTile;goTile=function(k,opt={}){const L=tileList(),t=L.find(x=>x.k===k);if(!t||!t.oseg)return _g(k,opt);
   if(dirty&&!$('viewForm').hidden)return;TILE=t.k;TSAVE[ROLE]=TILE;try{localStorage.setItem('implantTile',JSON.stringify(TSAVE))}catch(e){}document.body.dataset.tile=TILE;
   OC.seg=ROLE==='accountant'&&OC.seg&&OC.seg!=='add'?OC.seg:t.oseg;show('oc');renderTiles();if(!opt.keep)window.scrollTo(0,0);ocRender();ocLoadSoft()}})();
-(function(){const _s=showExtra;showExtra=function(v){_s(v);const el=$('viewOc');if(el)el.hidden=v!=='oc'}})();
 /* home for «oclin»: merged into surgery/roles-live-queue-reception.js */
 /* pollQ for «oclin»: merged into surgery/roles-live-queue-reception.js */
 /* ocSegBar: oc1 base, replaced by oc2 (the «درمان بیمار» tab; the other clinic's own order for oclin) */

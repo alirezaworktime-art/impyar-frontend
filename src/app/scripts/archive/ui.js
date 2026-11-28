@@ -108,7 +108,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 const _show=show;show=function(v){_show(v);try{TILE_HIDE=v==='login';const el=$('tiles');if(el)el.hidden=TILE_HIDE||!ROLE;if(v==='login'){TILE='';delete document.body.dataset.tile}
   if(v==='queue'||v==='recep'){const L=tileList(),want=v==='recep'?(x=>x.view==='recep'):(x=>x.tab==='tabQueue'),cur=L.find(x=>x.k===TILE);if(!cur||!want(cur)){const t=L.find(want);if(t){TILE=t.k;document.body.dataset.tile=TILE;renderTiles();tileEmpty()}}}}catch(e){}};
 /* renderQ: the tiles layer is merged into surgery/roles-live-queue-reception.js */
-const _tidySecs=tidySecs;tidySecs=function(){_tidySecs();try{tileEmpty()}catch(e){}};
 /* logout layer (tiles reset before logout): merged into logout in manager/views.js */
 /* staff: flatten the reception panes into one column and tag every section with its tile */
 function tileInitStaff(){const v=$('viewRecep');if(!v||$('rAll'))return;

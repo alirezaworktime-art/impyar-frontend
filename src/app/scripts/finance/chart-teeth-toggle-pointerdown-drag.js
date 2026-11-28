@@ -20,8 +20,7 @@ let M10PP = 0;
 { const _i = h9Init; h9Init = function (j) { const fresh = !(LO && LO.h9); const r = _i.apply(this, arguments); try { if (fresh && r && !r.file && PF) { const h = (fromDoc(PF.id, (j && j.data) || {}).h) || {}; r.file = String(h.file || h.pfile || '') } } catch (e) { } return r } }
 /* 4 */
 window.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-m10pp]')) M10PP = Date.now() }, true);
-{ const _a = apptCard; apptCard = function (a) { let h = _a.apply(this, arguments); try { if (a && a.owe > 0 && a.oweP && ROLE === 'staff' && a.plan && (a.st || 'set') === 'set' && ['tryin', 'rscr', 'rabt', 'deliv'].includes(a.kind) && h.indexOf('data-p4rest') < 0)
-  h = h.replace('<div class="acts">', `<div class="acts"><button class="btn sm main" type="button" data-p4rest="${esc(a.plan)}" data-m10pp="1">تعیین تکلیف مالی پروتز (${fa(a.owe)} مانده)</button>`) } catch (e) { } return h } }
+/* the prosthesis-remainder button (data-m10pp) on appointment cards is in apptCard (appointments/appointments-calendar.js) */
 /* 5 */
 let M10D = '';
 const m10Docs = () => f7cDocs();

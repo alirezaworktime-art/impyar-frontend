@@ -1,5 +1,6 @@
 /* ---------- views + polling ---------- */
 let VTIMER=null;
+/* showExtra: base + oc1 (viewOc) + lf1 (viewLf; that section is created by lf1, so before it loads $('viewLf') is null) */
 function showExtra(v){['cal','pros','lab','dash','pday','users','wb','acc','rx','fin'].forEach(k=>{const el=$('view'+k[0].toUpperCase()+k.slice(1));if(el)el.hidden=v!==k});
   [['tabCal','cal'],['tabPros','pros'],['tabLab','lab'],['tabDash','dash'],['tabPday','pday'],['tabUsers','users'],['tabWb','wb'],['tabAcc','acc'],['tabRx','rx'],['tabFin','fin']].forEach(([t,k])=>$(t).setAttribute('aria-current',v===k));
   clearInterval(VTIMER);VTIMER=null;
@@ -12,7 +13,9 @@ function showExtra(v){['cal','pros','lab','dash','pday','users','wb','acc','rx',
   if(v==='rx')loadRx();
   if(v==='fin')loadFin();
   if(v==='lab'){pollLab(true);VTIMER=setInterval(()=>pollLab(false),8000)}
-  if(v==='dash'){loadDash();try{mrApply()}catch(e){}}}
+  if(v==='dash'){loadDash();try{mrApply()}catch(e){}}
+  const elOc=$('viewOc');if(elOc)elOc.hidden=v!=='oc';
+  const elLf=$('viewLf');if(elLf)elLf.hidden=v!=='lf'}
 let RTAB=(()=>{try{return localStorage.getItem('implantRTab')||'ex'}catch(e){return 'ex'}})(),RAD='t',RAF={sg:'all',pr:'all'},CKM='',CKD='t',CKF='all';
 const raDayISO=x=>x==='f'?dAdd(tDay(),1):tDay();
 const apSort=(a,b)=>(a.time||'99').localeCompare(b.time||'99');
@@ -20,9 +23,11 @@ function apFilterSec(A,keys,fsel,fEl,lEl,emp){const cnt={};A.forEach(a=>cnt[a.ki
   $(fEl).innerHTML=[['all','همه',A.length],...keys.filter(k=>k!=='tryin'&&k!=='postop'&&k!=='check'||cnt[k]).map(k=>[k,AFL[k]||AKL[k],cnt[k]||0])].map(([k,l,n])=>`<button type="button" class="chip" data-raf="${fEl}:${k}" aria-pressed="${fsel===k}">${esc(l)} <b>${fa(n)}</b></button>`).join('');
   const V=fsel==='all'?A:A.filter(a=>a.kind===fsel);$(lEl).dataset.n=A.length;$(lEl).innerHTML=V.length?V.map(a=>apptCard(Object.assign({},a))).join(''):`<div class="empty">${emp}</div>`}
 let SECC=(()=>{try{return JSON.parse(localStorage.getItem('implantSecC')||'{}')}catch(e){return {}}})();
-function tidySecs(){if(ROLE!=='staff')return;document.querySelectorAll('#viewRecep .rpane, #rAll').forEach(pn=>{let vis=0;pn.querySelectorAll('.rsec').forEach(sec=>{const L=sec.querySelector('.list');if(!L||sec.dataset.tile==='plan'||!sec.dataset.tile)return;const k=L.id,n=L.dataset.n!==undefined?+L.dataset.n:L.querySelectorAll(':scope>.item').length;
+/* tidySecs: base + archive/ui (tileEmpty also runs for non-staff roles; its errors are swallowed) */
+function tidySecs(){if(ROLE==='staff')document.querySelectorAll('#viewRecep .rpane, #rAll').forEach(pn=>{let vis=0;pn.querySelectorAll('.rsec').forEach(sec=>{const L=sec.querySelector('.list');if(!L||sec.dataset.tile==='plan'||!sec.dataset.tile)return;const k=L.id,n=L.dataset.n!==undefined?+L.dataset.n:L.querySelectorAll(':scope>.item').length;
     const has=n||!!L.querySelector('[data-tall]');sec.hidden=!has;if(has)vis++;sec.classList.toggle('col',!!SECC[k]);const h=sec.querySelector('.rsh');if(h){h.dataset.sec=k;let b=h.querySelector('.rsc');if(!b){b=document.createElement('b');b.className='rsc';h.appendChild(b)}b.textContent=fa(n)}});
-    let em=pn.querySelector('.rpEmpty');if(!em){em=document.createElement('div');em.className='empty rpEmpty';em.textContent='در این بخش فعلاً کاری نیست.';pn.appendChild(em)}em.hidden=!!vis||pn.dataset.rpane==='ex'||pn.id==='rAll'})}
+    let em=pn.querySelector('.rpEmpty');if(!em){em=document.createElement('div');em.className='empty rpEmpty';em.textContent='در این بخش فعلاً کاری نیست.';pn.appendChild(em)}em.hidden=!!vis||pn.dataset.rpane==='ex'||pn.id==='rAll'});
+  try{tileEmpty()}catch(e){}}
 document.addEventListener('click',e=>{const h=e.target.closest&&e.target.closest('.rsec>.rsh[data-sec]');if(!h||e.target.closest('button,a'))return;const k=h.dataset.sec;SECC[k]=!SECC[k];if(!SECC[k])delete SECC[k];try{localStorage.setItem('implantSecC',JSON.stringify(SECC))}catch(x){}h.parentNode.classList.toggle('col',!!SECC[k])});
 /* renderRecepAppts: base + appt1 (refresh the booked-appointments tile) */
 function renderRecepAppts(){if(ROLE==='staff'&&$('raSg')){const day=raDayISO(RAD),dl=RAD==='t'?'امروز':'فردا',A=QAPPT.filter(a=>a.st==='set'&&a.day===day).sort(apSort);
@@ -43,6 +48,7 @@ function renderRecepBar(){if(ROLE!=='staff'||!$('rTabs'))return;const td=tDay(),
   renderNow()}
 let NOW_ALL=false;
 function tehNow(){try{const p={};new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);return (+p.hour)*60+(+p.minute)}catch(e){const d=new Date();return d.getHours()*60+d.getMinutes()}}
+/* renderNow: base + ux6 (3) (only in «صف من», without the late-appointment rows that «صف من» already lists) */
 function renderNow(){const el=$('rNow');if(!el)return;const td=tDay(),now=tehNow(),R=[],mins=iso=>Math.round((Date.now()-Date.parse(iso))/60000);
   QITEMS.forEach(x=>{if((x.queue==='waiting'||x.queue==='consult')&&x.queuedAt){const m=mins(x.queuedAt);if(m>=20)R.push({w:m>=40?2:1,o:-m,t:`<b>${esc(x.name)}</b> — ${fa(m)} دقیقه ${x.queue==='waiting'?'منتظر پزشک':'منتظر مشاور'}`,a:`<button class="btn sm ghost" type="button" data-rtab="ex">دیدن صف</button>`})}});
   const here=new Set(QITEMS.map(x=>x.id));
@@ -55,9 +61,12 @@ function renderNow(){const el=$('rNow');if(!el)return;const td=tDay(),now=tehNow
   const tm=QAPPT.filter(a=>a.day===dAdd(td,1)&&a.st==='set'),un=tm.filter(a=>!a.sms&&a.phone);
   if(un.length)R.push({w:1,o:3,t:`فردا ${fa(tm.length)} نوبت؛ <b>${fa(un.length)} پیامک یادآوری</b> فرستاده نشده`,a:`<button class="btn sm" type="button" data-remgo>فرستادن یادآوری‌ها</button>`});
   R.sort((a,b)=>b.w-a.w||a.o-b.o);el.hidden=false;
-  if(!R.length){el.innerHTML='<div class="rnh ok">✓ کار فوری ندارید</div>';return}
-  const V=NOW_ALL?R:R.slice(0,4);
+  if(!R.length)el.innerHTML='<div class="rnh ok">✓ کار فوری ندارید</div>';/* (ux6 below then hides the box: no .rn rows) */
+  else{const V=NOW_ALL?R:R.slice(0,4);
   el.innerHTML=`<div class="rnh">کارهای الان <b>${fa(R.length)}</b></div>${V.map(r=>`<div class="rn${r.w>1?' bad':''}"><div class="tx">${r.t}</div><div class="acts">${r.a}</div></div>`).join('')}${R.length>4?`<button class="btn sm ghost" type="button" data-nowall>${NOW_ALL?'کمتر':'نمایش '+fa(R.length-4)+' مورد دیگر'}</button>`:''}`}
+  /* ux6 (3): drop the late-appointment rows, recount, hide when empty */
+  try{if(!el.hidden){el.querySelectorAll('.rn').forEach(x=>{if(x.querySelector('[data-ast]'))x.remove()});
+  const n=el.querySelectorAll('.rn').length;if(!n){el.hidden=true;el.innerHTML=''}else{const b=el.querySelector('.rnh b');if(b)b.textContent=fa(n);const m=el.querySelector('[data-nowall]');if(m&&n<=4&&!NOW_ALL)m.remove()}}}catch(e){}}
 setInterval(()=>{try{if(ROLE==='staff'&&!$('viewRecep').hidden&&!document.hidden)renderNow()}catch(e){}},60000);
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-nowall]');if(t){NOW_ALL=!NOW_ALL;renderNow()}});
 function renderCk(){const g=CKM,day=raDayISO(CKD),A=QAPPT.filter(a=>a.st!=='cancel'&&a.day===day&&AGRP[g].includes(a.kind)).sort(apSort);
