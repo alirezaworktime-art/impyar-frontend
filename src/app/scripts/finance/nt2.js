@@ -5,17 +5,17 @@ function nt2Names() { const L = [], seen = new Set(), add = d => { d = String(d 
 const nt2DL = () => `<datalist id="nt2Names">${nt2Names().map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
 const nt2To = (to, attr) => Object.keys(A10T).map(k => `<button type="button" class="chip" ${attr}="${k}" aria-pressed="${(to || []).includes(k)}">${A10T[k]}</button>`).join('');
 const nt2Day = d => d ? jDay(d) : '';
-/* paper file: each note has date + writer + recipients, all by hand */
-a10Clean = function (M) { return (M || []).map(m => ({ t: String(m.t || '').trim(), to: (m.to || []).filter(k => A10T[k]), day: m.day || '', dayJ: m.dayJ != null ? m.dayJ : nt2Day(m.day), by: String(m.by || '').trim() })).filter(m => m.t) };
-ARC10_MSG = function () { if (!A6) return ''; const M = A6.msgs = A6.msgs && A6.msgs.length ? A6.msgs : [{ t: '', to: [], dayJ: '', by: '' }];
+/* paper file: each note has date + writer + recipients, all by hand. a10Clean, ARC10_MSG and a10Box replaced the arc10 versions (pdf/arc10-pdf-pdf-js.js) — now defined only here */
+function a10Clean(M) { return (M || []).map(m => ({ t: String(m.t || '').trim(), to: (m.to || []).filter(k => A10T[k]), day: m.day || '', dayJ: m.dayJ != null ? m.dayJ : nt2Day(m.day), by: String(m.by || '').trim() })).filter(m => m.t) }
+function ARC10_MSG() { if (!A6) return ''; const M = A6.msgs = A6.msgs && A6.msgs.length ? A6.msgs : [{ t: '', to: [], dayJ: '', by: '' }];
   return `<div class="grp a10m" id="a10Msg"><span>توضیحات (تاریخ، نویسنده و گیرنده)</span>${nt2DL()}${M.map((m, i) => `<div class="a10i"><div class="nt2r"><label class="f">تاریخ *<input data-a10d="${i}" value="${esc(m.dayJ != null ? m.dayJ : nt2Day(m.day))}" placeholder="مثلاً ${esc(jDay(tDay()))}" autocomplete="off"></label><label class="f">نویسنده *<input data-a10b="${i}" list="nt2Names" value="${esc(m.by || '')}" placeholder="نام نویسنده" maxlength="60" autocomplete="off"></label></div>
     <textarea data-a10t="${i}" rows="2" maxlength="1000" placeholder="متن توضیح…">${esc(m.t || '')}</textarea>
     <div class="chips" role="group" aria-label="برای کدام بخش"><small class="nt2l">برای:</small>${Object.keys(A10T).map(k => `<button type="button" class="chip" data-a10to="${k}" data-a10i="${i}" aria-pressed="${(m.to || []).includes(k)}">${A10T[k]}</button>`).join('')}${M.length > 1 ? `<button type="button" class="chip a10x" data-a10x="${i}">حذف</button>` : ''}</div></div>`).join('')}
-    <div class="btns"><button type="button" class="btn sm ghost" id="a10Add">+ توضیح دیگر</button></div></div>` };
+    <div class="btns"><button type="button" class="btn sm ghost" id="a10Add">+ توضیح دیگر</button></div></div>` }
 document.addEventListener('input', e => { const t = e.target; if (!t || !t.dataset || !A6 || !A6.msgs) return; if (t.dataset.a10d != null) { const m = A6.msgs[+t.dataset.a10d]; if (m) { m.dayJ = t.value.trim(); m.day = parseJ(m.dayJ) || ''; A6.dirty = true } } if (t.dataset.a10b != null) { const m = A6.msgs[+t.dataset.a10b]; if (m) { m.by = t.value; A6.dirty = true } } }, true);
 /* (the fxArc note check is in the api layer below, after NT2) */
-a10Box = function (M, keys, cls) { const L = a10Clean(M).filter(m => m.to.some(k => keys.includes(k))); if (!L.length) return '';
-  return `<div class="a10box ${cls || ''}" role="note"><b>توضیح پرونده‌ی کاغذی</b>${L.map(m => `<div><small>${m.day ? esc(jDay(m.day)) + ' · ' : ''}${m.by ? 'نویسنده: ' + esc(m.by) + ' · ' : ''}برای ${m.to.map(k => A10T[k]).join('، ')}</small><p>${esc(m.t)}</p></div>`).join('')}</div>` };
+function a10Box(M, keys, cls) { const L = a10Clean(M).filter(m => m.to.some(k => keys.includes(k))); if (!L.length) return '';
+  return `<div class="a10box ${cls || ''}" role="note"><b>توضیح پرونده‌ی کاغذی</b>${L.map(m => `<div><small>${m.day ? esc(jDay(m.day)) + ' · ' : ''}${m.by ? 'نویسنده: ' + esc(m.by) + ' · ' : ''}برای ${m.to.map(k => A10T[k]).join('، ')}</small><p>${esc(m.t)}</p></div>`).join('')}</div>` }
 /* stage notes: date automatic, writer + recipients by hand */
 let NT2 = null;
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-nt2to]'); if (!t || !NT2) return; e.preventDefault(); e.stopPropagation(); const k = t.dataset.nt2to; NT2.to = NT2.to.includes(k) ? NT2.to.filter(x => x !== k) : NT2.to.concat(k); t.setAttribute('aria-pressed', String(NT2.to.includes(k))) }, true);

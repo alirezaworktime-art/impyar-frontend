@@ -28,7 +28,7 @@ async function up2Upload(files) { if (!PF || !PF.id) return; const pid = PF.id, 
   if (ok.length) toast(fa(ok.length) + ' فایل اسکن در پرونده ثبت شد.'); if (bad.length) alertMsg('بارگذاری نشد:\n' + bad.join('\n')) }
 { const _f = renderFile; renderFile = function () { const r = _f.apply(this, arguments); try { up2Mount() } catch (e) { } return r } }
 /* the photo inputs and the drop box send scans here, pictures/PDF to «تصاویر» as before */
-{ const _u = imgUpload; imgUpload = async function (files) { const S = [...files].filter(f => UP2_RX.test(f.name)), R = [...files].filter(f => !UP2_RX.test(f.name)); if (S.length) await up2Upload(S); if (R.length) return _u.call(this, R) } }
+/* imgUpload: sending scans to up2Upload is now part of the single definition in pdf/p4-patient-images-radiographs.js */
 document.addEventListener('change', e => { const t = e.target; if (t && t.id === 'up2In' && t.files && t.files.length && !UP2.busy) { const F = [...t.files]; t.value = ''; up2Upload(F) } });
 const up2F = id => { for (const k in UP2.c) { const f = UP2.c[k].files.find(x => x.id === id); if (f) return f } return null };
 document.addEventListener('click', async e => { const t = e.target.closest && e.target.closest('[data-up2v],[data-up2d],[data-up2x]'); if (!t) return; e.preventDefault(); e.stopPropagation(); const d = t.dataset;

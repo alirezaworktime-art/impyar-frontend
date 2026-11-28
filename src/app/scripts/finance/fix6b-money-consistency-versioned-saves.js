@@ -30,8 +30,7 @@ function fx6bSgAsk(){return new Promise(async res=>{try{
   const d=sg?Number(sg.diff)||0:0;if(!d){delete F._sgd;return res(true)}
   const s=mkSheet('fx6SgSheet','<h3>اختلاف هزینه‌ی جراحی قبلی</h3><p>هزینه‌ی جراحیِ انجام‌شده‌ی این بیمار <b>'+fa(Math.abs(d))+' تومان '+(d>0?'بیشتر':'کمتر')+'</b> از طرح قبلی بود'+(Number(sg.settledDiff)?' و تسویه شده است':'')+'.</p><p class="note">اگر طرح تازه همان کارهای انجام‌شده را دارد، اختلاف را صفر کنید تا دو بار حساب نشود. اگر طرح تازه فقط کارهای دیگر را دارد، اختلاف بماند.</p><div class="btns" style="flex-wrap:wrap"><button class="btn" type="button" id="fx6SgKeep" style="flex:1 1 200px">اختلاف بماند (جدا از طرح تازه)</button><button class="btn ghost" type="button" id="fx6SgZero" style="flex:1 1 200px">اختلاف صفر شود (در طرح تازه آمده)</button><button class="btn ghost" type="button" id="fx6SgNo">انصراف</button></div>');
   const done=v=>{s.hidden=true;if(v)F._sgd=v;res(!!v)};$('fx6SgKeep').onclick=()=>done('keep');$('fx6SgZero').onclick=()=>done('zero');$('fx6SgNo').onclick=()=>done('');s.hidden=false;setTimeout(()=>{try{$('fx6SgKeep').focus()}catch(e){}},60)}catch(e){res(true)}})}
-{const _fz=finalize;finalize=async function(){if(busy)return;if(!(await fx6bSgAsk()))return;try{return await _fz.apply(this,arguments)}finally{if(F)delete F._sgd}}}
-{const _dc=doConfirm;doConfirm=async function(){if(busy||!lastPDF)return _dc.apply(this,arguments);if(!(await fx6bSgAsk()))return;return _dc.apply(this,arguments)}}
+/* finalize / doConfirm: the surgery-difference question (fx6bSgAsk) is now part of their single definitions in pdf/background-send-queue-doctor-never.js */
 /* A7: storekeeper — stock ↔ surgery catalog */
 const ICAT={j:null,sel:{}};
 (function(){const _s=i2Segs;i2Segs=function(){_s.apply(this,arguments);document.querySelectorAll('[data-iseg="icat"]').forEach(b=>b.hidden=ROLE!=='inventory');if(ROLE!=='inventory'&&INV.seg==='icat')INV.seg='fix'}})();

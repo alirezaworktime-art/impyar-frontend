@@ -20,7 +20,7 @@ async function a10Expand(files, max, msg, all) { const out = []; let more = 0;
   return out }
 /* radiographs in the paper-file form: every PDF becomes images (zoom works); patient-file images: only PDFs too big to keep */
 /* (a9Add: merged into finance/arc9-opg-cbct.js) */
-{ const _u = imgUpload; imgUpload = async function (files) { let F; try { F = await a10Expand(files, 2200, (i, n) => { const m = $('imgMsg'); if (m) { m.className = 'note'; m.textContent = `تبدیل PDF: صفحه‌ی ${fa(i)} از ${fa(n)}…` } }, false) } catch (e) { alertMsg(e.message); return } return _u.call(this, F) } }
+/* imgUpload: the PDF → images step is now part of the single definition in pdf/p4-patient-images-radiographs.js */
 /* (2) cost table: one row per implant brand group, at that group's tariff */
 const a10Rows = l => { if (l.k !== 'imp') return [{ lab: a6Lab(l) + (l.k === 'sgd' ? ' (' + A9.scan[l.scan || 'U'] + ')' : '') + (l.teeth && l.teeth.length ? ' — ' + toothTxt(l.teeth) : ''), n: num(l.n), p: num(l.price), a: a8Base(l) }];
   const G = arbGroups(l), ks = Object.keys(G).sort((a, b) => (ARB_GO.indexOf(a) + 1 || 99) - (ARB_GO.indexOf(b) + 1 || 99));
@@ -35,11 +35,7 @@ const a10Rows = l => { if (l.k !== 'imp') return [{ lab: a6Lab(l) + (l.k === 'sg
 /* (6) doctor list: the settings list + the accounting doctors, same name written two ways shown once (accounting spelling wins); fetched again on every open */
 const a10Nm = s => String(s || '').replace(/[‌\s.]/g, '').replace(/^(دکتر|د)/, '').replace(/ي/g, 'ی').replace(/ك/g, 'ک');
 /* (5) notes for the next departments, at the end of the form */
-function a10Clean(M) { return (M || []).map(m => ({ t: String(m.t || '').trim(), to: (m.to || []).filter(k => A10T[k]) })).filter(m => m.t) }
-function ARC10_MSG() { if (!A6) return ''; const M = A6.msgs = A6.msgs && A6.msgs.length ? A6.msgs : [{ t: '', to: [] }];
-  return `<div class="grp a10m" id="a10Msg"><span>توضیح برای بخش بعدی (جراح، پزشک آنکاوری، پزشک پروتز یا لابراتوار)</span>${M.map((m, i) => `<div class="a10i"><textarea data-a10t="${i}" rows="2" maxlength="1000" placeholder="متن توضیح…">${esc(m.t || '')}</textarea>
-    <div class="chips" role="group" aria-label="برای کدام بخش">${Object.keys(A10T).map(k => `<button type="button" class="chip" data-a10to="${k}" data-a10i="${i}" aria-pressed="${(m.to || []).includes(k)}">${A10T[k]}</button>`).join('')}${M.length > 1 ? `<button type="button" class="chip a10x" data-a10x="${i}">حذف</button>` : ''}</div></div>`).join('')}
-    <div class="btns"><button type="button" class="btn sm ghost" id="a10Add">+ توضیح دیگر</button></div></div>` }
+/* a10Clean, ARC10_MSG: defined in finance/nt2.js (the nt2 versions with date and writer) */
 function a10Mount() { const ta = document.querySelector('#a6Root [data-a6h="note"]'), sec = ta && ta.closest('section'); if (!sec) return; const o = $('a10Msg'); if (o) o.remove(); sec.insertAdjacentHTML('beforeend', ARC10_MSG()) }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-a10to],[data-a10x],#a10Add'); if (!t || !A6) return; e.preventDefault(); e.stopPropagation(); A6.dirty = true;
   if (t.id === 'a10Add') { A6.msgs.push({ t: '', to: [] }); a10Mount(); const n = document.querySelector(`[data-a10t="${A6.msgs.length - 1}"]`); if (n) n.focus(); return }
@@ -53,8 +49,7 @@ document.addEventListener('input', e => { const t = e.target; if (!t || !t.datas
     payload.arc.msgs = a10Clean(A6.msgs); (payload.arc.lines || []).forEach(x => { if (A10_LOCK[x.k]) x.doc = ARC_DOC }) }
   return _a.apply(this, arguments) } }
 /* where the notes show */
-function a10Box(M, keys, cls) { const L = a10Clean(M).filter(m => m.to.some(k => keys.includes(k))); if (!L.length) return '';
-  return `<div class="a10box ${cls || ''}" role="note"><b>توضیح پرونده‌ی کاغذی</b>${L.map(m => `<div><small>برای ${m.to.map(k => A10T[k]).join('، ')}</small><p>${esc(m.t)}</p></div>`).join('')}</div>` }
+/* a10Box: defined in finance/nt2.js (the nt2 version with date and writer) */
 const a10Of = d => (((d || {}).arc || {}).msgs) || [];
 { const _f = renderFile; renderFile = function () { const r = _f.apply(this, arguments); try { if (!PF || !PF.j) return r; const sh = $('pfSheet'); if (!sh) return r; sh.querySelectorAll('.a10box').forEach(x => x.remove()); const M = a10Of(PF.j.data);
     const l5 = sh.querySelector('.l5work'); if (l5) { const b = a10Box(M, ['pros', 'lab']); if (b) l5.insertAdjacentHTML('beforebegin', b) } else { const hd = sh.querySelector('.pf-head'), b = a10Box(M, Object.keys(A10T)); if (hd && b) hd.insertAdjacentHTML('afterend', b) } } catch (e) { } return r } }

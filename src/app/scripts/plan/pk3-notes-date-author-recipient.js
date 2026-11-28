@@ -45,12 +45,7 @@ const pk3TagTxt=t=>[t.st?FXST[t.st]||'':'',t.t&&t.t.length?toothTxt(t.t):''].fil
 /* pk3TagUI layers: base replaced by a18 (owner 2026-11-10): no per-image stage/tooth tagging — images are only grouped before/after implant (q6);
    the «مرحله‌ی این تصویر / دندان» block is gone, so this is always empty */
 function pk3TagUI(){return ''}
-{const _i=pfImgs;pfImgs=function(j){let h=_i.apply(this,arguments);try{const F2=j.files||[];
-  if(canImg())h=h.replace('<div class="fx3up">',pk3TagUI(j)+'<div class="fx3up">');
-  const sts=[...new Set(F2.map(f=>pk3Tag(f).st).filter(Boolean))];
-  if(sts.length){const ch=`<div class="chips pk3filt"><button type="button" class="chip" data-pk3f="" aria-pressed="${!PK3.filt}">همه</button>${sts.map(k=>`<button type="button" class="chip" data-pk3f="${k}" aria-pressed="${PK3.filt===k}">${FXST[k]||k}</button>`).join('')}</div>`;const i=h.indexOf('<h3 class="pf-h">');h=i>=0?h.slice(0,i)+ch+h.slice(i):h+ch}
-  F2.forEach(f=>{const t=pk3Tag(f);if(!t.st&&!t.t.length)return;const tx=pk3TagTxt(t);h=h.replace(`data-imv="${esc(f.id)}" title="${esc(f.name||'')}">`,`data-imv="${esc(f.id)}" title="${esc(f.name||'')}" data-pk3st="${t.st}"${PK3.filt&&t.st!==PK3.filt?' hidden':''}><small class="pk3lbl">${esc(tx)}</small>`)});
-  if(PK3.filt)F2.forEach(f=>{const t=pk3Tag(f);if(!t.st&&!PK3.filt)return;if(!t.st)h=h.replace(`data-imv="${esc(f.id)}" title="${esc(f.name||'')}">`,`data-imv="${esc(f.id)}" title="${esc(f.name||'')}" hidden>`)})}catch(e){}return h}}
+/* pfImgs: the tags, the filter and the labels are now part of the single definition in pdf/p4-patient-images-radiographs.js */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-pk3t],[data-pk3f]');if(!t)return;e.preventDefault();e.stopPropagation();
   if(t.dataset.pk3t){const k=t.dataset.pk3t,i=PK3.tag.t.indexOf(k);if(i>=0)PK3.tag.t.splice(i,1);else PK3.tag.t.push(k);t.setAttribute('aria-pressed',String(i<0));return}
   PK3.filt=t.dataset.pk3f||'';if(PF&&!$('pfSheet').hidden)renderFile()},true);

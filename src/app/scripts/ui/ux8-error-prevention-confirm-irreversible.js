@@ -26,8 +26,7 @@ window.addEventListener('click',async e=>{const el=e.target&&e.target.closest&&e
   if(yes){UX8.ok.add(t);if(t.id==='tabOut'){UX8.dirty=false;try{dirty=false}catch(x){}}t.click()}},true);
 /* undo toast: 10 s, and a plain message no longer wipes a live «برگرداندن» button (it goes to a second line) */
 {const _tu=toastUndo;toastUndo=function(text,undo){const r=_tu.apply(this,arguments);const el=$('toast');clearTimeout(el._t);el._ux8u=Date.now()+10000;el._t=setTimeout(()=>{el.hidden=true;el._ux8u=0},10000);return r}}
-{const _t=toast;toast=function(t,bad){const el=$('toast');const live=el&&el._ux8u&&el._ux8u>Date.now()&&!el.hidden&&el.querySelector('.tundo:not(:disabled)');
-  if(!live)return _t.apply(this,arguments);let s=el.querySelector('.ux8m');if(!s){s=document.createElement('div');s.className='ux8m';el.appendChild(s)}s.textContent=t;s.classList.toggle('err',!!bad)}}
+/* toast: the second message line under a live undo button is now part of the single definition in pdf/background-send-queue-doctor-never.js */
 /* (2) accuracy: Jalali years outside 1350–1430 are not dates (a Gregorian 2026/11/04 or a typo like 140/8/1) */
 {const _p=parseJ;parseJ=function(s){const r=_p.apply(this,arguments);if(!r)return r;const y=+String(r).slice(0,4);if(y&&(y<1971||y>2052))return '';return r}}
 /* more money fields take digits only (same check and message as the fx7 ones) */

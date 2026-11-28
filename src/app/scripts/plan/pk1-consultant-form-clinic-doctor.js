@@ -33,7 +33,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   else if(t.dataset.pk1m){p.gdm=t.dataset.pk1m}else{p.gdw=t.dataset.pk1w}
   touch();recalc();if(t.dataset.pk1j&&!pk1N(p.sgda))setTimeout(()=>{try{$('p_sgda').focus()}catch(e){}},30)},true);
 /* reason required before the final confirmation */
-{const _z=finalize;finalize=async function(t){try{if(F&&F.pay&&pk1GdRaw(F.pay)&&!String(F.pay.gdwhy||'').trim()){alertMsg('برای تخفیف کلی، «دلیل تخفیف» را بنویسید.');const i=$('p_gdwhy');if(i){i.focus();i.scrollIntoView({behavior:'smooth',block:'center'})}return}}catch(e){}return _z.apply(this,arguments)}}
+/* finalize: the reason check is now part of the single definition in pdf/background-send-queue-doctor-never.js */
 /* PDF: the guide and the discount under «شرایط پرداخت» */
 {const _p=payBlock;payBlock=function(r){const b=_p.apply(this,arguments);try{const T=totals(r),L=[];if(T.sgd)L.push(`گاید جراحی: ${PK1_J[T.sgd.j]} — ${fa(T.sgd.n)} × ${fa(T.sgd.a)} = ${fa(T.sgd.amt)} تومان (در پارت جراحی منظور شده)`);
   if(T.gd)L.push(`تخفیف کلی: ${fa(T.gd.d)} تومان از ${PK1_W[T.gd.w]}${T.gd.dS&&T.gd.dP?` (پارت جراحی ${fa(T.gd.dS)} · پارت پروتز ${fa(T.gd.dP)})`:''}${T.gd.why?' — دلیل: '+T.gd.why:''} (در مبالغ بالا کسر شده)`);

@@ -26,7 +26,7 @@ function m48More(){const b=$('m11More'),bar=document.querySelector('#formBar .bt
   if(!bar)return;if(!x){bar.insertAdjacentHTML('afterbegin','<button class="btn" id="m48BarMore" type="button" data-m11more="1"></button>');x=$('m48BarMore')}
   x.textContent=M11_SHOW?'پنهان کردن انتخاب‌نشده‌ها':'درمان‌های انتخاب‌نشده'}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#m48BarMore');if(!t)return;setTimeout(()=>{try{if(!M11_SHOW)return;const c=document.querySelector('#viewForm .m11hide.m11show');if(c)c.scrollIntoView({block:'start',behavior:'smooth'})}catch(x){}},60)});
-{const _l=leaveForm;leaveForm=function(){try{const x=$('m48BarMore');if(x)x.remove()}catch(e){}return _l.apply(this,arguments)}}
+/* leaveForm: removing the bar button is now part of the single definition in pdf/background-send-queue-doctor-never.js */
 /* (2) */
 const M48_GT='بیمار نیاز به مشاوره‌ی دندانپزشک عمومی دارد';
 function m48GenCan(){return ROLE==='doctor'||ROLE==='consultant'}
@@ -51,4 +51,4 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* (5) PDFs */
 async function m48Notes(id){try{if(PF&&PF.id===id&&PF.j&&Array.isArray(PF.j.notes))return PF.j.notes;return await pk3Notes(id,true)}catch(e){return []}}
 async function m48NoteBlocks(j){try{const nb=await ntPdfBlocks(j||{});return nb.length?[ffGap(16)].concat(nb):[]}catch(e){return []}}
-{const _b=buildPDF;buildPDF=async function(r,meta){let pb=[];try{if(r&&r.id&&r.status&&r.status!=='new'&&!(meta&&meta.quote)){const N=await m48Notes(r.id);if(N&&N.length)pb=await m48NoteBlocks({notes:N})}}catch(e){}window.M48PB=pb;try{return await _b.apply(this,arguments)}finally{window.M48PB=null}}}
+/* buildPDF: the notes blocks (window.M48PB) are now part of the single definition in pdf/built-pdf-writer-a4-pages.js */
