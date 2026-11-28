@@ -14,5 +14,4 @@ async function m51Check() { const v = m51Vals(); if (!v) return; const my = ++M5
 const m51Later = ms => { clearTimeout(M51.t); M51.t = setTimeout(() => { m51Check().catch(() => { }) }, ms) };
 document.addEventListener('input', e => { const t = e.target; if (!t || !t.matches) return; if (t.matches('[data-a6h="pfile"],[data-a6h="nid"],#fxa_file,#fxa_nid')) m51Later(450) });
 document.addEventListener('change', e => { const t = e.target; if (!t || !t.matches) return; if (t.matches('[data-a6h="pfile"],[data-a6h="nid"],#fxa_file,#fxa_nid')) m51Later(50) });
-{ const _o = a6Open; a6Open = function () { M51.told = {}; M51.key = ''; M51.res = null; const r = _o.apply(this, arguments); m51Later(1200); return r } }
 { const _r = a6Render; a6Render = function () { const r = _r.apply(this, arguments); try { if (!$('m51Dup') && M51.res && (M51.res.file || (M51.res.nid || []).length)) m51Later(30) } catch (e) { } return r } }

@@ -27,7 +27,6 @@ function ux6Cv(){if(ROLE!=='staff')return;const h=$('rAll')&&$('rAll').querySele
     if(L)L.outerHTML='<button type="button" data-fx2cv="list" data-ux6rad="t">امروز</button><button type="button" data-fx2cv="list" data-ux6rad="f">فردا</button>';
     cv.querySelectorAll('[data-fx2cv]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ux6rad?(m==='list'&&RAD===b.dataset.ux6rad):b.dataset.fx2cv===m)))}
   if(TILE==='bkd'&&!a.querySelector('[data-ux6cal]'))a.insertAdjacentHTML('beforeend','<button class="btn sm ghost" type="button" data-gocal data-cmode="week" data-ux6cal="1">تقویم کامل</button>')}
-{const _fh=fx2Head;fx2Head=function(){const r=_fh.apply(this,arguments);try{ux6Cv()}catch(e){}return r}}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ux6rad]');if(!b||ROLE!=='staff')return;RAD=b.dataset.ux6rad;try{renderRecepAppts()}catch(x){}},true);
 /* «طرح درمان دوباره» (appointment cards, follow-ups): straight to the plan doctor; the general «ارجاع به پزشک…» keeps the purpose picker */
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ux6plan][data-todoc]');if(!t)return;e.preventDefault();e.stopImmediatePropagation();sendToDoctor(t.dataset.todoc,t.dataset.tdn,t.dataset.tdp)},true);

@@ -1,2 +1,1 @@
 /* ---------- gd2: کادر «تخفیف کلی سهم کلینیک» زیر جدول هزینه‌ها (درخواست مالک ۱۸ آبان)؛ مبلغ آن با هر تغییر درمان‌ها تازه می‌شود. ---------- */
-{ const _l = a6MoneyLite; a6MoneyLite = function () { const r = _l.apply(this, arguments); try { const o = $('a9gdo'); if (o) o.textContent = fa(a9GdAmt()) } catch (e) { } return r } }

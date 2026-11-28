@@ -20,16 +20,6 @@ const arbMiss=l=>(l.teeth||[]).filter(t=>{const m=(l.imp||{})[t]||{};return !m.b
     (l.teeth||[]).forEach(t=>{if(!base.teeth.includes(t)){base.teeth.push(t);base.imp[t]=l.imp[t]}});
     if(gs.length===1)base.gp[gs[0]]=num(l.price);base.n=base.teeth.length});
   S.lines=out}catch(e){}return S}}
-/* totals use the per-group tariffs */
-a6Calc=function(){const S=A6,cost=S.lines.reduce((s,l)=>s+arbAmt(l),0),pa=p=>{const v=p.m==='p'?Math.round(cost*Math.min(100,Number(toEn(String(p.v)).replace(/[^\d.]/g,''))||0)/100):num(p.v);return v};
-  const dc=pa(S.disc.c),dd=pa(S.disc.d),net=cost-dc-dd,j=S.j||{},rf=(j.refunds||[]).filter(x=>x.st==='paid').reduce((a,x)=>a+num(x.amount),0);
-  const other=(j.pays||[]).filter(p=>p.kind!=='arc'&&p.st!=='del').reduce((a,p)=>a+(p.st==='ok'||(p.kind==='chq'&&p.st==='wait')?num(p.amount):0),0);
-  const arcP=S.pays.reduce((a,p)=>a+num(p.amount),0),paid=arcP+other-rf,rem=S.rem===''?null:num(S.rem),imp=S.settled?Math.max(0,net-paid):rem!=null?Math.max(0,net-paid-rem):0;
-  return {cost,dc,dd,net,arcP,other,paid,imp,bal:net-imp-paid}};
-{const _t=a6TabHTML;a6TabHTML=function(C){let h=_t.apply(this,arguments);try{const rows=A6.lines.slice().sort((a,b)=>String(a.day).localeCompare(String(b.day))).map(l=>{
-    if(l.k!=='imp')return `<tr><td>${esc(a6Lab(l))}</td><td>${esc(l.dayJ||'')}</td><td>${fa(num(l.n))} × ${fa(num(l.price))}</td><td>${fa(num(l.n)*num(l.price))}</td></tr>`;
-    const G=arbGroups(l);return Object.keys(G).map(g=>`<tr><td>${esc(a6Lab(l))}${g?' — '+ARB_GL[g]:' — بی‌برند'}</td><td>${esc(l.dayJ||'')}</td><td>${fa(G[g].length)} × ${fa(g?arbPr(l,g):0)}</td><td>${fa(G[g].length*(g?arbPr(l,g):0))}</td></tr>`).join('')}).join('');
-  h=h.replace(/<tbody>[\s\S]*?<\/tbody>/,'<tbody>'+(rows||'<tr><td colspan="4">هنوز درمانی وارد نشده.</td></tr>')+'</tbody>')}catch(e){}return h}}
 /* the implant session: per-tooth brand/size chips and one tariff box per brand group */
 {const _l=a6Line;a6Line=function(l){let h=_l.apply(this,arguments);if(l.k!=='imp')return h;try{
   h=h.replace(/<label class="f">برند<input data-a6f="b"[^>]*><\/label>/,'');
@@ -41,8 +31,12 @@ a6Calc=function(){const S=A6,cost=S.lines.reduce((s,l)=>s+arbAmt(l),0),pa=p=>{co
   h=h.replace('<div class="a6sut">',`${chips}${miss.length&&l.teeth.length?'<p class="note arbm">برای '+fa(miss.length)+' دندان برند و سایز ثبت نشده؛ روی آن بزنید.</p>':''}${pr}<div class="a6sut">`);
   h=h.replace('دندان‌ها را بزنید','روی هر دندان بزنید و برند و سایزش را انتخاب کنید')}catch(e){}return h}}
 /* the small window */
+/* arbOpen — layers: archive/arcb1 base + prosthesis/m2 (m3: the initial-failure state of the tooth); inventory/m44b still wraps it */
 function arbOpen(l,t){const m=(l.imp||{})[t]||{},last=ARB.last||{};const b=m.b||last.b||'';const c=arbCat(b);
-  ARB.p={lid:l.id,t,had:l.teeth.includes(t),b,c,d:m.d||'',len:m.l||'',ob:c||!b?'':b};arbDraw()}
+  ARB.p={lid:l.id,t,had:l.teeth.includes(t),b,c,d:m.d||'',len:m.l||'',ob:c||!b?'':b};arbDraw();
+  try { if (ARB.p) { ARB.p.f = m3F(l, t); ARB.p.orig = (l.imp || {})[t]; ARB.p.m3 = 1; arbDraw() } } catch (e) {}}
+/* arbDraw — layers: archive/arcb1 base + prosthesis/m2 (m3: success / initial failure) + inventory/m44b (second fixture after a failure).
+   Both added rows need ARB.p, so the early return without it covers them too. */
 function arbDraw(){const P=ARB.p;if(!P)return;const C=catM()||[],c=P.c,chip=(on,attr,txt)=>`<button type="button" class="chip" ${attr} aria-pressed="${!!on}">${esc(txt)}</button>`;
   const br=ARB_GO.concat(['']).map(g=>{const L=C.filter(x=>(ARB_GL[x.g]?x.g:'')===g);if(!L.length)return '';return `<div class="arbg"><span>${g?ARB_GL[g]:'سایر'}</span><div class="chips">${L.map(x=>chip(c===x,`data-arbb="${esc(arbLbl(x))}"`,arbLbl(x))).join('')}</div></div>`}).join('');
   const ds=c?c.d:[],ls=c?(catLens(c,P.d)||[]):[];
@@ -51,8 +45,14 @@ function arbDraw(){const P=ARB.p;if(!P)return;const C=catM()||[],c=P.c,chip=(on,
   const s=mkSheet('arbSh',`<h3>دندان ${esc(toothTxt([P.t]))} — برند و سایز ایمپلنت</h3>${br}<div class="arbg"><span>برند دیگر</span><div class="chips"><input class="arbi w" data-arbbi="1" placeholder="نام برند" value="${esc(P.ob)}"></div></div>
     ${dRow}${lRow}<p class="note">${P.b?'برند: <b>'+esc(P.b)+'</b> · گروه '+(ARB_GL[arbG(P.b)]||'')+' · تعرفه '+fa(arbDef(arbG(P.b)))+' تومان':'برند را انتخاب کنید.'}</p><div class="msg" id="arbMsg" role="alert"></div>
     <div class="btns"><button type="button" class="btn" id="arbOk">ثبت</button>${P.had?'<button type="button" class="btn ghost danger" id="arbDel">برداشتن این دندان</button>':''}<button type="button" class="btn ghost" id="arbNo">انصراف</button></div>`);
-  s.hidden=false;s.setAttribute('role','dialog');s.setAttribute('aria-modal','true')}
-function arbClose(){const s=$('arbSh');if(s)s.hidden=true;ARB.p=null}
+  s.hidden=false;s.setAttribute('role','dialog');s.setAttribute('aria-modal','true');
+  try { const s = $('arbSh'), P = ARB.p; if (s && P && !s.querySelector('[data-m3f]')) { const m = s.querySelector('#arbMsg');
+    if (m) m.insertAdjacentHTML('beforebegin', `<div class="arbg m3row"><span>وضعیت</span><div class="chips"><button type="button" class="chip" data-m3f="0" aria-pressed="${!P.f}">کاشت موفق</button><button type="button" class="chip" data-m3f="1" aria-pressed="${!!P.f}">فیل اولیه</button></div></div>`) } } catch (e) {}
+  try{const s=$('arbSh'),P=ARB.p;if(s&&P&&P.m44l&&!s.querySelector('#m44bRow')){const m=s.querySelector('#arbMsg');
+    if(m)m.insertAdjacentHTML('beforebegin',`<div class="arbg m44brow" id="m44bRow"${P.f?'':' hidden'}><span>بعد از فیل، روی همین دندان دوباره کاشته شد؟</span><div class="chips"><button type="button" class="chip" data-m44b="0" aria-pressed="${!P.m44}">نه</button><button type="button" class="chip" data-m44b="1" aria-pressed="${!!P.m44}">بله، فیکسچر دوم کاشته شد</button></div><small class="note">با «ثبت»، پنجره‌ی برند و سایز فیکسچر دوم باز می‌شود؛ فیکسچر دوم ردیف جدا با تعرفه‌ی خودش می‌شود.</small></div>`)}}catch(e){}}
+/* arbClose — layers: archive/arcb1 base + prosthesis/m2 (m3: keep the initial-failure mark of a changed tooth); inventory/m44b still wraps it */
+function arbClose(){try { const P = ARB.p; if (P && P.m3) { const l = a6L(P.lid), m = l && l.imp && l.imp[P.t]; if (m && m !== P.orig) { if (P.f) m.f = 1; else delete m.f } } } catch (e) {}
+  const s=$('arbSh');if(s)s.hidden=true;ARB.p=null}
 function arbRe(){const sc=window.scrollY;a6Render();window.scrollTo(0,sc)}
 window.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('button');if(!t||!A6)return;const d=t.dataset;
   if(d.a6t||d.arbt){const l=a6L(d.l);if(!l||l.k!=='imp')return;e.preventDefault();e.stopImmediatePropagation();arbOpen(l,d.a6t||d.arbt);return}
@@ -81,4 +81,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ARB.p){arbClose()}}
     gs.forEach((g,i)=>{const T=G[g];out.push(Object.assign({},x,{id:i===0?x.id:(String(x.id).slice(0,36)+'-'+(g||'xx')),teeth:T,n:T.length,price:g?arbPr(l,g):0,imp:Object.fromEntries(T.map(t=>{const m=(l.imp||{})[t]||{};return [t,Object.assign({b:m.b||'',d:m.d||'',l:m.l||''},m.f?{f:1}:{})]}))}))})}
   payload.arc.lines=out}}catch(e){}return _a.apply(this,arguments)}}
 /* file box and PDF: every tooth with its own brand and size */
-function arbBr(l,html){const I=l.imp||{},T=(l.teeth||[]).filter(t=>I[t]&&I[t].b);if(!T.length)return '';const s=T.map(t=>toothTxt([t])+' '+I[t].b+(I[t].d&&I[t].l?' '+faD(String(I[t].d))+'×'+faD(String(I[t].l)):'')).join('، ');return html?' ('+esc(s)+')':' ('+s+')'}
+/* arbBr — layers: archive/arcb1 base + prosthesis/m2 (m3: the initial failures); r = the base text (empty without brands) */
+function arbBr(l,html){const I=l.imp||{},T=(l.teeth||[]).filter(t=>I[t]&&I[t].b);if(!T.length)return '';const s=T.map(t=>toothTxt([t])+' '+I[t].b+(I[t].d&&I[t].l?' '+faD(String(I[t].d))+'×'+faD(String(I[t].l)):'')).join('، ');const r=html?' ('+esc(s)+')':' ('+s+')';
+  try { const F = (l.teeth || []).filter(t => m3F(l, t)); if (!F.length || !r) return r; const add = ' — فیل اولیه: ' + toothTxt(F); return html ? r.replace(/\)$/, esc(add) + ')') : r.replace(/\)$/, add + ')') } catch (e) { return r }}

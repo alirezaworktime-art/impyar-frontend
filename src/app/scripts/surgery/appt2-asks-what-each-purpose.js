@@ -12,7 +12,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* ---- perf1: capped work lists + unchanged-queue skip ---- */
 let QH='',SDCAP=30,SD_TOT=0,SD_ON=false,MQCAP=30,MQ_TOT=0,MQ_ON=false;const TCAP={};
 const capBtn=(k,tot,cap)=>tot>cap?`<button class="btn sm ghost capmore" type="button" data-capmore="${k}">نمایش ${fa(Math.min(30,tot-cap))} مورد دیگر (${fa(tot-cap)} مانده)</button>`:'';
-{const _rs=renderSd;renderSd=function(){SD_TOT=0;try{return _rs.apply(this,arguments)}finally{const L=$('sdList');if(L&&SD_TOT>SDCAP&&!L.querySelector('.capmore')){L.dataset.n=SD_TOT;L.insertAdjacentHTML('beforeend',capBtn('sd',SD_TOT,SDCAP))}}};}
+/* renderSd: the capped-list layer is merged into the archive renderSd */
 /* renderMyQ: the capped-list layer is merged into surgery/queue.js */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-capmore]');if(!b)return;const k=b.dataset.capmore;
   if(k==='sd'){SDCAP+=30;renderSd()}else if(k==='mq'){MQCAP+=30;renderMyQ()}else if(k.startsWith('t:')){const t=k.slice(2);TCAP[t]=(TCAP[t]||30)+30;renderTasks()}});

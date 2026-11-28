@@ -97,7 +97,6 @@ const UX2={tc:false,role:''};
 function uxTileSync(){if(UX2.role!==ROLE){UX2.role=ROLE;UX2.tc=false}const el=$('tiles');const on=!!(UX2.tc&&ROLE&&el&&!el.hidden&&TILE);document.body.classList.toggle('ux2tc',on);
   if(el){el.querySelectorAll('.htile').forEach(b=>{const l=(b.querySelector('.hl,.tl')||{}).textContent||'',n=(b.querySelector('.hn,.tn')||{}).textContent||'';b.setAttribute('aria-label',l+(n&&n!=='—'?' ('+n+')':''));if(on)b.title=l+(n&&n!=='—'?' — '+n+' مورد':'')});
     let tt=$('ux2TT');if(!tt){tt=document.createElement('button');tt.type='button';tt.id='ux2TT';tt.textContent='همه‌ی بخش‌ها ▾';tt.setAttribute('aria-expanded','false')}if(tt.parentElement!==el)el.appendChild(tt)}}
-(function(){const _r=renderTiles;renderTiles=function(){const r=_r.apply(this,arguments);try{uxTileSync()}catch(e){}return r}})();
 document.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('#tiles [data-tile],#ux2TT');if(!t)return;
   if(t.id==='ux2TT'||(document.body.classList.contains('ux2tc')&&t.dataset.tile===TILE)){e.preventDefault();e.stopImmediatePropagation();UX2.tc=false;uxTileSync();return}
   UX2.tc=true;setTimeout(uxTileSync,0)},true);

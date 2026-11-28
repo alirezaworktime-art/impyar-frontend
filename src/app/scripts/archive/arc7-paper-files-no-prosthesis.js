@@ -1,7 +1,6 @@
 /* arc7: paper files — no prosthesis type, one stage list; archive edit opens the paper editor; path bar «مرحله‌ی بعدی» */
 const A7_ST=[['sut','منتظر کشیدن بخیه'],['unc','منتظر آنکاوری'],['imprw','منتظر قالب‌گیری'],['lab','مرحله‌ی «ساخت پروتز در لابراتوار»'],['rabt','مرحله‌ی «امتحان اباتمنت»'],['frame','مرحله‌ی «امتحان فریم»'],['jig','مرحله‌ی «تست جیگ»'],['bite','مرحله‌ی «ثبت بایت»'],['tryin','مرحله‌ی «امتحان پروتز»'],['deliv','مرحله‌ی «تحویل پروتز»']];
 const A7_TYPE={jig:'aox',bite:'ovd'};
-a6StOpts=function(){const cur=A6?A6.stage:'';return A7_ST.map(([k,l])=>`<option value="${k}"${k===cur?' selected':''}>${esc(l)}</option>`).join('')};
 /* the type is chosen for the stage (jig → All-on-X, bite → overdenture, else single/bridge) so the server's path check passes */
 /* reopen restores the saved open-flag and stage (arc6 reset them to closed / imprw on every open) */
 {const _f=a6From;a6From=function(j){const r=_f.apply(this,arguments);try{const a=(j&&j.data&&j.data.arc)||{};if(a.v6){if(a.open!==undefined)r.open=!!a.open;if(a.stage&&A7_ST.some(x=>x[0]===a.stage))r.stage=a.stage}r.type=A7_TYPE[r.stage]||'fix'}catch(e){}return r}}

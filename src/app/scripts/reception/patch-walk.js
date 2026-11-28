@@ -12,7 +12,6 @@ function renderPi() { const L = $('piList'); if (!L || ROLE !== 'staff') return;
   (QLAB || []).forEach(l => R.push({ name: l.name, why: `کار لابراتوار ${fa(f3Days(l.due))} روز از موعد گذشته · ${esc(LST[l.st] || l.st)}`, act: fileBtn(l.plan, l.name, 'pros') }));
   L.dataset.n = R.length;
   L.innerHTML = R.length ? R.map(r => `<div class="item task kg-pr"><div class="row1"><div><div class="nm">${esc(r.name || '')}</div><div class="meta">${r.why}</div></div></div><div class="acts">${r.phone ? tel(r.phone) : ''}${r.act}</div></div>`).join('') : '<div class="empty">موردی نیست.</div>'; }
-const _pwRT = renderTiles; renderTiles = function () { _pwRT(); try { renderPi(); } catch (e) { } };
 /* «برگرداندن انصراف» on a booking task that was closed by bookLost */
 document.addEventListener('click', async e => { const t = e.target.closest && e.target.closest('button[data-bkundo]'); if (!t || t.disabled) return; e.preventDefault(); e.stopImmediatePropagation();
   t.disabled = true; try { await api('bookUndo', { id: t.dataset.bkundo }); toast('انصراف برگردانده شد؛ بیمار دوباره در صف نوبت‌دهی است.'); pollQ(true); } catch (err) { toast(err.message); } finally { t.disabled = false; } }, true);

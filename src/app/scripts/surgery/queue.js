@@ -77,7 +77,6 @@ function renderBoard(el){const td=tDay(),A=QAPPT.filter(a=>a.day===td&&a.st!=='c
     <p class="note">جزئیات مالی در «داشبورد» و «حسابداری کامل».</p>`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.mbc .c[data-file]');if(t&&t.dataset.file)openFile(t.dataset.file,t.dataset.fname)});
 /* home tile + rail */
-const _tileList=tileList;tileList=function(){const L=_tileList();if(!MQ_HOME[ROLE])return L;const n=ROLE==='manager'?0:mqItems().length;return [{k:'q',c:'q',l:ROLE==='manager'?'تابلو':'صف من',s:'',n,tab:'tabQueue',view:ROLE==='staff'?'recep':undefined}].concat(L)};
 const _goTile=goTile;goTile=function(k,opt){if(k==='q'&&ROLE!=='staff'){TILE='q';TSAVE[ROLE]='q';try{localStorage.setItem('implantTile',JSON.stringify(TSAVE))}catch(e){}document.body.dataset.tile='q';if($('viewQueue').hidden)show('queue');else renderQ();renderTiles();if(!(opt&&opt.keep))window.scrollTo(0,0);return}return _goTile(k,opt)};
 function mqInit(){if($('myq'))return;const d=document.createElement('div');d.id='myq';d.dataset.tile='q';const host=ROLE==='staff'?$('rAll'):$('viewQueue');if(!host)return;host.insertBefore(d,host.firstChild)}
 /* renderQ: the «صف من» layer is merged into surgery/roles-live-queue-reception.js */

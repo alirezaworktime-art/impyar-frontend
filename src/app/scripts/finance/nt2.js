@@ -18,10 +18,6 @@ a10Box = function (M, keys, cls) { const L = a10Clean(M).filter(m => m.to.some(k
   return `<div class="a10box ${cls || ''}" role="note"><b>توضیح پرونده‌ی کاغذی</b>${L.map(m => `<div><small>${m.day ? esc(jDay(m.day)) + ' · ' : ''}${m.by ? 'نویسنده: ' + esc(m.by) + ' · ' : ''}برای ${m.to.map(k => A10T[k]).join('، ')}</small><p>${esc(m.t)}</p></div>`).join('')}</div>` };
 /* stage notes: date automatic, writer + recipients by hand */
 let NT2 = null;
-{ const _o = ntOpen; ntOpen = async function (plan, o = {}) { const r = await _o.apply(this, arguments); try { const n = o.note || null, st = $('fxNtSt'); if (!st || !NT) return r;
-    NT2 = { to: n && n.tos ? (() => { try { return JSON.parse(n.tos) } catch (e) { return [] } })() : [] };
-    st.closest('label').insertAdjacentHTML('afterend', `${nt2DL()}<div class="nt2r"><label class="f">تاریخ<input value="${esc(n ? jt(n.at) : 'امروز — خودکار')}" disabled></label><label class="f">نویسنده *<input id="nt2By" list="nt2Names" maxlength="60" value="${esc(n ? (n.author || n.by || '') : '')}" placeholder="نام نویسنده" autocomplete="off"></label></div>
-      <div class="grp"><span>برای (گیرنده)</span><div class="chips" role="group">${nt2To(NT2.to, 'data-nt2to')}</div></div>`) } catch (e) { } return r } }
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-nt2to]'); if (!t || !NT2) return; e.preventDefault(); e.stopPropagation(); const k = t.dataset.nt2to; NT2.to = NT2.to.includes(k) ? NT2.to.filter(x => x !== k) : NT2.to.concat(k); t.setAttribute('aria-pressed', String(NT2.to.includes(k))) }, true);
 /* api (nt2, two layers in one; each acts on its own action only): fxNote add / edit carries the writer and the recipients (the writer is required);
    fxArc of a paper file: every note needs a valid date (not after today) and a writer */
@@ -34,5 +30,3 @@ document.addEventListener('click', e => { const t = e.target.closest && e.target
       return Promise.reject(new Error(!m.day ? 'تاریخ توضیح را درست بنویسید (مثل ' + jDay(tDay()) + ').' : m.day > tDay() ? 'تاریخ توضیح نمی‌تواند بعد از امروز باشد.' : 'نویسنده‌ی توضیح را بنویسید.')) }
   }
   return _a.apply(this, arguments) } }
-ntItem = function (n) { const can = FXW[ROLE]; let to = []; try { to = JSON.parse(n.tos || '[]') } catch (e) { }
-  return `<div class="fxn"><div class="fxn-h"><b>${esc(FXST[n.stage] || 'سایر')}</b><small>${esc(jt(n.at))} · نویسنده: ${esc(n.author || n.by || ROLE_LBL[n.role] || '')}${to.length ? ' · برای ' + esc(to.map(k => A10T[k] || k).join('، ')) : ''}${n.upd ? ' · ویرایش ' + esc(jt(n.upd)) + (n.updBy ? ' (' + esc(n.updBy) + ')' : '') : ''}</small>${can ? `<button class="btn sm ghost" type="button" data-fxnedit="${esc(n.id)}">ویرایش</button>` : ''}</div>${n.kind === 'pen' && n.img ? `<img class="fxn-img" src="${esc(n.img)}" alt="نوشته‌ی دستی ${esc(FXST[n.stage] || '')}">` : ''}${n.text ? `<p>${esc(n.text)}</p>` : ''}</div>` };

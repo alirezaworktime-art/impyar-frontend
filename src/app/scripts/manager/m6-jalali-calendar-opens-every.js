@@ -12,5 +12,4 @@ window.addEventListener('pointerdown', m6Mark, true);
 window.addEventListener('focusin', m6Mark, true);
 window.addEventListener('mousedown', m6Mark, true);
 /* «پاک کردن» next to «امروز» */
-{ const _d = fx2DpDraw; fx2DpDraw = function () { const r = _d.apply(this, arguments); try { const y = FX2DP && FX2DP.el.querySelector('.fx2dpy'); if (y && !y.querySelector('[data-dpc]')) y.insertAdjacentHTML('beforeend', '<button type="button" data-dpc="1">پاک کردن</button>') } catch (e) {} return r } }
 window.addEventListener('click', e => { const b = e.target && e.target.closest && e.target.closest('.fx2dp button[data-dpc]'); if (!b || !FX2DP) return; e.preventDefault(); e.stopImmediatePropagation(); const i = FX2DP.inp; i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); fx2DpClose() }, true);

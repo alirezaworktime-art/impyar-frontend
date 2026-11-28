@@ -58,11 +58,6 @@ function m4A6Del(S) { try { localStorage.removeItem(m4A6Key(S)) } catch (e) {} }
 function m4A6Save() { try { if (!A6 || !A6.dirty || !m4Vis('viewArc6')) return; const o = {}; for (const k of Object.keys(A6)) { if (k === 'j' || k === 'back') continue; const v = A6[k]; o[k] = v instanceof Set ? { __set: [...v] } : v }
     localStorage.setItem(m4A6Key(A6), JSON.stringify({ at: Date.now(), when: jalali(new Date()).slash, s: o })) } catch (e) {} }
 setInterval(m4A6Save, 3000); addEventListener('pagehide', m4A6Save); document.addEventListener('visibilitychange', m4A6Save);
-{ const _o = a6Open; a6Open = function (j) { const r = _o.apply(this, arguments); const key = M4A6 + ROLE + ':' + ((j && j.id) || 'new');
-  setTimeout(async () => { try { const x = JSON.parse(localStorage.getItem(key) || 'null'); if (!x || !A6 || m4A6Key(A6) !== key) return; if (Date.now() - x.at > 7 * 864e5) { localStorage.removeItem(key); return }
-    const up = j && j.updatedAt ? Date.parse(j.updatedAt) : 0; if (up && up > x.at) { localStorage.removeItem(key); return }
-    const ok = await uxConfirm('پیش‌نویس ذخیره‌نشده‌ی این پرونده (' + (x.when || '') + ') روی این دستگاه پیدا شد. بازیابی شود؟ (انصراف = پیش‌نویس پاک شود)', 'بازیابی', false, 'اطلاعات موقت');
-    if (!ok) { localStorage.removeItem(key); return } const s = x.s || {}; for (const k in s) { const v = s[k]; A6[k] = v && v.__set ? new Set(v.__set) : v } A6.dirty = true; a6Render(); toast('پیش‌نویس پرونده بازیابی شد؛ برای ثبت «ذخیره» را بزنید.') } catch (e) {} }, 900); return r } }
 { const _s = a6Save; a6Save = async function () { const S = A6; const r = await _s.apply(this, arguments); try { if (S && (!A6 || A6 !== S || !m4Vis('viewArc6'))) m4A6Del(S) } catch (e) {} return r } }
 /* a closed tab or reload: the browser's own warning when something is unsaved */
 window.addEventListener('beforeunload', e => { try { m4A6Save(); if ((A6 && A6.dirty && m4Vis('viewArc6')) || (SURG && !SURG.arc && SURG.dirty && m4Vis('viewSurg')) || m4Sheets().length) { e.preventDefault(); e.returnValue = '' } } catch (x) {} });

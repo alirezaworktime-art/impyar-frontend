@@ -10,7 +10,6 @@ const a13Roles=l=>{const pt=l.pt||{},a=l.teeth.filter(t=>pt[t]!=='p'),p=l.teeth.
 function a13Lab(l){if(l.k==='imp')return 'پایه ایمپلنت — '+A13_RI[+l.ri||0]+' (رایگان)';
   let s=A13_TN[l.ty]||'مراحل پروتز';if(l.redo&&A13_TEETH[l.ty])s+=' (مجدد — رایگان)';if(l.ty==='cem'&&l.cem)s+=' — '+(A13_CEM[l.cem]||'');const r=A13_TEETH[l.ty]&&l.teeth&&l.teeth.length?a13Roles(l):'';return s+(r?' — '+r:'')}
 /* new and opened lines */
-{const _n=a6NewLine;a6NewLine=function(k){const l=_n.apply(this,arguments);if(l&&k==='pros'){l.n=1;l.ty='';l.pt={};l.redo=false;l.cem='';l.price=0}if(l&&k==='imp')l.ri=0;return l}}
 {const _f=a6From;a6From=function(){const S=_f.apply(this,arguments);try{S.lines.forEach(l=>{if(l.k==='reimp'){l.k='imp';l.ri=1;l.price=0}if(l.k==='pros'){l.n=1;l.pt=l.pt||{};l.teeth=l.teeth||Object.keys(l.pt)}if(l.k==='imp')l.ri=+l.ri||0});
   if(S.lines.some(l=>l.k==='pros'))S.op.add('pros');S.op.delete('reimp')}catch(e){}return S}}
 /* one session line */
@@ -27,7 +26,6 @@ function a13Lab(l){if(l.k==='imp')return 'پایه ایمپلنت — '+A13_RI[+
   h=h.replace('تعرفه‌ی هر واحد (تومان)','مبلغ این جلسه (تومان)');
   if(free)h=h.replace(`data-a6f="price" data-l="${l.id}"`,`data-a6f="price" data-l="${l.id}" disabled`);
   if(tt)h=h.replace('<div class="a6sut">',`<div class="a13ch"><p class="note">روی دندان بزنید: یک بار = <b class="a13ka">پایه</b> · دو بار = <b class="a13kp">پونتیک</b> · سه بار = برداشتن${l.teeth.length?' — '+esc(a13Roles(l)):''}</p>${a6Teeth(l)}</div><div class="a6sut">`)}catch(e){}return h}}
-{const _r=a6Render;a6Render=function(){const r=_r.apply(this,arguments);try{(A6&&A6.lines||[]).filter(l=>l.k==='pros').forEach(l=>{const pt=l.pt||{};document.querySelectorAll(`.a13ch [data-a6t][data-l="${l.id}"]`).forEach(b=>{const t=b.dataset.a6t,on=l.teeth.includes(t);b.classList.toggle('a13pa',on&&pt[t]!=='p');b.classList.toggle('a13pp',on&&pt[t]==='p');b.title=on?(pt[t]==='p'?'پونتیک':'پایه'):''})})}catch(e){}return r}}
 const a13Re=()=>{const sc=window.scrollY;a6Render();window.scrollTo(0,sc)};
 window.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('button');if(!t||!A6)return;const d=t.dataset;
   if(d.a6t){const l=a6L(d.l);if(!l||l.k!=='pros')return;e.preventDefault();e.stopImmediatePropagation();const k=d.a6t;l.pt=l.pt||{};
