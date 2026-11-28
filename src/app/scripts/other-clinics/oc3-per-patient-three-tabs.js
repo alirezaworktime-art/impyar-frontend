@@ -7,7 +7,9 @@ const oc3Svc = c => (c.svc || []).filter(s => !/^(ps_|bp_)/.test(s.k));
 const oc3SvcOf = (c, kind) => oc3Svc(c).filter(s => kind === 'pros' ? oc3Pros().includes(s.sec) : !oc3Pros().includes(s.sec));
 const oc3Qty = (x, s) => x.kind === 'items' || x.id === 'anes' ? (x.items || []).reduce((a, it) => a + itemQty(s, it), 0) : qty(s, x);
 /* the plan-form globals point at the open oc3 form while a tab form is on screen */
-function oc3Mount(secs) { if (!OC3.kf) OC3.kf = F; const f = blankForm(); f.s = secFrom(secs || {}); f.brand = 'ko'; F = f; CUR = 1; SURG = null; try { dirty = false } catch (e) { } return f }
+/* oc3Mount: oc3 base + m43d (prosthesis/m43d-temporary-prosthesis-pmma-chosen.js): that form has no prices and keeps the plain «نوع» choice of «روکش موقت» */
+function oc3Mount(secs) { if (!OC3.kf) OC3.kf = F; const f = blankForm(); f.s = secFrom(secs || {}); f.brand = 'ko'; F = f; CUR = 1; SURG = null; try { dirty = false } catch (e) { }
+  try { if (f && f.s && f.s.tmp && f.s.tmp.ip) { f.s.tmp.ip.m43d = ''; f.s.tmp.ip.es = ''; f.s.tmp.ip.dn = '' } } catch (e) { } return f }
 function oc3Unmount() { if (OC3.kf) { F = OC3.kf; OC3.kf = null } OC3.mode = ''; OC3.f = null; try { dirty = false } catch (e) { } }
 /* ===== patient page: header + tabs ===== */
 function oc2PatHTML() {
@@ -21,13 +23,23 @@ function oc2PatHTML() {
 /* the plan summary (teeth marked in the plan) shown on top of the work / prosthesis tabs */
 function oc3PlanSum() { const pl = OC2.v && OC2.v.plan; if (!pl || !Object.keys(pl.s || {}).length) return '<p class="note">برای این بیمار طرح درمان ثبت نشده است.</p>'; const S = secFrom(pl.s); return `<div class="oc3-plan-sum"><b>طرح درمان:</b> ${secLines(S).map(l => `<span><i>${esc(l.t)}:</i> ${esc(l.d)}</span>`).join('')}</div>` }
 /* ===== «طرح درمان»: all the plan sections, no price ===== */
+/* oc3PlanHTML: oc3 base + m19 (pdf/form-guide-card-notes.js: «سرجیکال گاید» card + multi-line «توضیحات پزشک» note, «دانلود PDF») */
 function oc3PlanHTML() {
+  const fresh = OC3.mode !== 'plan';
   const v = OC2.v, pl = v.plan; if (OC3.mode !== 'plan') { OC3.mode = 'plan'; OC3.f = oc3Mount(pl ? pl.s : {}); OC3.f.note = pl ? pl.note || '' : '' }
-  return `<p class="note">طرح پیشنهادی برای تحویل به ${esc(ocCl(v.pat.clinic).name)} — بدون تعرفه. درمان‌ها را مثل فرم طرح درمان علامت بزنید.</p>
+  let h = `<p class="note">طرح پیشنهادی برای تحویل به ${esc(ocCl(v.pat.clinic).name)} — بدون تعرفه. درمان‌ها را مثل فرم طرح درمان علامت بزنید.</p>
   <div class="oc3f oc3-plan" id="oc3Form">${SECTIONS.map(x => sectionHTML(x)).join('')}</div>
   <div class="fields"><label class="f">توضیح<input id="oc3note" maxlength="400" value="${esc(OC3.f.note || '')}"></label></div>
   <div class="msg" id="oc2Msg" role="alert"></div>
-  <div class="btns"><button class="btn main" type="button" id="oc3PlanSave">ذخیره‌ی طرح درمان</button><button class="btn ghost" type="button" id="oc3PlanPdf"${pl ? '' : ' disabled title="اول طرح را ذخیره کنید"'}>PDF برای کلینیک</button></div>`
+  <div class="btns"><button class="btn main" type="button" id="oc3PlanSave">ذخیره‌ی طرح درمان</button><button class="btn ghost" type="button" id="oc3PlanPdf"${pl ? '' : ' disabled title="اول طرح را ذخیره کنید"'}>PDF برای کلینیک</button></div>`;
+  /* m19 */
+  try { if (fresh) { const pl = OC2.v.plan, d = m19Split(pl ? pl.note : ''); OC3.f.note = d.note; OC3.f.h = OC3.f.h || {}; if (d.sg) OC3.f.h.sgd = d.sg; else delete OC3.f.h.sgd }
+    document.querySelectorAll('#q5Card').forEach(x => { if (!x.closest('#viewOc')) x.remove() }); /* one guide card on the page */
+    const g = q5Block().replace(/؛ مبلغ گاید را مشاور در «شرایط پرداخت» می‌نویسد\./, '.').replace('<span class="tag">برای روز جراحی</span>', '');
+    const a = '<div class="fields"><label class="f">توضیح<input id="oc3note"', i = h.indexOf(a), j = i < 0 ? -1 : h.indexOf('</label></div>', i);
+    if (j > 0) h = h.slice(0, i) + g + `<div class="fields"><label class="f">توضیحات پزشک<textarea id="oc3note" rows="3" maxlength="200" placeholder="هر توضیحی که باید به کلینیک و بیمار گفته شود">${esc(OC3.f.note || '')}</textarea></label></div>` + h.slice(j + '</label></div>'.length);
+    h = h.replace('>PDF برای کلینیک<', '>دانلود PDF برای کلینیک<') } catch (e) { }
+  return h
 }
 /* ===== «انجام کار» / «پروتز»: list of sessions + form on the clinic's services ===== */
 function oc3TabHTML(kind) {

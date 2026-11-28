@@ -2,9 +2,7 @@
    «بیمار بعداً برند را انتخاب می‌کند»; first cheque date and the cash with reception; opt 3 «۷۰٪ نقد، بقیه روز قالب‌گیری»; deposit only
    (no «نقد درمان»); POS / account names; deposit saved with the final confirmation (no sheet); referral locked until settled ---------- */
 /* (1) duplicate patient = same national id */
-id1Hit = function () { try { const nid = toEn(($('rc_nid') || {}).value || '').replace(/\D/g, ''); if (!nid) return null;
-  const all = [...ARCHIVE.map(d => ({ id: d.id, name: d.name, nid: d.nid, phone: d.phone, jalali: d.jalali })), ...QITEMS.filter(x => !ARCHIVE.some(a => a.id === x.id)).map(x => ({ id: x.id, name: x.name, nid: x.nid, phone: x.phone }))];
-  return all.find(x => x.id !== RC_EDIT && toEn(x.nid || '').replace(/\D/g, '') === nid) || null } catch (e) { return null } };
+/* (now id1Hit itself in other-clinics/id1-patient-identity-cheques.js) */
 /* (2) All on X lower jaw: only Plus fixtures (aoxMix / aoxMixHTML: merged into surgery/form-render.js) */
 document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mx]'); if (t && /^L:/.test(t.dataset.mx)) { e.preventDefault(); e.stopImmediatePropagation() } }, true);
 /* (3) consultant form: Enter confirms the field and moves to the next one */

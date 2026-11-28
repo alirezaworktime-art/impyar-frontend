@@ -27,7 +27,7 @@ const mark=s=>{try{if(s&&s.tmp&&s.tmp.ip){s.tmp.ip.m43d='1';if(!s.tmp.ip.es)s.tm
 /* a plan that is not finally approved and has nothing in «روکش موقت» yet moves to the new way */
 {const _d=fromDoc;fromDoc=function(id,d){const r=_d.apply(this,arguments);try{if(r&&r.status!=='confirmed'&&r.status!=='modified')[r.s,r.s2].concat(r.sx||[]).forEach(S=>{if(S&&S.tmp&&!NEWM(S.tmp)&&!used(S.tmp))mark(S)})}catch(e){}return r}}
 /* «سایر کلینیک‌ها»: that form has no prices and keeps the plain «نوع» choice */
-try{if(typeof oc3Mount==='function'){const _m=oc3Mount;oc3Mount=function(){const f=_m.apply(this,arguments);try{if(f&&f.s&&f.s.tmp&&f.s.tmp.ip){f.s.tmp.ip.m43d='';f.s.tmp.ip.es='';f.s.tmp.ip.dn=''}}catch(e){}return f}}}catch(e){}
+/* (now inside oc3Mount in other-clinics/oc3-per-patient-three-tabs.js) */
 {const _r=rowTotals;rowTotals=function(r,x){const o=_r.apply(this,arguments);try{if(x&&x.id==='tmp'&&r&&r.s&&NEWM(r.s.tmp)){const c=sync(r.s.tmp);o.flat=c.sum;o.m43d=c}}catch(e){console.error('m43d',e)}return o}}
 {const _c=chipsHTML;chipsHTML=function(x){try{if(x&&x.id==='tmp'&&x.groups&&x.groups.length===3){const s=AS().tmp;
     if(!NEWM(s))return _c.call(this,Object.assign({},x,{groups:[x.groups[0]]}));
