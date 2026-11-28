@@ -12,7 +12,6 @@ function l2Late(x,s){const f=l2Dept(s.dept).flags||{},now=Date.now(),pt=s.part||
 /* A3: actions plain staff cannot do are not shown */
 const l7Rec=()=>{const me=L2.me||{};return l5Sup()||!!me.recep};
 function l7Trim(root){if(!root||l7Rec())return;root.querySelectorAll('[data-l5edit],[data-l6a="renew"],[data-l6a="renewall"],[data-l6a="reproc"],[data-l6a="test"],[data-l6a="finish"]').forEach(b=>b.remove())}
-(function(){const _r=l2Render;l2Render=function(){const r=_r.apply(this,arguments);try{l7Trim($('l2In'))}catch(e){}return r}})();
 
 document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t&&t.dataset&&t.dataset.fx2sel&&t.classList.contains('fx2d')){e.preventDefault();t.click()}});
 /* fix6a: prosthesis path in the owner's order; after an approved test the order form opens for the next piece */

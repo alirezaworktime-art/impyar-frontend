@@ -1,7 +1,10 @@
 /* ---------- dental lab ---------- */
 const LB={ver:'',items:[],seg:'new',t:null,seen:null};
 const LB_SEGS=[['new','جدید',x=>x.st==='new'||x.st==='redo'],['work','در حال ساخت',x=>x.st==='recv'||x.st==='making'],['ready','ارسال‌شده',x=>x.st==='ready'],['done','تحویل‌شده',x=>x.st==='done'||x.st==='cancel']];
-function labSpecs(d){return [d.for&&LFOR[d.for]&&'ساخت: '+LFOR[d.for],d.pon&&d.pon.length&&'پونتیک: '+toothTxt(d.pon),d.type,d.mat,d.abut&&'اباتمنت '+d.abut,d.ret,d.shade&&'رنگ '+d.shade,d.sys].filter(Boolean).map(v=>`<span>${esc(v)}</span>`).join('')}
+/* labSpecs: pros2 (impression method, redo count) + lab2 (work type and the lab progress on every order card; l2CurTxt is read first).
+   The older dental-lab version was dead (the pros2 declaration replaced it). m23 still wraps it (paused-prosthesis warning). */
+function labSpecs(d){const c=l2CurTxt(d||{});const S=[d.for&&LFOR[d.for]&&'ساخت: '+LFOR[d.for],d.pon&&d.pon.length&&'پونتیک: '+toothTxt(d.pon),d.type,d.mat,d.meth&&PR2.METH[d.meth]&&'قالب: '+PR2.METH[d.meth],d.abut&&'اباتمنت '+d.abut,d.ret,d.shade&&'رنگ '+d.shade,d.sys].filter(Boolean).map(v=>`<span>${esc(v)}</span>`).join('');
+  return (d.redo?`<span class="p2redo">اصلاح ${fa(d.redo)}${d.redoFor?' · '+esc(pr2Lbl(d.redoFor)):''}</span>`:'')+S+(d&&d.wt?`<span>${esc(d.wt)}</span>`:'')+(c?`<span class="l2cur">${esc(c)}</span>`:'')}
 function labLog(log){return (log||[]).length?`<ul class="llog">${log.slice(-6).map(g=>`<li class="${g.lab?'lab':''}"><b>${esc(g.st?LST[g.st]||g.st:'پیام')}</b>${g.note?' — '+esc(g.note):''}<small>${esc(jt(g.at))}${g.by?' · '+esc(g.by):''}</small></li>`).join('')}</ul>`:''}
 function renderLab(){const n={};LB_SEGS.forEach(([k,,f])=>n[k]=LB.items.filter(f).length);
   $('lbSeg').innerHTML=LB_SEGS.map(([k,l])=>`<button type="button" data-lbs="${k}" aria-pressed="${LB.seg===k}">${l}${n[k]?' ('+fa(n[k])+')':''}</button>`).join('');

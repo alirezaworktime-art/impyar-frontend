@@ -39,7 +39,6 @@ async function l5Submit(withLab,b){l5Read();const m=$('l5Msg'),s=L5,j=PF.j,err=t
     pollQ(true);try{if(!$('viewPday').hidden)loadPday()}catch(e){}}
   catch(e){err(e.message)}finally{b.disabled=false}}
 /* entry points: referral card, prosthesis-day cards, patient name */
-(function(){const _r=l3RenderRef;l3RenderRef=function(){const r=_r.apply(this,arguments);const b=$('l3Ref');if(b){b.querySelectorAll('[data-l3lab]').forEach(x=>{x.dataset.l5=x.dataset.l3lab;x.dataset.l5n=x.dataset.l3n;delete x.dataset.l3lab;x.textContent='شروع جلسه‌ی پروتز'});b.querySelectorAll('.l3it .nm').forEach((s,i)=>{const p=QPREF[i];if(p){s.classList.add('l5nm');s.dataset.l5nm=p.id;s.dataset.l5n=p.name;s.dataset.aid=p.aid}})}return r}})();
 document.addEventListener('click',e=>{const nmEl=e.target.closest&&e.target.closest('[data-l5nm]');if(nmEl&&ROLE&&['surgery','doctor'].includes(ROLE)){l5Open(nmEl.dataset.l5nm,nmEl.dataset.l5n,nmEl.dataset.aid||'');return}
   const t=e.target.closest&&e.target.closest('button');if(!t)return;
   if(t.dataset.l5){e.stopImmediatePropagation();l5Open(t.dataset.l5,t.dataset.l5n,t.dataset.aid||'');return}

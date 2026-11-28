@@ -131,9 +131,6 @@ function l8Check(msgId){try{if(typeof h9Read==='function')h9Read()}catch(e){}con
 (function(){const _s=l5Submit;l5Submit=async function(withLab,b){if(withLab&&LO&&LO.h9&&!l8Check('l5Msg'))return;return _s.apply(this,arguments)}})();
 (function(){const _a=api;api=function(action,body){try{if(body&&body.order&&typeof body.order==='object'&&(action==='labNew'||action==='lab4New'||action==='prosSess')&&LO&&LO.h9){const H=LO.h9;Object.assign(body.order,{implant:(H.imp||[]).slice(0,1),ctype:(H.itype||[]).slice(),cmat:(H.imat||[]).slice()})}
   if(action==='lab4New'&&body&&typeof L4N!=='undefined'&&L4N&&L4N.box&&body.box===undefined)body.box=L4N.box}catch(e){}return _a.apply(this,arguments)}})();
-/* the fields in the order detail */
-(function(){const _r=l2Render;l2Render=function(){const r=_r.apply(this,arguments);try{const d=((L2.ord||{}).order||{}).data||{},el=$('l2In');if(el&&(d.implant||(d.ctype||[]).length)){const i=el.querySelector('.l2info');if(i)i.insertAdjacentHTML('beforeend',`<div><small>ایمپلنت</small><b>${esc(d.implant||'—')}</b></div><div><small>روکش ایمپلنت</small><b dir="auto">${esc([(d.ctype||[]).join('، '),(d.cmat||[]).join('، ')].filter(Boolean).join(' · ')||'—')}</b></div>`)}
-  l8StepBtns()}catch(e){}return r}})();
 
 /* ===== files in «دستور کار»: clickable drop box, allowed types checked first, per-file progress and retry ===== */
 const L8_OKX=/\.(stl|ply|obj|zip|rar|7z|dcm|3oxz|constructioninfo|jpg|jpeg|jfif|png|webp|heic|heif|gif|bmp|tif|tiff|pdf|mp4|mov|html|htm|txt|webm|ogg|oga|m4a|mp3|wav|aac)$/i;

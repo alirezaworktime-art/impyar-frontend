@@ -17,7 +17,5 @@ const l2Ago=iso=>{if(!iso)return '';const m=Math.max(0,Math.round((Date.now()-Da
 async function l2Defs(force){if(L2.defs&&!force&&(!L2.dv||L2.defs.v===L2.dv))return L2.defs;const j=await api('labDefs',{op:'get'});L2.defs=j;L2.dv=j.v;return j}
 function l2Dots(steps){return (steps||[]).length?`<div class="l2dots" aria-hidden="true">${steps.map(s=>`<i class="${s.st}" title="${esc(s.dname+' · '+L2_STL[s.st])}"></i>`).join('')}</div>`:''}
 function l2CurTxt(d){const c=d&&d.cur;if(!c||!c.t)return '';return c.all?'همه‌ی مراحل ساخت انجام شد':`مرحله‌ی ${fa(c.n+1>c.t?c.t:c.n+1)} از ${fa(c.t)}${c.d?': '+c.d:''}${c.by?' · در دست '+c.by:''}`}
-/* the clinic side sees the lab progress on every order card */
-(function(){const _s=labSpecs;labSpecs=function(d){const c=l2CurTxt(d||{});return _s.apply(this,arguments)+(d&&d.wt?`<span>${esc(d.wt)}</span>`:'')+(c?`<span class="l2cur">${esc(c)}</span>`:'')}})();
 function l2Btn(l){return `<div class="acts" style="margin-top:6px"><button class="btn sm ghost" type="button" data-l2open="${esc(l.id)}">مراحل، فایل‌ها و اسکن${l.no?' · #'+l2No(l.no):''}</button></div>`}
 

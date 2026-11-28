@@ -22,8 +22,6 @@ const uxPrompt=(label,def,type,ok,title)=>uxAsk({title:title||label.replace(/[:�
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&UXA){e.preventDefault();e.stopImmediatePropagation();UXA.done(null)}},true);
 document.addEventListener('pointerdown',e=>{if(UXA&&e.target===UXA.s){e.stopImmediatePropagation();UXA.done(null)}},true);
 document.addEventListener('click',e=>{if(UXA&&e.target===UXA.s){e.stopImmediatePropagation();e.preventDefault()}},true);
-/* the lab dialogs use the same one */
-l2Ask=function(title,fields,okL){return uxAsk({title,fields:(fields||[]).map(f=>Object.assign({},f)),ok:okL||'ثبت',danger:/حذف|ابطال|باطل|لغو|برگشت/.test(okL||'')})};
 /* every «… دوباره بزنید» button: the second tap is replaced by the dialog */
 const UXARM=/دوباره بزنید|دوباره بزن/;
 document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('button,[role=button],a');if(b&&!b.dataset.armed&&!b._uxGo)b._uxTxt=b.textContent.trim()},true);

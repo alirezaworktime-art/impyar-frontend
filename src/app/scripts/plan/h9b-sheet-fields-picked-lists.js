@@ -9,7 +9,5 @@ function h9Opts(k){const H=LO.h9,uniq=a=>[...new Set(a.map(x=>String(x||'').trim
   if(k==='asst')return uniq(ASSTS());
   if(k==='shade'){if(!H9COL)h9Colors();return uniq((H9COL||[]).concat(PR2.SHADES||[]))}
   return []}
-(function(){const _f=h9Field;h9Field=function(k,l,o){if(!['doc','brand','asst','shade'].includes(k)||ROLE==='lab')return _f.apply(this,arguments);const v=LO.h9[k]||'',L=h9Opts(k);if(v&&!L.includes(v))L.unshift(v);
-  return `<label class="h9f"><span>${l}</span><select data-h9f="${k}"${k==='shade'?' class="ltr"':''}><option value="">—</option>${L.map(x=>`<option value="${esc(x)}"${x===v?' selected':''}>${esc(x)}</option>`).join('')}</select></label>`}})();
 document.addEventListener('change',e=>{const s=e.target;if(s&&s.tagName==='SELECT'&&s.dataset&&s.dataset.h9f&&LO&&LO.h9){LO.h9[s.dataset.h9f]=s.value;if(s.dataset.h9f==='shade')LO.shade=s.value;if(s.dataset.h9f==='brand')LO.sys=s.value;if(s.dataset.h9f==='doc')LO.doc=s.value}});
 

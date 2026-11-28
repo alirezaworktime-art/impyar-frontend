@@ -22,9 +22,6 @@ renderLab=function(){if(ROLE!=='lab')return;if(!/^s_/.test(LB.seg)||!l4Lbl(LB.se
   try{renderTiles()}catch(e){}l4Fab();
   const rows=LB.items.filter(x=>l4Act(x)&&l4F(x)===k).sort((a,b)=>((b.st==='redo')-(a.st==='redo'))||(((b.data||{}).prio==='urgent')-((a.data||{}).prio==='urgent'))||String(a.due).localeCompare(String(b.due)));
   $('lbList').innerHTML=`<h3 class="pf-h l4h">${esc(l4Lbl(k))} <small class="meta">${rows.length?fa(rows.length)+' کار':''}</small></h3>`+(rows.length?rows.map(l4Card).join(''):'<div class="empty">کاری در این مرحله نیست.</div>')};
-/* order sheet: Hani steps stay; show the stage and clinic */
-(function(){const _r=l2Render;l2Render=function(){const r=_r.apply(this,arguments);try{const box=$('l2In'),o=L2.ord.order,d=o.data||{};const p=box&&box.querySelector('.l2info');
-  if(p&&!box.querySelector('.l4st'))p.insertAdjacentHTML('beforebegin',`<div class="meta l4st">مرحله: <b>${esc(l4Lbl(l4F(o)))}</b>${d.clinic?' · کلینیک <b>'+esc(d.clinic)+'</b>':''}</div>`)}catch(e){}return r}})();
 /* «دریافت و شروع کار» in the «رزین پیچ‌شونده» tab: the short resin process is preselected */
 const L4RS=990001;
 async function l4Ready(lid,t){if(!t.dataset.armed){t.dataset.armed='1';const o=t.textContent;t.textContent='دوباره بزنید تا ارسال شود';setTimeout(()=>{if(t.isConnected){delete t.dataset.armed;t.textContent=o}},4000);return}

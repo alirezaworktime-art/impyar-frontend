@@ -41,9 +41,6 @@ function f3Items(R,td){
       act:`<button class="btn sm main" type="button" data-pbook="${esc(x.id)}" data-pbn="${esc(x.name)}" data-pbp="${esc(x.phone||'')}" data-pbk="${b[0]}" data-pbnote="${esc(b[1])}">تعیین نوبت ${esc(b[1]||AKL[b[0]]||'')}</button>`,extra:tel(x.phone)+fileBtn(x.id,x.name,'pros')})});
   QLAB.forEach(l=>R.push({pid:l.plan,c:'pros',name:l.name,why:`کار لابراتوار ${fa(f3Days(l.due))} روز از موعد گذشته · ${esc(LST[l.st]||l.st)}`,w:30+Math.min(f3Days(l.due),20),act:fileBtn(l.plan,l.name,'pros').replace('class="btn sm ghost"','class="btn sm main"'),extra:''}));
 }
-/* lab order specs: impression method, redo count */
-function labSpecs(d){const S=[d.for&&LFOR[d.for]&&'ساخت: '+LFOR[d.for],d.pon&&d.pon.length&&'پونتیک: '+toothTxt(d.pon),d.type,d.mat,d.meth&&PR2.METH[d.meth]&&'قالب: '+PR2.METH[d.meth],d.abut&&'اباتمنت '+d.abut,d.ret,d.shade&&'رنگ '+d.shade,d.sys].filter(Boolean).map(v=>`<span>${esc(v)}</span>`).join('');
-  return (d.redo?`<span class="p2redo">اصلاح ${fa(d.redo)}${d.redoFor?' · '+esc(pr2Lbl(d.redoFor)):''}</span>`:'')+S}
 /* prosthesis board / list cards */
 function pr2Flag(x){return x.stage==='pause'?`<div class="meta"><b class="late">متوقف${x.pause&&x.pause.stop?' — ادامه نمی‌دهد':''}</b>${x.pause&&x.pause.until&&!x.pause.stop?' · تماس '+esc(jDay(x.pause.until)):''}</div>`:x.stage==='fail'?'<div class="meta"><b class="late">شکست ایمپلنت</b></div>':x.repair?`<div class="meta"><b class="late">مشکل بعد از تحویل: ${esc(PR2.REP[x.repair]||'')}</b></div>`:x.wait?'<div class="meta"><b>نتیجه‌ی تست ثبت نشده</b></div>':''}
 function prBoardCard(x){const td=tDay(),days=x.at?Math.max(0,dDiff(td,x.at.slice(0,10))):0,l=x.lab,late=l&&l.due&&l.due<td&&l.st!=='ready',rd=['heal','tmpd'].includes(x.stage)&&x.ready&&x.ready<=td,rn=x.redo&&x.redo[x.stage==='lab'?x.after:x.stage];

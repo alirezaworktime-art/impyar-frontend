@@ -13,7 +13,9 @@ function h9Chart(g,sel){const row=j=>`<div class="h9row" dir="ltr">${H9N.map(n=>
   return `<div class="h9chart"><div class="h9ct">${g==='base'?'پایه':'پونتیک'}</div>${row('U')}<div class="h9line"></div>${row('L')}</div>`}
 function h9T(g,k,n,sel){return `<button type="button" class="h9t" data-h9t="${g}" data-k="${k}" aria-pressed="${sel.includes(k)}">${n}</button>`}
 function h9Opt(g,v){const on=(LO.h9[g]||[]).includes(v);return `<button type="button" class="h9o" data-h9o="${g}" data-v="${esc(v)}" aria-pressed="${on}"><i></i><span dir="auto">${esc(v)}</span></button>`}
-function h9Field(k,l,o){return `<label class="h9f"><span>${l}</span><input data-h9f="${k}" value="${esc(LO.h9[k]||'')}"${o||''}></label>`}
+/* h9Field: hani (text input) + h9b (doctor / brand / assistant / shade are picked from lists, except in the lab) */
+function h9Field(k,l,o){if(!['doc','brand','asst','shade'].includes(k)||ROLE==='lab')return `<label class="h9f"><span>${l}</span><input data-h9f="${k}" value="${esc(LO.h9[k]||'')}"${o||''}></label>`;const v=LO.h9[k]||'',L=h9Opts(k);if(v&&!L.includes(v))L.unshift(v);
+  return `<label class="h9f"><span>${l}</span><select data-h9f="${k}"${k==='shade'?' class="ltr"':''}><option value="">—</option>${L.map(x=>`<option value="${esc(x)}"${x===v?' selected':''}>${esc(x)}</option>`).join('')}</select></label>`}
 function h9HTML(j){const H=h9Init(j);
   return `<div class="h9sheet"><div class="h9hd"><div class="h9no">شماره: <b>—</b><small>(بعد از ارسال، شماره‌ی لابراتوار)</small></div><div class="h9tt">لابراتوار تخصصی حانی</div></div>
     <div class="h9grid">${h9Field('doc','نام پزشک :',' list="h9Docs"')}${h9Field('brand','برند :')}${h9Field('asst','نام دستیار :',' list="h9Assts"')}${h9Field('name','نام بیمار:')}${h9Field('file','شماره پرونده :')}${h9Field('day','تاریخ :',' inputmode="numeric"')}${h9Field('shade','رنگ کار :',' class="ltr" list="h9Shades"')}${h9Field('age','سن بیمار :',' inputmode="numeric"')}</div>
@@ -93,7 +95,6 @@ const H9NEED='روی چارت «پایه» دندان‌های پایه را ب�
   if(withLab&&LO&&LO.h9){try{loRead();await h9Map()}catch(e){const m=$('l5Msg');if(m){m.className='msg err';m.textContent=e.message}return}
   try{const f=await h9Sheet();LOF=LOF.filter(x=>!/^برگه-دستورکار-/.test(x.name));LOF.unshift(f)}catch(e){}}return _s.apply(this,arguments)}})();
 var H9SKIP=0;/* read by openPmap (prosthesis/pros2-prosthesis-day-doctor-abutment.js) */
-(function(){const _o=l3OpenLab;l3OpenLab=async function(){H9SKIP=Date.now()+3000;return _o.apply(this,arguments)}})();
 /* sheet clicks */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-h9t],[data-h9o],[data-h9p],#h9Draw');if(!b||!LO||!LO.h9)return;e.stopPropagation();h9Read();const H=LO.h9;
   if(b.dataset.h9t){const g=b.dataset.h9t,k=b.dataset.k,o=g==='base'?'pon':'base';H[g]=H[g].includes(k)?H[g].filter(v=>v!==k):H[g].concat(k);H[o]=H[o].filter(v=>v!==k);h9Apply();renderFile();return}

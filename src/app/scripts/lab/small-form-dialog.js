@@ -1,6 +1,3 @@
 /* ---------- a small form dialog ---------- */
-function l2Ask(title,fields,okL){return new Promise(res=>{const s=mkSheet('l2AskSh',`<h3>${esc(title)}</h3><div class="fields">${fields.map((f,i)=>f.type==='html'?f.html:`<label class="f${f.full?' full':''}">${esc(f.l)}${f.type==='textarea'?`<textarea data-ak="${i}" rows="3">${esc(f.v||'')}</textarea>`:f.type==='select'?`<select data-ak="${i}">${f.opts.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(f.v??'')?' selected':''}>${esc(l)}</option>`).join('')}</select>`:`<input data-ak="${i}" value="${esc(f.v||'')}"${f.list?` list="${f.list}"`:''}>`}</label>`).join('')}</div><div class="msg" id="l2AskM"></div><div class="btns"><button class="btn" type="button" id="l2AskOk">${esc(okL||'ثبت')}</button><button class="btn ghost" type="button" id="l2AskNo">انصراف</button></div>`);
-  s.style.zIndex=70;s.hidden=false;const done=v=>{s.hidden=true;res(v)};
-  $('l2AskNo').onclick=()=>done(null);$('l2AskOk').onclick=()=>{const o={};fields.forEach((f,i)=>{const e=s.querySelector(`[data-ak="${i}"]`);if(e&&f.k)o[f.k]=e.value.trim()});const bad=fields.find(f=>f.req&&!o[f.k]);if(bad){$('l2AskM').className='msg err';$('l2AskM').textContent=bad.l+' را بنویسید.';return}done(o)};
-  const first=s.querySelector('[data-ak]');if(first)setTimeout(()=>first.focus(),50)})}
-
+/* l2Ask: the in-app dialog of ux5 (uxAsk); the older own sheet was dead (ux5 replaced it). m26 still wraps it (extra account fields). */
+function l2Ask(title,fields,okL){return uxAsk({title,fields:(fields||[]).map(f=>Object.assign({},f)),ok:okL||'ثبت',danger:/حذف|ابطال|باطل|لغو|برگشت/.test(okL||'')})}
