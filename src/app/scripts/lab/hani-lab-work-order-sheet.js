@@ -85,12 +85,14 @@ async function h9Sheet(){const H=LO.h9,W=1240,Hh=1754,c=document.createElement('
 /* send: map → order (existing flow) → the sheet image as an order file */
 (function(){const _s=loSend;loSend=async function(t){try{loRead();await h9Map()}catch(e){const m=$('loMsg');if(m){m.className='msg err';m.textContent=e.message}return}
   if(LO&&LO.h9){try{const f=await h9Sheet();if(!LOF.some(x=>x.name===f.name))LOF.unshift(f)}catch(e){}}return _s.apply(this,arguments)}})();
-(function(){const _s=l5Submit;l5Submit=async function(withLab,b){if(withLab&&LO&&LO.h9){try{loRead();await h9Map()}catch(e){const m=$('l5Msg');if(m){m.className='msg err';m.textContent=e.message}return}
-  try{const f=await h9Sheet();LOF=LOF.filter(x=>!/^برگه-دستورکار-/.test(x.name));LOF.unshift(f)}catch(e){}}return _s.apply(this,arguments)}})();
 const H9NEED='روی چارت «پایه» دندان‌های پایه را بزنید.';
 (function(){const _s=loSend;loSend=async function(t){if(LO&&LO.h9){loRead();if(!LO.h9.base.length){const m=$('loMsg');if(m){m.className='msg err';m.textContent=H9NEED}return}}return _s.apply(this,arguments)}})();
-(function(){const _s=l5Submit;l5Submit=async function(withLab,b){if(withLab&&LO&&LO.h9){loRead();if(!LO.h9.base.length){const m=$('l5Msg');if(m){m.className='msg err';m.textContent=H9NEED;m.scrollIntoView({block:'center'})}return}}return _s.apply(this,arguments)}})();
-var H9SKIP=0;(function(){const _o=openPmap;openPmap=async function(){if(Date.now()<H9SKIP)return;return _o.apply(this,arguments)}})();
+/* l5Submit with a lab order and the sheet (two former layers of this file, in their old order):
+   (1) the base teeth must be marked (H9NEED); (2) map → then the sheet image becomes the first order file */
+(function(){const _s=l5Submit;l5Submit=async function(withLab,b){if(withLab&&LO&&LO.h9){loRead();if(!LO.h9.base.length){const m=$('l5Msg');if(m){m.className='msg err';m.textContent=H9NEED;m.scrollIntoView({block:'center'})}return}}
+  if(withLab&&LO&&LO.h9){try{loRead();await h9Map()}catch(e){const m=$('l5Msg');if(m){m.className='msg err';m.textContent=e.message}return}
+  try{const f=await h9Sheet();LOF=LOF.filter(x=>!/^برگه-دستورکار-/.test(x.name));LOF.unshift(f)}catch(e){}}return _s.apply(this,arguments)}})();
+var H9SKIP=0;/* read by openPmap (prosthesis/pros2-prosthesis-day-doctor-abutment.js) */
 (function(){const _o=l3OpenLab;l3OpenLab=async function(){H9SKIP=Date.now()+3000;return _o.apply(this,arguments)}})();
 /* sheet clicks */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-h9t],[data-h9o],[data-h9p],#h9Draw');if(!b||!LO||!LO.h9)return;e.stopPropagation();h9Read();const H=LO.h9;

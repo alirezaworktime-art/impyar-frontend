@@ -4,13 +4,16 @@ function discPct(r){const p=r.pay||{};const v=p.disc===undefined||String(p.disc)
 function discOn(r){try{const T=totals(PV(r,1));return discPct(r)>0&&pctS(r)>=100&&(!T.pros||pctP(r)>=100)}catch(e){return false}}
 const discAmt=(r,T)=>discOn(r)?rnd(T*discPct(r)/100):0;
 /* cheques and cash that follow from the plan's payment terms (same split as the patient-file cheque sheet) */
-/* chqFor: fin2 base + fix7d M6 (a blank cheque count is one cheque: fx7N1) + o3s (option 3: pct% of the surgery part in cash before surgery, no cheques).
-   pl10 also had an option-3 layer here; o3s always replaced every field it set, so it is not repeated. */
+/* chqFor: fin2 base + fix7d M6 (a blank cheque count is one cheque: fx7N1) + pl10 (option 3, whole plan) + o3s (option 3: pct% of the
+   surgery part in cash before surgery, no cheques), in that order. */
 function chqFor(r0){const r=fx7N1(r0),pv=PV(r,1),T=totals(pv),b=effBrand(r),S=T.surg[b]||0,P=T.pros||0,p=r.pay||{},out=[];
   if(S){if(p.opt==='1'){const n=num(p.n1);if(n){const x=splitPay(S,fracS(r),n);for(let i=0;i<n;i++)if(x.am[i]>0)out.push({part:'s',amount:x.am[i]})}}else{const x=splitPay(S,fracS(r),1);if(x.rest)out.push({part:'s',amount:x.rest})}}
   if(P){const n=num(p.n3);if(n){const x=splitPay(P,fracP(r),n);for(let i=0;i<n;i++)if(x.am[i]>0)out.push({part:'p',amount:x.am[i]})}}
   const cS=splitPay(S,fracS(r),1).c,cP=splitPay(P,fracP(r),1).c,disc=discOn(r)?discAmt(r,S+P):0,dS=discOn(r)?discAmt(r,S):0;
-  const o={S,P,cash:cS+cP-disc,cashS:cS-dS,cashP:cP-(disc-dS),disc,chq:out};
+  let o={S,P,cash:cS+cP-disc,cashS:cS-dS,cashP:cP-(disc-dS),disc,chq:out};
+  /* pl10 (consultant/pl10-duplicate-alarm-national-id.js): option 3 = pct% of the whole plan; o3s below replaces it, but pl10 alone still applies
+     while o3s's script is not loaded yet (or if it throws) — exactly as the old layers */
+  try { if (pl10O3(r0)) { const C = pl10Cash(r0, o.S, o.P), all = o.S + o.P, cash = pl10Done(r0.id) ? all : C, cS = Math.min(o.S, cash); o = Object.assign({}, o, { cash, cashS: cS, cashP: cash - cS, disc: 0, chq: [] }) } } catch (e) { }
   try{if(pl10O3(r0)){const C=Math.min(o.S,o3sCash(r0,o.S));return Object.assign({},o,{cash:C,cashS:C,cashP:0,disc:0,chq:[]})}}catch(e){}return o}
 const BANKS=['ملی','ملت','صادرات','تجارت','سپه','رفاه','کشاورزی','مسکن','پاسارگاد','پارسیان','سامان','اقتصاد نوین','شهر','آینده','دی','سینا','قرض‌الحسنه رسالت','سایر'];
 let PC=null;

@@ -24,8 +24,8 @@ function bkdRender(){const L=$('bkdList');if(!L)return;const td=tDay(),A=BKD.ite
 (function(){const _t=TILES.staff;TILES.staff=()=>{const L=_t();const i=L.findIndex(t=>t.k==='surg');L.splice(i+1,0,{k:'bkd',c:'chk',l:'نوبت‌های داده‌شده',s:'به تفکیک روز و نوع کار',n:bkdCount(),view:'recep'});return L}})();
 TILE_HD.staff.surg='نوبت‌دهی';TILE_HD.staff.bkd='نوبت‌های داده‌شده (روزهای آینده)';
 (function(){const _g=goTile;goTile=function(k){const r=_g.apply(this,arguments);try{if(ROLE==='staff'&&TILE==='bkd'){bkdLoad(true);bkdRender()}}catch(e){}return r}})();
-/* the prosthesis doctor's day view: today only the referred appointments */
-(function(){const _l=loadPday;loadPday=async function(){const r=await _l.apply(this,arguments);try{if(ROLE==='surgery'&&PD&&PD.appts){const td=tDay();PD.appts=PD.appts.filter(a=>a.day!==td||a.ref||l3Of(a.plan)||a.st==='done');renderPday()}}catch(e){}return r}})();
+/* the prosthesis doctor's day view (today only the referred appointments): merged into prosthesis loadPday */
+/* tileHead (reception «نوبت‌دهی» buttons): merged into the archive tileHead */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-bkm],#bkmX,[data-apref],[data-bkdf],[data-bkdre]');if(!t)return;
   if(t.dataset.bkm){bkOpen(t.dataset.bkm);return}
   if(t.id==='bkmX'){$('bkmSheet').hidden=true;return}

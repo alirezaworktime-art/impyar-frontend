@@ -8,11 +8,7 @@ const pk1N=v=>{const n=Number(toEn(String(v==null?'':v)).replace(/[^\d.]/g,''));
 function pk1Sgd(p){p=p||{};const j=PK1_J[p.sgdj]?p.sgdj:'';const a=Math.round(pk1N(p.sgda));if(!j||!a)return {n:0,amt:0,j:'',a:0};const n=j==='B'?2:1;return {n,amt:n*a,j,a}}
 function pk1GdRaw(p){p=p||{};const v=pk1N(p.gdv);if(!v)return null;return {m:p.gdm==='p'?'p':'a',v,w:PK1_W[p.gdw]?p.gdw:'c',why:String(p.gdwhy||'').trim()}}
 function pk1GdAmt(p,gross){const g=pk1GdRaw(p);if(!g||!(gross>0))return 0;return Math.min(gross,g.m==='p'?Math.round(gross*Math.min(100,g.v)/100):Math.round(g.v))}
-/* totals: guide added to the surgery part of every brand; the global discount taken off the surgery / prosthesis parts (percent per part; a toman amount split by the selected brand's parts) */
-{const _t=totals;totals=function(r){const T=_t.apply(this,arguments);if(PK1.off)return T;try{const p=(r&&r.pay)||{};const sg=pk1Sgd(p);if(sg.amt){BRANDS.forEach(b=>{T.surg[b.k]+=sg.amt});T.sgd=sg}
-  const g=pk1GdRaw(p);if(g){let bk=r.brand&&r.brand!=='ref'&&T.surg[r.brand]!==undefined?r.brand:BRANDS.reduce((a,b)=>T.surg[b.k]<T.surg[a]?b.k:a,'ir');
-    const S=T.surg[bk]||0,P=T.pros||0,d=pk1GdAmt(p,S+P),dS=g.m==='p'?Math.min(S,Math.round(S*Math.min(100,g.v)/100)):(S+P?Math.round(d*S/(S+P)):0),dP=Math.min(P,d-dS);
-    T.gd={d,dS,dP,w:g.w,why:g.why,brand:bk};BRANDS.forEach(b=>{const s=T.surg[b.k];T.surg[b.k]=Math.max(0,s-(g.m==='p'?Math.min(s,Math.round(s*Math.min(100,g.v)/100)):dS))});T.pros=Math.max(0,P-dP)}}catch(e){}return T}}
+/* totals: guide + global discount — merged into totals (prosthesis/calc.js), switched off by PK1.off */
 /* the recorded sessions' actual cost: sessions priced without the file-level items, then the guide once and the surgery share of the discount once */
 /* (surgActual: guide / discount layer merged into surgery/surgery-day.js) */
 /* form block (consultant) */

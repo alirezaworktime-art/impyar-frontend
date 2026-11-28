@@ -1,10 +1,14 @@
 /* ---------- psess: «جلسه‌ی پروتز» — full read-only file for the prosthesis doctor + work of this session + lab order ---------- */
 const L5W={impr:'قالب‌گیری',rscr:'امتحان رزین پیچ‌شونده',rabt:'امتحان رزین اباتمنت',deliv:'تحویل روکش',other:'سایر'};
 var L5=null,QPSESS=[];
-async function l5Open(id,name,aid){LOF=[];await openFile(id,name,'pros');if(!PF||PF.id!==id)return;
-  if(!PF.j.pros){toast('مرحله‌ی پروتز این بیمار شروع نشده؛ در پرونده «شروع از قالب‌گیری» را بزنید.',1);return}
-  L5={id,aid:aid||'',work:'',res:'',note:''};PF.sess=L5;const st=PF.j.pros.stage;L5.work=['heal','tmpd','impr','lab'].includes(st)?'impr':st==='deliv'?'deliv':PR2.TEST&&PR2.TEST.includes(st)?(st==='rabt'?'rabt':'rscr'):'';
-  LO=null;renderFile();try{$('pfSheet').querySelector('.in').scrollTop=0}catch(e){}}
+/* l5Open: base + pk4 (plan/pk4-login-step-types-paper.js: a session without pk4 data gets pk4Reset + redraw; this part runs on every
+   non-throwing exit, also when the file is not the one asked for or has no prosthesis stage) */
+async function l5Open(id,name,aid){LOF=[];await openFile(id,name,'pros');
+  if(PF&&PF.id===id){
+  if(!PF.j.pros)toast('مرحله‌ی پروتز این بیمار شروع نشده؛ در پرونده «شروع از قالب‌گیری» را بزنید.',1);
+  else{L5={id,aid:aid||'',work:'',res:'',note:''};PF.sess=L5;const st=PF.j.pros.stage;L5.work=['heal','tmpd','impr','lab'].includes(st)?'impr':st==='deliv'?'deliv':PR2.TEST&&PR2.TEST.includes(st)?(st==='rabt'?'rabt':'rscr'):'';
+  LO=null;renderFile();try{$('pfSheet').querySelector('.in').scrollTop=0}catch(e){}}}
+  try{if(L5&&!L5.pk4){pk4Reset();renderFile()}}catch(e){}}
 function l5Read(){if(!L5)return;const n=$('ps_note');if(n)L5.note=n.value;try{if(LO)loRead()}catch(e){}}
 function l5Render(){const {j}=PF,s=L5,name=(fromDoc(PF.id,j.data||{}).h||{}).name||'';$('pfTitle').textContent='جلسه‌ی پروتز · '+name;
   const stg=j.pros?(PSTN[j.pros.stage]||pr2Lbl(j.pros.stage,pr2T(j.pros))||j.pros.stage):'';
@@ -35,7 +39,6 @@ async function l5Submit(withLab,b){l5Read();const m=$('l5Msg'),s=L5,j=PF.j,err=t
     pollQ(true);try{if(!$('viewPday').hidden)loadPday()}catch(e){}}
   catch(e){err(e.message)}finally{b.disabled=false}}
 /* entry points: referral card, prosthesis-day cards, patient name */
-(function(){const _p=pdCard;pdCard=function(id,name){return _p.apply(this,arguments).replace('<span class="nm">',`<span class="nm l5nm" data-l5nm="${esc(id)}" data-l5n="${esc(name)}" title="باز کردن جلسه‌ی پروتز">`).replace('<div class="acts">',`<div class="acts">${id?`<button class="btn sm main" type="button" data-l5="${esc(id)}" data-l5n="${esc(name)}">جلسه‌ی پروتز</button>`:''}`)}})();
 (function(){const _r=l3RenderRef;l3RenderRef=function(){const r=_r.apply(this,arguments);const b=$('l3Ref');if(b){b.querySelectorAll('[data-l3lab]').forEach(x=>{x.dataset.l5=x.dataset.l3lab;x.dataset.l5n=x.dataset.l3n;delete x.dataset.l3lab;x.textContent='شروع جلسه‌ی پروتز'});b.querySelectorAll('.l3it .nm').forEach((s,i)=>{const p=QPREF[i];if(p){s.classList.add('l5nm');s.dataset.l5nm=p.id;s.dataset.l5n=p.name;s.dataset.aid=p.aid}})}return r}})();
 document.addEventListener('click',e=>{const nmEl=e.target.closest&&e.target.closest('[data-l5nm]');if(nmEl&&ROLE&&['surgery','doctor'].includes(ROLE)){l5Open(nmEl.dataset.l5nm,nmEl.dataset.l5n,nmEl.dataset.aid||'');return}
   const t=e.target.closest&&e.target.closest('button');if(!t)return;

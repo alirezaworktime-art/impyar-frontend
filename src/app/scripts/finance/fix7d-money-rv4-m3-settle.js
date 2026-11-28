@@ -1,7 +1,7 @@
 /* ---------- fix7d: money (rv4 M3 settle card-to-card, M6 blank cheque count, M7 amount input, W2 refund warning) ---------- */
 /* M6: a remainder with an empty cheque count is one cheque everywhere (text, schedule, suggestions) */
 const fx7N1=r=>{try{const p=(r&&r.pay)||null;if(!p)return r;const z=v=>v===undefined||v===null||String(v).trim()===''||num(v)===0;if(!z(p.n1)&&!z(p.n3))return r;return Object.assign({},r,{pay:Object.assign({},p,{n1:z(p.n1)?'1':p.n1,n3:z(p.n3)?'1':p.n3})})}catch(e){return r}};
-{const _pt=payText;payText=function(r,b){return _pt(fx7N1(r),b)}}
+/* (payText gets fx7N1 — merged into prosthesis/calc.js) */
 /* (chqFor gets fx7N1 too — merged into fin2.js) */
 /* M7: money inputs take digits only (Persian digits and thousand separators are fine) */
 const FX7_AMT='#py_amount,#st_amt,#rf_amt,#fx4_rfa,#fx4_wv,#pc_cash,#p_cash,#p_chq1,#p_cs,#p_cp,#p_disc,#ic_total,#ic_pre,#a6Rem,#ae_amt,#cp_amt,#uxAskSh input[data-ak][inputmode="numeric"]';
