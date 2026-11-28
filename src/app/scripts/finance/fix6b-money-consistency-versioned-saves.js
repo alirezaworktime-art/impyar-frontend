@@ -33,8 +33,6 @@ function fx6bSgAsk(){return new Promise(async res=>{try{
 /* finalize / doConfirm: the surgery-difference question (fx6bSgAsk) is now part of their single definitions in pdf/background-send-queue-doctor-never.js */
 /* A7: storekeeper — stock ↔ surgery catalog */
 const ICAT={j:null,sel:{}};
-(function(){const _s=i2Segs;i2Segs=function(){_s.apply(this,arguments);document.querySelectorAll('[data-iseg="icat"]').forEach(b=>b.hidden=ROLE!=='inventory');if(ROLE!=='inventory'&&INV.seg==='icat')INV.seg='fix'}})();
-(function(){const _r=i2Render;i2Render=function(B,force){if(INV.seg==='icat'){$('invTools').hidden=true;return fx6bCatView(B,force)}return _r.apply(this,arguments)}})();
 const fx6N=v=>toEn(String(v==null?'':v)).trim().replace(/\s+/g,' ').toLowerCase();
 const fx6Num=v=>{const t=toEn(String(v==null?'':v)).trim().replace(/[\/٫,]/g,'.');const f=parseFloat(t);return isFinite(f)&&/^[\d.]+$/.test(t)?String(f):fx6N(t)};
 function fx6bGroups(){const G={};((ICAT.j||{}).cat||[]).forEach(c=>{const g=c.b+'|'+c.sys,x=G[g]||(G[g]={b:c.b,sys:c.sys,d:{}});(x.d[c.d]=x.d[c.d]||[]).push(c.l)});

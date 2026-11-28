@@ -66,9 +66,12 @@ function i2FiltSum(){const d=I2D[INV2.rep],f=INV2.f,L=[],it=k=>(INV.items||[]).f
   if(d.f.includes('sup')&&f.sup)L.push('تأمین‌کننده: '+i2SupN(f.sup));if(d.f.includes('type')&&f.type)L.push('نوع حرکت: '+I2T[f.type]);return L.join(' · ')||'بدون فیلتر'}
 function i2RangeTxt(j){const d=I2D[INV2.rep];if(d.rg==='asof')return 'در تاریخ '+jDay(j?j.to:INV2.per.to)+' (پایان روز)';if(d.rg==='none')return 'وضعیت '+(d.k==='fore'?'نوبت‌های '+fa((j&&j.n)||INV2.p.n||30)+' روز آینده':'امروز ')+jDay(tDay());return 'از '+jDay(j?j.from:INV2.per.from)+' تا '+jDay(j?j.to:INV2.per.to)}
 /* ---- view ---- */
+/* i2Segs / i2Render merge three layers: inv2 (rep/cnt/po), pa9 (storekeeper tab «ifin»: i9On, i9View) and fix6b A7 (storekeeper tab «icat»: fx6bCatView). */
 function i2Segs(){const r=i2Read();document.querySelectorAll('[data-iseg="rep"],[data-iseg="po"]').forEach(b=>b.hidden=!r);document.querySelectorAll('[data-iseg="cnt"]').forEach(b=>b.hidden=!i2Write());
-  if((!r&&['rep','po'].includes(INV.seg))||(!i2Write()&&INV.seg==='cnt'))INV.seg='fix'}
-function i2Render(B,force){$('invTools').hidden=true;const v=INV.seg,cur=B.querySelector('[data-i2view]');if(cur&&cur.dataset.i2view===v&&!force){if(v==='cnt')i2CntDiff();return}
+  if((!r&&['rep','po'].includes(INV.seg))||(!i2Write()&&INV.seg==='cnt'))INV.seg='fix';
+  document.querySelectorAll('[data-iseg="ifin"]').forEach(b=>b.hidden=!i9On());if(!i9On()&&INV.seg==='ifin')INV.seg='fix';
+  document.querySelectorAll('[data-iseg="icat"]').forEach(b=>b.hidden=ROLE!=='inventory');if(ROLE!=='inventory'&&INV.seg==='icat')INV.seg='fix'}
+function i2Render(B,force){$('invTools').hidden=true;if(INV.seg==='icat')return fx6bCatView(B,force);if(INV.seg==='ifin')return i9View(B,force);const v=INV.seg,cur=B.querySelector('[data-i2view]');if(cur&&cur.dataset.i2view===v&&!force){if(v==='cnt')i2CntDiff();return}
   if(v==='rep')return i2RepView(B);if(v==='cnt')return i2CntView(B);if(v==='po')return i2PoView(B)}
 function i2RepView(B){if(!INV2.per){INV2.per=i2Range('m');INV2.pk='m'}const d=I2D[INV2.rep];
   B.innerHTML=`<div class="i2rep" data-i2view="rep"><aside class="i2nav">${I2R.map(([g,L])=>`<div class="i2grp"><b>${esc(g)}</b>${L.map(([k,t])=>`<button type="button" class="i2card" data-i2rep="${k}" aria-current="${k===INV2.rep}">${esc(t)}</button>`).join('')}</div>`).join('')}</aside>
