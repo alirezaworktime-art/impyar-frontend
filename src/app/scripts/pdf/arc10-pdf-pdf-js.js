@@ -19,8 +19,7 @@ async function a10Expand(files, max, msg, all) { const out = []; let more = 0;
   if (more) alertMsg(`فقط ${fa(A10_MAXP)} صفحه‌ی اول PDF (از ${fa(more)} صفحه) ذخیره شد.`);
   return out }
 /* radiographs in the paper-file form: every PDF becomes images (zoom works); patient-file images: only PDFs too big to keep */
-{ const _a = a9Add; a9Add = async function (files) { const m = $('a9Msg'); let F; try { F = await a10Expand(files, 3000, (i, n) => { if (m) m.textContent = `تبدیل PDF: صفحه‌ی ${fa(i)} از ${fa(n)}…` }, true) } catch (e) { alertMsg(e.message); if (m) m.textContent = ''; return }
-  return _a.call(this, F) } }
+/* (a9Add: merged into finance/arc9-opg-cbct.js) */
 { const _u = imgUpload; imgUpload = async function (files) { let F; try { F = await a10Expand(files, 2200, (i, n) => { const m = $('imgMsg'); if (m) { m.className = 'note'; m.textContent = `تبدیل PDF: صفحه‌ی ${fa(i)} از ${fa(n)}…` } }, false) } catch (e) { alertMsg(e.message); return } return _u.call(this, F) } }
 /* (2) cost table: one row per implant brand group, at that group's tariff */
 const a10Rows = l => { if (l.k !== 'imp') return [{ lab: a6Lab(l) + (l.k === 'sgd' ? ' (' + A9.scan[l.scan || 'U'] + ')' : '') + (l.teeth && l.teeth.length ? ' — ' + toothTxt(l.teeth) : ''), n: num(l.n), p: num(l.price), a: a8Base(l) }];

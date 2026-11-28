@@ -4,8 +4,7 @@ const oc2PS = () => (OC.d && OC.d.ps) || [], oc2G = () => (OC.d && OC.d.g) || []
 const oc2PSN = s => (oc2PS().find(x => x[0] === s) || [s, s])[1];
 const oc2Pr = (c, k) => { const s = (c.svc || []).find(v => v.k === k); return s ? (Number(s.p) || 0) : 0 };
 /* seg «درمان بیمار» beside the existing ones (same bar, same style) */
-{ const _b = ocSegBar; ocSegBar = function () { if (ROLE !== 'accountant' && ROLE !== 'oclin') return _b.apply(this, arguments); const segs = ROLE === 'accountant' ? [['rep', 'کارکرد و درآمد'], ['pay', 'دریافتی‌ها و چک‌ها'], ['add', 'ثبت کار'], ['tr', 'درمان بیمار'], ['cl', 'کلینیک‌ها و تعرفه‌ها']] : [['add', 'ثبت کار'], ['tr', 'درمان بیمار'], ['rep', 'کارکرد و درآمد'], ['pay', 'دریافتی‌ها و چک‌ها'], ['cl', 'کلینیک‌ها و تعرفه‌ها']]; return `<div class="seg oc-seg" role="tablist">${segs.map(([k, l]) => `<button type="button" data-ocseg="${k}" aria-pressed="${OC.seg === k}">${l}</button>`).join('')}</div>` } }
-{ const _r = ocRender; ocRender = function () { const el = $('ocRoot'); if (!el || $('viewOc').hidden) return; const d = OC.d; if (!d || OC.seg !== 'tr' || (ROLE === 'oclin' && (!d.sel || !d.sel.length))) return _r.apply(this, arguments); el.innerHTML = ocSegBar() + oc2HTML(); oc2Post() } }
+/* (ocSegBar and the «tr» branch of ocRender: in finance/oc1-surgeon-s-work-other.js) */
 /* ===== list of patients of the chosen clinic ===== */
 /* oc2Load / oc2Open: oc2 base replaced by oc4 (cached list / patient shown first, refreshed in the background) */
 async function oc2Load(){const cl=OC2.cl||(ocMine()[0]||{}).id||'';OC2.cl=cl;const key=cl+'|'+(OC2.q||'');OC2.pc=OC2.pc||{};
@@ -108,5 +107,5 @@ async function oc2SesSave(bt) {
 /* ===== tariff form: the fixed rows (brand groups + prosthesis stages) are shown but their name is not editable ===== */
 /* fixed tariff rows (brand groups / prosthesis stages): name read-only, no delete; the price stays editable */
 function oc2FixRows(){document.querySelectorAll('.oc-clc').forEach(card=>{const id=card.dataset.ocid,e=OC.edit[id];const svc=e?e.svc:(ocCl(id).svc||[]);card.querySelectorAll('[data-ocsv][data-f="n"]').forEach(i=>{const s=svc[+i.dataset.ocsv];if(!s||!/^(bp_|ps_)/.test(s.k))return;i.readOnly=true;i.title='ردیف ثابت — فقط تعرفه را عوض کنید';const row=i.closest('div');if(row){row.dataset.fixed='1';const del=row.querySelector('[data-ocsvdel]');if(del)del.remove()}})})}
-{ const _r = ocRender; ocRender = function () { const r = _r.apply(this, arguments); try { if (OC.seg === 'cl') oc2FixRows() } catch (e) { } return r } }
+/* (oc2FixRows runs at the end of ocRender, finance/oc1-surgeon-s-work-other.js) */
 

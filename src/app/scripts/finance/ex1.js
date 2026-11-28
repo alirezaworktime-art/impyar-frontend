@@ -5,8 +5,14 @@
 let RC_PREV = null;
 const ex1Done = j => { try { const pr = j.pros || null, sg = j.surg || null; return !!((pr && pr.stage === 'done') || (sg && sg.finished && !pr)); } catch (e) { return false } };
 /* a) brand not chosen yet → open the brand sheet right there (reception) */
-{ const _a = api; api = function (action, payload) { const p = _a.apply(this, arguments); if (!(action === 'toSurgery' || action === 'sendDoc' || action === 'apptSet')) return p;
-  return Promise.resolve(p).catch(async e => { if (ROLE === 'staff' && /برند ایمپلنت بیمار هنوز انتخاب نشده/.test((e && e.message) || '') && payload && payload.id) { try { const j = await _a('get', { id: payload.id }); if (j && j.data && j.data.pay && j.data.pay.blater) setTimeout(() => pl10BrandSheet(fromDoc(payload.id, j.data)), 350) } catch (x) { } } throw e }) } }
+{ const _a = api; api = function (action, payload) { const p = _a.apply(this, arguments);
+  /* a) toSurgery / sendDoc / apptSet only */
+  if (action === 'toSurgery' || action === 'sendDoc' || action === 'apptSet')
+  return Promise.resolve(p).catch(async e => { if (ROLE === 'staff' && /برند ایمپلنت بیمار هنوز انتخاب نشده/.test((e && e.message) || '') && payload && payload.id) { try { const j = await _a('get', { id: payload.id }); if (j && j.data && j.data.pay && j.data.pay.blater) setTimeout(() => pl10BrandSheet(fromDoc(payload.id, j.data)), 350) } catch (x) { } } throw e });
+  /* b) surgStop / prosAct stop only (the step b below; merged from a second layer — the two never act on the same action) */
+  if (action === 'surgStop' || (action === 'prosAct' && payload && payload.op === 'stop'))
+  return Promise.resolve(p).catch(async e => { const m = /^EX1\|(\d+)\|([\s\S]*)$/.exec((e && e.message) || ''); if (!m) throw e; const r = await ex1Ask(Number(m[1]), m[2]); if (!r) throw new Error('ثبت نشد: تکلیف مانده‌ی حساب مشخص نشد.'); return _a(action, Object.assign({}, payload, { ex1: r })) });
+  return p } }
 /* b) the patient does not go on, money is still owed: ask what to do, then repeat the action with the answer */
 function ex1Ask(owe, name) { return new Promise(res => {
   const s = mkSheet('ex1Sh', `<h3>مانده‌ی حساب بیمار${name ? ' · ' + esc(name) : ''}</h3><p class="note">این بیمار درمان را ادامه نمی‌دهد ولی <b>${fa(owe)} تومان</b> از هزینه‌ی کارهای انجام‌شده مانده است. تکلیف این مانده چیست؟</p>
@@ -22,8 +28,6 @@ function ex1Ask(owe, name) { return new Promise(res => {
       if (mode === 'collect') { due = parseJ($('ex1_due').value); if (!due) { m.className = 'msg err'; m.textContent = 'تاریخ پیگیری را به شکل ۱۴۰۵/۰۹/۱۵ بنویسید.'; return } }
       if (mode === 'waive' && !note) { m.className = 'msg err'; m.textContent = 'دلیل بخشش را بنویسید (در تاریخچه و حسابداری می‌ماند).'; return }
       fin({ mode, due, note }) } } }) }
-{ const _a = api; api = function (action, payload) { const p = _a.apply(this, arguments); if (!(action === 'surgStop' || (action === 'prosAct' && payload && payload.op === 'stop'))) return p;
-  return Promise.resolve(p).catch(async e => { const m = /^EX1\|(\d+)\|([\s\S]*)$/.exec((e && e.message) || ''); if (!m) throw e; const r = await ex1Ask(Number(m[1]), m[2]); if (!r) throw new Error('ثبت نشد: تکلیف مانده‌ی حساب مشخص نشد.'); return _a(action, Object.assign({}, payload, { ex1: r })) }) } }
 /* c) a finished patient who comes back: a new file (course) linked to the old one */
 { const _r = rcReset; rcReset = function () { RC_PREV = null; return _r.apply(this, arguments) } }
 { const _f = renderFile; renderFile = function () { const r = _f.apply(this, arguments); try { if (!PF || !PF.j) return r; const d = PF.j.data || {}, h = d.h || {}, kv = document.querySelector('#pfSheet .pf-head .kv'); if (!kv) return r;
@@ -41,19 +45,22 @@ function ex1ImpUI() { const st = $('impStock'); if (!st) return; let w = $('ex1L
   $('ex1RepW').hidden = IMPRS !== 'fail'; ex1Bind(); document.querySelectorAll('#ex1RepW [data-ex1rep]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.ex1rep) === Number(EX1_IMP.rep)))) }
 { const _o = openImp; openImp = function (k, sid) { const r = _o.apply(this, arguments); try { const m = (SURG && SURG.imp[k]) || {}; EX1_IMP.loan = m.src === 'loan'; EX1_IMP.rep = m.rep === undefined ? 1 : Number(m.rep); ex1ImpUI() } catch (e) { } return r } }
 { const _s = impStock; impStock = function () { const r = _s.apply(this, arguments); try { ex1ImpUI() } catch (e) { } return r } }
-{ const _x = xlRsBtns; xlRsBtns = function () { const r = _x.apply(this, arguments); try { ex1ImpUI() } catch (e) { } return r } }
+/* (xlRsBtns also redraws ex1ImpUI: merged into xl-implant-reason-per-fixture.js) */
 function ex1Bind() { document.querySelectorAll('#ex1RepW [data-ex1rep]').forEach(b => { b.onclick = () => { EX1_IMP.rep = Number(b.dataset.ex1rep); ex1ImpUI() } }) }
 document.addEventListener('change', e => { if (e.target && e.target.id === 'ex1_loan') EX1_IMP.loan = e.target.checked });
 { const _v = impSave; impSave = function () { const r = _v.apply(this, arguments); try { if (SURG && $('impSheet').hidden && SURG.imp[IMPK]) { const m = SURG.imp[IMPK]; if (EX1_IMP.loan) m.src = 'loan'; else delete m.src; if (m.rs === 'fail') m.rep = EX1_IMP.rep ? 1 : 0; else delete m.rep; renderImps() } } catch (e) { } return r } }
 const ex1ImpTag = m => (m && m.rs === 'fail' ? (Number(m.rep) ? ' · فیکسچر دوم کاشته شد' : ' · برداشته شد، کاشت دوباره بعداً') : '') + (m && m.src === 'loan' ? ' · امانی/شخصی' : '');
 { const _r = renderImps; renderImps = function () { const r = _r.apply(this, arguments); try { document.querySelectorAll('#sgImps [data-impedit]').forEach(b => { const m = SURG && SURG.imp[b.dataset.impedit]; const t = ex1ImpTag(m); if (t && m && m.b && m.d && m.l) b.insertAdjacentHTML('beforeend', '<small class="ex1tag">' + esc(t) + '</small>') }) } catch (e) { } return r } }
-/* re-implant (کاشت مجدد) after a failure: the fixture is free, the consumables of that tooth are half price (owner's rule) */
+/* re-implant (کاشت مجدد) after a failure: the fixture is free, the consumables of that tooth are half price (owner's rule)
+   ex1Adj: ex1 base + pk2 (the typed re-implant tariff comes back; rounded before and after, as the two layers did) */
 function ex1Adj(rec, sessions) { const b = effBrand(rec), P = rec.s; let adj = 0;
   (sessions || []).forEach(ss => { const S = secFrom(ss.s || {}), im = ss.imp || {}; const redo = Object.keys(im).filter(k => im[k] && im[k].rs === 'redo' && isTooth(k) && S.imp && S.imp.sel[k]);
     redo.forEach(k => { const g = im[k].g || b; adj += num(P.imp.bp[g] || P.imp.bp[b]); if (P.crw) adj += num(P.crw.price);
       if (S.gbr && S.gbr.sel[k]) adj += 0.5 * num(P.gbr.price) * Math.max(1, num((S.gbr.icnt || {})['gn:' + k])); });
     if (redo.length && S.vip && P.vip) { const qs = new Set(redo.map(k => k.slice(0, 2))); (SEC.vip.items || []).forEach(it => { qs.forEach(q => { const key = it.k + ':' + q; if (S.vip.isel && S.vip.isel[key]) adj += 0.5 * num(P.vip.ip[it.k]) * (num((S.vip.icnt || {})[key]) || 1) }) }) } });
-  return Math.round(adj) }
+  adj = Math.round(adj);
+  /* pk2 */
+  try{(sessions||[]).forEach(ss=>{const S=secFrom(ss.s||{}),im=ss.imp||{};Object.keys(im).forEach(k=>{const m=im[k];if(m&&m.rs==='redo'&&isTooth(k)&&S.imp&&S.imp.sel[k])adj-=pk2N(m.rp)})})}catch(e){}return Math.round(adj) }
 { const _s = surgActual; surgActual = function (rec, sessions) { const t = _s.apply(this, arguments); try { return Math.max(0, t - ex1Adj(rec, sessions)) } catch (e) { return t } } }
 /* g) replacing a returned / exchanged cheque: the number of the old cheque goes into the note (shown in lists and Excel) */
 /* h) who signs the consent: the patient, or a guardian with name and relation */

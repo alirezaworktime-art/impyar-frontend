@@ -13,7 +13,8 @@ const m15Ty = b => { const s = String(b || ''); return /zyg|زایگوما|زی�
 const m15Pr = ty => { const pl = A6P('aox_cb') || arbDef('it'); return ty === 'z' ? (A6P('aox_z') || pl) : ty === 't' ? (A6P('aox_t') || pl) : ty === 'n' ? (A6P('aox_n') || pl) : pl };
 const m15Par = l => { if (typeof A6 === 'undefined' || !A6 || !l || l.k !== 'imp') return null; const id = l.ax || l.id; return A6.lines.find(x => x.id === id && x.k === 'aox') || null };
 const m15Groups = l => { const o = {}; (l.teeth || []).forEach(t => { const k = m15Ty(((l.imp || {})[t] || {}).b); (o[k] = o[k] || []).push(t) }); return o };
-function m15Amt(l) { try { if (!m15Par(l)) return null; if (m2Only() === 'p') return 0; return (l.teeth || []).reduce((a, t) => a + m15Pr(m15Ty(((l.imp || {})[t] || {}).b)), 0) } catch (e) { return null } }
+/* m15Amt: m15 base, replaced by m16 (plan/reopening-saved-tariff-every-all.js): every All on X base keeps its saved tariff (m16Groups) */
+function m15Amt (l) { try { const p = m15Par(l); if (!p) return null; if (m2Only() === 'p') return 0; return m16Groups(l, p).reduce((a, g) => a + g.T.length * g.pr, 0) } catch (e) { return null } }
 /* save: the implants of an All on X session go as one line per kind, each at its tariff */
 { const _a = api; api = function (action, payload) { try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) { const out = [];
   for (const x of payload.arc.lines || []) { const l = x.k === 'imp' && A6.lines.find(y => y.id === x.id), p = l && l.ax && A6.lines.find(y => y.id === l.ax && y.k === 'aox'); if (!p) { out.push(x); continue }

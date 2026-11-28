@@ -18,7 +18,7 @@ function l5Render(){const {j}=PF,s=L5,name=(fromDoc(PF.id,j.data||{}).h||{}).nam
   const A=[];if(false)A.push(`<button class="btn main" type="button" id="l5Lab">ثبت جلسه و ارجاع به لابراتوار</button><button class="btn ghost" type="button" id="l5Save">ثبت جلسه بدون سفارش</button>`);else A.push(`<button class="btn main" type="button" id="l5Save">ثبت جلسه</button>`);
   A.push(`<button class="btn ghost sm" type="button" id="l5Full">پرونده‌ی کامل</button><button class="btn ghost sm" id="pfClose" type="button">بستن</button>`);$('pfActs').innerHTML=A.join('')}
 (function(){const _r=renderFile;renderFile=function(){if(PF&&PF.sess&&L5&&PF.sess===L5){try{l5Render()}catch(e){console.error(e);PF.sess=null;return _r.apply(this,arguments)}return}return _r.apply(this,arguments)}})();
-(function(){const _o=openFile;openFile=async function(){L5=null;return _o.apply(this,arguments)}})();
+/* (openFile clears L5: finance/patient-file-timeline.js) */
 async function l5Submit(withLab,b){l5Read();const m=$('l5Msg'),s=L5,j=PF.j,err=t=>{m.className='msg err';m.textContent=t;m.scrollIntoView({block:'center'})};
   if(!s.work)return err('کار این جلسه را انتخاب کنید.');if((s.work==='rscr'||s.work==='rabt')&&!s.res)return err('نتیجه‌ی امتحان را بزنید.');if((s.work==='other'||s.res==='redo')&&!String(s.note).trim())return err('توضیح را بنویسید.');
   const p={id:PF.id,aid:s.aid,work:s.work,result:s.res,note:s.note,by:USERNAME||ROLE_LBL[ROLE]};

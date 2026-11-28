@@ -41,8 +41,8 @@ function ux6PayWrap(h,j,r){const i=h.indexOf('<div class="payform">');if(i<0)ret
   return head+`<section class="ux6pbox" aria-label="دریافت پرداخت"><div class="ux6ph"><b>دریافت پرداخت</b><button class="btn sm ghost" type="button" data-ux6pay="close">بستن</button></div>
     <div class="seg ux6pseg" role="group" aria-label="نوع دریافت"><button type="button" data-ux6pm="one" aria-pressed="${m==='one'}">یک پرداخت (نقد، کارت یا چک)</button>${multi?`<button type="button" data-ux6pm="multi" aria-pressed="${m==='multi'}">چند چک ماهانه</button>`:''}</div>
     ${rest||plan?`<div class="btns ux6pact">${rest}${plan}</div>`:''}${m==='one'?one:multi}</section>`}
-{const _pp=pfPays;pfPays=function(j,r){let h=_pp.apply(this,arguments);try{h=ux6PayWrap(h,j,r)}catch(e){console.error('ux6 pay',e)}return h}}
-{const _of=openFile;openFile=function(id,name,tab){if(tab==='pay'&&id)UX6.pay[id]=Object.assign({},UX6.pay[id],{open:true});return _of.apply(this,arguments)}}
+/* (pfPays: ux6PayWrap — merged into finance/patient-file-extra-tabs.js) */
+/* (openFile on «pay» opens the payments: finance/patient-file-timeline.js) */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ux6pay],[data-ux6pm]');if(!b||!PF)return;const id=PF.id;try{if($('py_amount'))pyRead()}catch(x){}
   const S=UX6.pay[id]=Object.assign({},UX6.pay[id]);if(b.dataset.ux6pay)S.open=b.dataset.ux6pay==='open';else S.m=b.dataset.ux6pm;if(S.m==='multi')IC.open=true;renderFile()});
 /* surgeon's file: «شروع مرحله‌ی پروتز» only after surgery, for a prosthesis-only patient or a paper file */

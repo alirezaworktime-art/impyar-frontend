@@ -15,6 +15,4 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   const h=document.querySelector('.l5work h3');if(h)h.textContent='کار امروز';
   const s=$('l5Save');if(s)s.textContent='ثبت کار امروز';
   const w=document.querySelector('.l5work');if(w&&!w.querySelector('.m58n')){const p=document.createElement('p');p.className='note m58n';p.textContent='در پرونده و PDF پرونده ثبت می‌شود. برای سفارش لابراتوار دکمه‌ی «سفارش لابراتوار» روی کارت بیمار را بزنید.';const m=$('l5Msg');if(m)m.before(p);else w.append(p)}}catch(e){}return r}})();
-/* 4. PDF of the file: full doctor notes of the prosthesis steps (the table cuts them) */
-(function(){const _f=ffProsBlocks;ffProsBlocks=function(j){const B=_f.apply(this,arguments);try{const lg=((j.pros||{}).log||[]).filter(g=>String(g.note||'').replace(/\s+/g,' ').trim().length>50);
-  if(lg.length)B.push(textBlock('توضیح کامل مراحل',lg.map(g=>jt(g.at)+' · '+(PSTN[g.k]||g.k)+': '+String(g.note).replace(/\s+/g,' ').trim())))}catch(e){}return B}})();
+/* 4. PDF of the file: full doctor notes of the prosthesis steps (the table cuts them) — in ffProsBlocks, finance/patch-pdf-pdf.js */

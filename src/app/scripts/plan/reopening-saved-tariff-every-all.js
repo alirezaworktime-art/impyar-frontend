@@ -1,7 +1,7 @@
 /* ---------- m16: paper files — editing never changes what was saved (owner, 2026-11-11): (1) «پایه ایمپلنت» sessions entered as separate rows (e.g. different tariffs on the same day) stay separate on reopening, and every row keeps its own saved tariff (before: rows of the same day + doctor were joined and one tariff of the brand group won → 6 × 30M); (2) All on X implants keep their saved tariff per base on reopening; a new or re-branded base takes the tariff of its kind ---------- */
 const m16Pr = (p, t, ty) => { const s = p && p.tp && p.tp[t]; return s && s.ty === ty ? s.pr : m15Pr(ty) };
 const m16Groups = (l, p) => { const o = {}; (l.teeth || []).forEach(t => { const ty = m15Ty(((l.imp || {})[t] || {}).b), pr = m16Pr(p, t, ty), k = ty + '|' + pr; (o[k] = o[k] || { ty, pr, T: [] }).T.push(t) }); return Object.values(o) };
-m15Amt = function (l) { try { const p = m15Par(l); if (!p) return null; if (m2Only() === 'p') return 0; return m16Groups(l, p).reduce((a, g) => a + g.T.length * g.pr, 0) } catch (e) { return null } };
+/* (m15Amt now uses m16Groups: finance/layer.js) */
 /* reopening: the saved tariff of every All on X base */
 { const _f = a6From; a6From = function (j) { const S = _f.apply(this, arguments); try { const a = j && j.data && j.data.arc; if (a && a.v6 && Array.isArray(a.lines)) S.lines.filter(l => l.k === 'aox').forEach(p => { const cid = m2Cid(p), tp = {};
   a.lines.filter(l => l.k === 'imp' && String(l.id).replace(/-(ir|ko|it|sw|rt|xx|k\d{1,2})$/, '') === cid).forEach(c => (c.teeth || []).forEach(t => { const m = (c.imp || {})[t] || {}; tp[t] = { ty: m15Ty(m.b), pr: num(c.price) } }));

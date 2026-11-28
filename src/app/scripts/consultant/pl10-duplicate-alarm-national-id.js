@@ -24,7 +24,7 @@ const pl10Cash = (r, S, P) => Math.round((S + P) * pl10Pct(r) / 100 / 1e5) * 1e5
 let PL10_GET = {};
 { const _a = api; api = function (action, payload) { const p = _a.apply(this, arguments); if (action === 'get' && payload && payload.id) Promise.resolve(p).then(j => { try { if (j && j.data) PL10_GET[payload.id] = j } catch (e) { } }).catch(() => { }); return p } }
 const pl10Done = id => { const j = PL10_GET[id]; return !!(j && j.surg && (j.surg.sessions || []).length) };
-{ const _c = chqFor; chqFor = function (r) { const o = _c.apply(this, arguments); try { if (pl10O3(r)) { const C = pl10Cash(r, o.S, o.P), all = o.S + o.P, cash = pl10Done(r.id) ? all : C, cS = Math.min(o.S, cash); return Object.assign({}, o, { cash, cashS: cS, cashP: cash - cS, disc: 0, chq: [] }) } } catch (e) { } return o } }
+/* (chqFor option 3: now only the o3s rule, merged into finance/fin2.js) */
 { const _c = cashFor; cashFor = function (r, S, P) { try { if (pl10O3(r)) return pl10Cash(r, S, P) } catch (e) { } return _c.apply(this, arguments) } }
 { const _p = payText; payText = function (r, brand) { const o = _p.apply(this, arguments); try { if (pl10O3(r)) { const T = totals(r), b = brand || effBrand(r), S = T.surg[b] || 0, P = T.pros || 0, C = pl10Cash(r, S, P); return { surg: `${fa(pl10Pct(r))}٪ کل طرح نقد قبل از جراحی: ${fa(C)}`, pros: `مانده ${fa(Math.max(0, S + P - C))} نقد روز قالب‌گیری (بدون چک)` } } } catch (e) { } return o } }
 /* (4)(5)(6)(7)(8) the payment card: opt 3 chip + %, first cheque date hidden (reception), deposit only, POS / account list */
@@ -73,7 +73,7 @@ function pl10BrandSheet(snap) { const pv = PV(snap, 1), T = totals(pv), id = sna
   if (snap && snap.brand === 'ref' && snap.pay && snap.pay.blater && (ROLE === 'staff' || ROLE === 'consultant')) { pl10BrandSheet(snap); return }
   return _o.apply(this, arguments) } }
 /* (10) reception sheet title; the consultant / manager can allow a referral without settlement (with a reason) */
-{ const _p = pfPays; pfPays = function (j, r) { let h = _p.apply(this, arguments); try { if ((ROLE === 'consultant' || ROLE === 'manager') && r && (r.status === 'confirmed' || r.status === 'modified') && payNums(j).rest > 0) h += `<div class="btns pl10al"><button class="btn sm ghost" type="button" data-pl10allow="${esc(j.id || r.id || '')}">اجازه‌ی ارجاع به جراح بدون تسویه…</button></div>` } catch (e) { } return h } }
+/* (pfPays: the «allow referral without settlement» button — merged into finance/patient-file-extra-tabs.js) */
 document.addEventListener('click', async e => { const t = e.target.closest && e.target.closest('[data-pl10allow]'); if (!t) return; e.preventDefault(); e.stopImmediatePropagation();
   const v = await uxAsk({ title: 'اجازه‌ی ارجاع بدون تسویه', msg: 'منشی می‌تواند بیمار را با پرداخت ناقص به جراح ارجاع دهد. دلیل در تاریخچه ثبت می‌شود.', fields: [{ k: 'reason', l: 'دلیل', req: 1, full: 1 }], ok: 'اجازه بده' }); if (!v || !v.reason) return;
   t.disabled = true; try { const r = await api('fx4Allow', { id: t.dataset.pl10allow, step: 'surg', reason: v.reason, sendId: uuid() }); toast('اجازه ثبت شد' + (r && r.short ? ' (' + fa(r.short) + ' تومان مانده)' : '') + '.') } catch (err) { toast(err.message, 1) } finally { t.disabled = false } }, true);

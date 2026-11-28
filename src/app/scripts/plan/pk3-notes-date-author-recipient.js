@@ -22,7 +22,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(t.dataset.pk3ed){const c=PK3.cache[sec.dataset.pk3plan];const n=c&&c.n.find(x=>x.id===t.dataset.pk3ed);if(n)ntOpen(sec.dataset.pk3plan,{note:n});return}
   ntOpen(t.dataset.pk3add,{stage:sec.dataset.pk3st||PK3_STAGE[ROLE]||'',name:t.dataset.pk3n2||''})},true);
 /* after a note is saved / edited / deleted: refresh every panel of that plan */
-{const _a=api;api=function(action,payload){const r=_a.apply(this,arguments);try{if(action==='fxNote'&&payload&&['add','edit','del'].includes(payload.op)&&r&&r.then)r.then(()=>{delete PK3.cache[payload.id];document.querySelectorAll(`.pk3n[data-pk3plan="${payload.id}"]`).forEach(s=>pk3Fill(s,true))}).catch(()=>{})}catch(e){}return r}}
+/* (refresh after fxNote: in the api layer near the end of this file) */
 /* (a) plan form: doctor / consultant */
 {const _f=renderForm;renderForm=function(){const r=_f.apply(this,arguments);try{const pc=$('pCard');if(pc&&F&&F.id&&['doctor','consultant'].includes(ROLE))pk3Mount(pc.parentElement,F.id,PK3_STAGE[ROLE],{name:(F.h||{}).name||''},pc.nextSibling?'afterbegin':'beforeend');
   if(pc&&F&&F.id){const s=pc.parentElement.querySelector('.pk3n');if(s&&s.previousElementSibling!==pc)pc.insertAdjacentElement('afterend',s)}}catch(e){}return r}}
@@ -56,5 +56,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(t.dataset.pk3t){const k=t.dataset.pk3t,i=PK3.tag.t.indexOf(k);if(i>=0)PK3.tag.t.splice(i,1);else PK3.tag.t.push(k);t.setAttribute('aria-pressed',String(i<0));return}
   PK3.filt=t.dataset.pk3f||'';if(PF&&!$('pfSheet').hidden)renderFile()},true);
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='pk3St')PK3.tag.st=e.target.value},true);
-{const _a=api;api=function(action,payload){try{if(action==='fileAdd'&&payload&&payload.file&&PF&&payload.id===PF.id){const tg=pk3TagStr(PK3.tag);if(tg)payload.file.note=(tg+' '+String(payload.file.note||'')).trim()}}catch(e){}return _a.apply(this,arguments)}}
+/* api (pk3, two layers in one): before — fileAdd of this file gets the image tag in its note; after — fxNote add / edit / del refreshes the notes panels of that plan */
+{const _a=api;api=function(action,payload){try{if(action==='fileAdd'&&payload&&payload.file&&PF&&payload.id===PF.id){const tg=pk3TagStr(PK3.tag);if(tg)payload.file.note=(tg+' '+String(payload.file.note||'')).trim()}}catch(e){}const r=_a.apply(this,arguments);try{if(action==='fxNote'&&payload&&['add','edit','del'].includes(payload.op)&&r&&r.then)r.then(()=>{delete PK3.cache[payload.id];document.querySelectorAll(`.pk3n[data-pk3plan="${payload.id}"]`).forEach(s=>pk3Fill(s,true))}).catch(()=>{})}catch(e){}return r}}
 {const _o=openFile;openFile=async function(){PK3.tag={st:'',t:[]};PK3.filt='';return _o.apply(this,arguments)}}

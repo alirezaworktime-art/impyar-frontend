@@ -25,11 +25,15 @@ TILES.oclin=()=>{const d=OC.d,td=tDay(),tw=d?d.works.filter(w=>w.day===td):[],so
 (function(){const _s=showExtra;showExtra=function(v){_s(v);const el=$('viewOc');if(el)el.hidden=v!=='oc'}})();
 (function(){const _h=home;home=function(){if(ROLE!=='oclin')return _h();show('oc');const k=(TSAVE&&TSAVE.oclin)||'add';goTile(k)}})();
 (function(){const _p=pollQ;pollQ=function(f){if(ROLE==='oclin')return Promise.resolve();return _p(f)}})();
-function ocSegBar(){if(ROLE!=='accountant')return '';return `<div class="seg oc-seg" role="tablist">${[['rep','کارکرد و درآمد'],['pay','دریافتی‌ها و چک‌ها'],['add','ثبت کار'],['cl','کلینیک‌ها و تعرفه‌ها']].map(([k,l])=>`<button type="button" data-ocseg="${k}" aria-pressed="${OC.seg===k}">${l}</button>`).join('')}</div>`}
-function ocRender(){const el=$('ocRoot');if(!el||$('viewOc').hidden)return;const d=OC.d;
+/* ocSegBar: oc1 base, replaced by oc2 (the «درمان بیمار» tab; the other clinic's own order for oclin) */
+function ocSegBar () { if (ROLE !== 'accountant' && ROLE !== 'oclin') return ''; const segs = ROLE === 'accountant' ? [['rep', 'کارکرد و درآمد'], ['pay', 'دریافتی‌ها و چک‌ها'], ['add', 'ثبت کار'], ['tr', 'درمان بیمار'], ['cl', 'کلینیک‌ها و تعرفه‌ها']] : [['add', 'ثبت کار'], ['tr', 'درمان بیمار'], ['rep', 'کارکرد و درآمد'], ['pay', 'دریافتی‌ها و چک‌ها'], ['cl', 'کلینیک‌ها و تعرفه‌ها']]; return `<div class="seg oc-seg" role="tablist">${segs.map(([k, l]) => `<button type="button" data-ocseg="${k}" aria-pressed="${OC.seg === k}">${l}</button>`).join('')}</div>` }
+/* ocRender: oc1 base + oc2 (tab «tr»: the patient treatment page) + oc2 (tab «cl»: fixed tariff rows, after every draw — also when nothing was drawn). oc3 keeps its own layer. */
+function ocRender(){(()=>{const el=$('ocRoot');if(!el||$('viewOc').hidden)return;const d=OC.d;
+  if (d && OC.seg === 'tr' && !(ROLE === 'oclin' && (!d.sel || !d.sel.length))) { el.innerHTML = ocSegBar() + oc2HTML(); oc2Post(); return }
   if(!d){el.innerHTML=ocSegBar()+'<div class="card"><p class="note">در حال بارگذاری…</p></div>';return}
   if(ROLE==='oclin'&&(!d.sel||!d.sel.length)){el.innerHTML=ocPickHTML(true);return}
-  const H={add:ocAddHTML,rep:ocRepHTML,pay:ocPayHTML,cl:ocClHTML}[OC.seg]||ocAddHTML;el.innerHTML=ocSegBar()+H();if(OC.seg==='add')ocSum()}
+  const H={add:ocAddHTML,rep:ocRepHTML,pay:ocPayHTML,cl:ocClHTML}[OC.seg]||ocAddHTML;el.innerHTML=ocSegBar()+H();if(OC.seg==='add')ocSum()})();
+  try { if (OC.seg === 'cl') oc2FixRows() } catch (e) { } }
 function ocPickHTML(first){const d=OC.d,sel=new Set(d.sel||[]);return `<div class="card oc-pick"><h2>${first?'به بخش «سایر کلینیک‌ها» خوش آمدید':'کلینیک‌های من'}</h2>
   <p class="note">کلینیک‌هایی را که در آن‌ها کار می‌کنید انتخاب کنید. موقع ثبت کار فقط همین‌ها نشان داده می‌شوند و تعرفه‌ی هر کلینیک خودکار حساب می‌شود. بعداً از «کلینیک‌ها و تعرفه‌ها» عوض می‌شود.</p>
   <div class="oc-cards">${d.clinics.filter(c=>c.active).map(c=>`<button type="button" class="oc-cc" data-ocpick="${esc(c.id)}" aria-pressed="${sel.has(c.id)||(first&&!d.sel)}"><b>${esc(c.name)}</b><small>${c.svc.some(s=>s.p)?fa(c.svc.filter(s=>s.p).length)+' خدمت با تعرفه':'تعرفه هنوز ثبت نشده'}</small></button>`).join('')}</div>

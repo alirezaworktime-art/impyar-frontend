@@ -45,7 +45,7 @@ function h9Apply(){const H=LO&&LO.h9;if(!H)return;const base=H.base.filter(isToo
     if(k.length){LO.sys=[...new Set(Object.values(X.tbrand))].join('، ');ex.push('برند هر دندان: '+k.map(t=>l6Fdi(t)+' '+X.tbrand[t]).join('، '))}
     if(X.txt)ex.push('توضیحات: '+X.txt);if(ex.length)LO.note=(String(LO.note||'')+' · '+ex.join(' · ')).slice(0,1000)}catch(e){}}
 function h9Read(){if(!LO||!LO.h9)return;document.querySelectorAll('[data-h9f]').forEach(i=>{LO.h9[i.dataset.h9f]=i.value});const d=$('lo_due');if(d){const iso=parseJ(d.value);LO.dueTxt=d.value;LO.due=iso||''}}
-(function(){const _r=loRead;loRead=function(){const r=_r.apply(this,arguments);try{h9Read();h9Apply()}catch(e){}return r}})();
+/* (loRead calls h9Read + h9Apply: finance/patient-file-extra-tabs.js) */
 /* the base / pontic chart is the prosthesis map: save it before the order (the server refuses an order without it) */
 async function h9Map(){const H=LO&&LO.h9;if(!H||!PF)return;const M={};H.base.forEach(k=>M[k]='a');H.pon.forEach(k=>M[k]='p');if(!Object.keys(M).length)return;
   const cur=(PF.j.pros||{}).map||{};if(JSON.stringify(Object.keys(cur).sort().map(k=>k+cur[k]))===JSON.stringify(Object.keys(M).sort().map(k=>k+M[k])))return;

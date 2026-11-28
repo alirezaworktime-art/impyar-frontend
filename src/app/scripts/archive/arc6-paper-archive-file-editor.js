@@ -245,7 +245,7 @@ async function a6Save(btn,ack){const S=A6,m=$('a6Msg'),td=tDay();ack=ack||{};
 /* the accountant edits the money of a paper file from its file too */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-fxarced]');if(!t||ROLE!=='accountant')return;e.preventDefault();e.stopPropagation();if(PF&&PF.j&&PF.id===t.dataset.fxarced)fxArcOpen(PF.j)},true);
 /* ---- «مالی بیماران» / payments tab: payment date (an earlier date is an earlier payment, not today's cash box) ---- */
-{const _p=pfPays;pfPays=function(j,r){let h=_p.apply(this,arguments);if(h.includes('id="pyMsg"')&&!h.includes('id="py_day"'))h=h.replace('<div class="msg" id="pyMsg"></div>',`<div class="fields"><label class="f">تاریخ پرداخت<input id="py_day" data-jd="1" placeholder="${esc(jDay(tDay()))}" value="${esc(A6PDV||jDay(tDay()))}" autocomplete="off"><small class="dhint">امروز = صندوق امروز. تاریخ گذشته = پرداخت قبلی (در صندوق امروز نمی‌آید).</small></label></div><div class="msg" id="pyMsg"></div>`);return h}}
+/* (pfPays: the payment date field — merged into finance/patient-file-extra-tabs.js) */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#pyAdd');if(!t)return;const i=$('py_day');A6PD='';if(!i)return;const v=i.value.trim(),d=v?parseJ(v):tDay(),m=$('pyMsg');
   if(!d||d>tDay()){e.preventDefault();e.stopImmediatePropagation();if(m){m.className='msg err';m.textContent=!d?'تاریخ پرداخت درست نیست.':'تاریخ پرداخت نمی‌تواند بعد از امروز باشد.'}return}if(d<tDay()){A6PD=d;setTimeout(()=>{A6PD=''},0)}},true);
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='py_day')A6PDV=e.target.value.trim()});
@@ -253,7 +253,7 @@ document.addEventListener('input',e=>{if(e.target&&e.target.id==='py_day')A6PDV=
 /* payment kind with the card reader's name in the PDF table */
 const a6PayK=p=>p.kind==='arc'&&p.meth?'پرداخت قبلی · '+(A6M[p.meth]||''):(PAY_K[p.kind]||p.kind||'—');
 /* ---- PDF of a paper file: patient, performed treatments, costs (with discount), payments ---- */
-{const _f=fullFilePDF;fullFilePDF=async function(j){try{await ensurePos()}catch(e){}const a=((j&&j.data)||{}).arc;if(!a||!a.v6)return _f.apply(this,arguments);return a6Pdf(j)}}
+/* (the paper-file branch of fullFilePDF: in finance/patch-pdf-pdf.js) */
 async function a6Pdf(j){
   try{await Promise.race([logoReady,new Promise(z=>setTimeout(z,1500))])}catch(e){}
   try{await Promise.race([Promise.all([document.fonts.load(`400 20px Vazirmatn`),document.fonts.load(`700 20px Vazirmatn`),document.fonts.load(`800 20px Vazirmatn`)]),new Promise(z=>setTimeout(z,1500))])}catch(e){}

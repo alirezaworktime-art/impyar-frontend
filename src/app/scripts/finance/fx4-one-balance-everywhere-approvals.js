@@ -13,7 +13,7 @@ const FX4_ONCE=['settleDone','fxArc','refundPay','fx4Refund','fx4RefundCancel','
 /* the patient file uses the balance the server computes (same as debtors, creditors and the payment check) */
 /* settlement: «رایگان» (waive) for a positive difference, e.g. a warranty re-implant */
 ST_K.splice(3,0,['waive','رایگان (بخشودن؛ مثلاً کاشت دوباره‌ی گارانتی)']);
-{const _sp=stPays;stPays=function(){if(typeof ST!=='undefined'&&ST&&ST.k==='waive')return [];return _sp.apply(this,arguments)}}
+/* (stPays: «رایگان» returns nothing to collect — merged into pros2-surgery-difference-settlement-consultant.js) */
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='fx4_wv'){const n=mnum(t.value);t.value=n?fa(n):''}});
 /* tasks: «تأیید ادامه با پرداخت ناقص» for reception */
 Object.assign(TLBL,{payok:['تأیید ادامه با پرداخت ناقص','پزشک می‌خواهد کار را ادامه دهد ولی پرداخت بیمار طبق قرار کامل نیست. با بیمار هماهنگ کنید؛ اگر ادامه مجاز است دلیل را ثبت کنید تا پزشک دوباره بزند.']});Object.assign(TGRP,{payok:'fl'});

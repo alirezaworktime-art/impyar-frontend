@@ -104,10 +104,4 @@ function m61HoldList(){const v=$('viewPday');if(!v)return;let b=$('m61Hl');const
   b.hidden=!L.length;b.innerHTML=L.length?`<div class="qhead"><h2>منتظر معاینه‌ی جراح <small class="note">${fa(L.length)} بیمار</small></h2></div><div class="list">${L.map(x=>`<div class="item"><div class="row1"><div><span class="nm">${esc(x.name)}</span><div class="meta">مشکل ایمپلنت ${esc(toothTxt(x.hold.teeth||[]))}${x.hold.by?' · ارجاع '+esc(x.hold.by):''}</div></div><span class="pill wait">منتظر جراح</span></div><div class="acts" data-m61d="1"><button class="btn sm" type="button" data-m61hold="${esc(x.id)}" data-m61n="${esc(x.name)}">معاینه و نظر جراح</button></div></div>`).join('')}</div>`:''}
 /* lab order while waiting for the surgeon */
 window.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-m58lab]');if(!t)return;const x=(PD.pros||[]).find(p=>p.id===t.dataset.m58lab);if(x&&x.hold){e.stopImmediatePropagation();e.preventDefault();toast('این بیمار منتظر معاینه‌ی جراح است؛ بعد از نظر جراح سفارش بدهید.',1)}},true);
-/* PDF of the file: the stage of every tooth, the next step, the surgeon */
-(function(){const _f=ffProsBlocks;ffProsBlocks=function(j){const B=_f.apply(this,arguments);try{const pr=j.pros||{},L=[];
-  if(pr.ts&&Object.keys(pr.ts).length)L.push('مرحله‌ی دندان‌ها: '+Object.keys(pr.ts).map(k=>toothTxt([k])+' '+(PSTN[pr.ts[k]]||pr.ts[k])).join('، '));
-  if(pr.hold)L.push('منتظر معاینه‌ی جراح — '+toothTxt(pr.hold.teeth||[]));
-  (pr.holds||[]).forEach(h=>L.push('معاینه‌ی جراح '+jd(h.end)+' ('+(h.decBy||'')+'): '+({ok:'مشکلی ندارد',stop:'توقف تا کاشت دوباره',pon:'پونتیک',wo:'بدون دندان'}[h.dec]||h.dec)+' — '+toothTxt(h.teeth||[])));
-  if(pr.nxt)L.push('مرحله‌ی بعد: '+(M61N[pr.nxt.st]||pr.nxt.st)+' — '+jd(pr.nxt.day+'T12:00:00Z'));
-  if(L.length)B.push(textBlock('ادامه درمان',L))}catch(e){}return B}})();
+/* PDF of the file: the stage of every tooth, the next step, the surgeon — in ffProsBlocks, finance/patch-pdf-pdf.js */

@@ -1,6 +1,7 @@
 /* ---------- pos: which card reader received the money ---------- */
 let POSL=null,POSP=null;
-function ensurePos(force){if(POSL&&!force)return Promise.resolve(POSL);if(POSP&&!force)return POSP;
+/* ensurePos: base + m28 (roles without access to the card-reader list never ask the server: an empty list) */
+function ensurePos(force){try{if(!['consultant','staff','manager','accountant'].includes(ROLE)){POSL=POSL||[];return Promise.resolve(POSL)}}catch(e){}if(POSL&&!force)return Promise.resolve(POSL);if(POSP&&!force)return POSP;
   POSP=api('posList').then(j=>{POSL=j.items||[];POSP=null;return POSL}).catch(()=>{POSP=null;POSL=POSL||[];return POSL});return POSP}
 const posName=id=>{const p=(POSL||[]).find(x=>x.id===id);return p?p.name:''};
 const posKind=v=>v==='cash'?'cash':'card',posId=v=>v&&v!=='cash'&&v!=='xfer'?v:'';

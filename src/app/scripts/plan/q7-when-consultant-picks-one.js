@@ -20,8 +20,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 {const _r=recalc;recalc=function(){const r=_r.apply(this,arguments);try{q7RefCard()}catch(e){}return r}}
 /* plan-later skips the «which plan?» sheet at the final confirmation */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#confirmBtn');if(!t||ROLE!=='consultant'||!q7PL()||t.dataset.picked)return;t.dataset.picked='1';setTimeout(()=>{try{delete t.dataset.picked}catch(x){}},0)},true);
-/* the «which plan?» sheet also offers «پذیرش روز جراحی انتخاب می‌کند» */
-{const _p=pkRender;pkRender=function(){const r=_p.apply(this,arguments);try{if(ROLE==='consultant'){const b=$('pkSheet').querySelector('.btns');if(b&&!b.querySelector('#q7Later'))b.insertAdjacentHTML('afterbegin','<button class="btn ghost" id="q7Later" type="button">پذیرش روز جراحی انتخاب می‌کند</button>')}}catch(e){}return r}}
+/* the «which plan?» sheet also offers «پذیرش روز جراحی انتخاب می‌کند» (its button: in pkRender, finance/fin2.js) */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#q7Later');if(!t||!F||!F.pay)return;e.preventDefault();F.pay.plater=1;touch();$('pkSheet').hidden=true;const b=PK.btn;if(b){b.dataset.picked='1';b.click();delete b.dataset.picked}},true);
 /* (3) reception: plan sheet before the brand sheet */
 function q7PlanSheet(snap){const id=snap.id,all=[{no:1,s:snap.s}].concat(((snap.sx&&snap.sx.length)?snap.sx:(snap.s2?[snap.s2]:[])).map((s,i)=>({no:i+2,s})));

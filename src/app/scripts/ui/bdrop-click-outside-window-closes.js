@@ -18,6 +18,5 @@ document.addEventListener('pointerdown',e=>{BD.down=e.target&&e.target.classList
 document.addEventListener('click',e=>{const sh=e.target;if(!sh||!sh.classList||!sh.classList.contains('sheet')||sh.hidden||BD.down!==sh)return;BD.down=null;
   const kept=bdSaveDraft(sh);bdClose(sh);if(kept)toast('پنجره بسته شد؛ نوشته‌ها موقت نگه داشته شد و با باز کردن دوباره برمی‌گردد.')});
 /* the lab order form inside the patient file */
-(function(){const _o=openFile;openFile=async function(id){const r=await _o.apply(this,arguments);const d=BD.lo.get(id);
-  if(d&&PF&&PF.id===id&&!LO&&Date.now()-d.at<3*3600e3){BD.lo.delete(id);LO=d.LO;if(typeof LOF!=='undefined')LOF=d.LOF;PF.tab='pros';renderFile();toast('دستور کار نیمه‌کاره‌ی لابراتوار برگردانده شد.')}return r}})();
+/* (its restore when the file opens: in openFile, finance/patient-file-timeline.js) */
 

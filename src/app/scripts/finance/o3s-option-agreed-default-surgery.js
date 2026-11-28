@@ -2,7 +2,7 @@
 const o3sCash=(r,S)=>Math.round((Number(S)||0)*pl10Pct(r)/100/1e5)*1e5;
 const o3sRest=(S,P,C)=>`مانده ${fa(Math.max(0,S+P-C))} بدون چک، هر زمان و هر مبلغ تا روز قالب‌گیری`;
 /* reception's collection sheet + everything that reads chqFor: before and after surgery only pct% of the surgery part is asked */
-{const _c=chqFor;chqFor=function(r){const o=_c.apply(this,arguments);try{if(pl10O3(r)){const C=Math.min(o.S,o3sCash(r,o.S));return Object.assign({},o,{cash:C,cashS:C,cashP:0,disc:0,chq:[]})}}catch(e){}return o}}
+/* (chqFor: merged into finance/fin2.js) */
 {const _c=cashFor;cashFor=function(r,S,P){try{if(pl10O3(r))return o3sCash(r,S)}catch(e){}return _c.apply(this,arguments)}}
 {const _p=payText;payText=function(r,brand){const o=_p.apply(this,arguments);try{if(pl10O3(r)){const T=totals(r),b=brand||effBrand(r),S=T.surg[b]||0,P=T.pros||0,C=o3sCash(r,S);return {surg:`${fa(pl10Pct(r))}٪ پارت جراحی نقد قبل از جراحی: ${fa(C)}`,pros:o3sRest(S,P,C)}}}catch(e){}return o}}
 /* the consultant's form: the % field and its note */

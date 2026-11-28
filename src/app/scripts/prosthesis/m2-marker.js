@@ -76,9 +76,7 @@ window.addEventListener('click', e => { const t = e.target && e.target.closest &
     for (const l of S.lines.filter(x => M2_AX[x.k])) { if (!l.teeth.length && !num(l.n)) return err(a6Lab(l) + ': دندان‌های پایه را بزنید.', `.a6l[data-l="${l.id}"]`);
       if (o !== 'p') { const miss = arbMiss(l); if (miss.length) return err(a6Lab(l) + ': برای پایه‌ی ' + toothTxt(miss) + ' برند، قطر و طول را انتخاب کنید (روی دندان بزنید).', `[data-arbt="${miss[0]}"][data-l="${l.id}"]`) } } } catch (e) {}
   return _s.apply(this, arguments) } }
-{ const _a = api; api = function (action, payload) { try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) { payload.arc.only = m2Only();
-    payload.arc.lines = (payload.arc.lines || []).map(x => { const l = M2_AX[x.k] && A6.lines.find(y => y.id === x.id); if (!l) return x;
-      return Object.assign({}, x, { teeth: l.teeth.slice(), imp: Object.fromEntries(l.teeth.map(t => { const m = (l.imp || {})[t] || {}; return [t, Object.assign({ b: m.b || '', d: m.d || '', l: m.l || '' }, m.f ? { f: 1 } : {})] })), jn: m2Units(l), price: m2Only() === 'i' ? 0 : x.price }) }) } } catch (e) {} return _a.apply(this, arguments) } }
+/* (fxArc lines of All on X / overdenture: in the api layer further down) */
 /* ---- «فیل اولیه» (owner 2026-11-10): per tooth, in the brand / size window of «پایه ایمپلنت», All on X and overdenture; its tariff is a box of the session (default = the brand tariff) ---- */
 const m3F = (l, t) => !!(((l && l.imp) || {})[t] || {}).f;
 const m3Nf = l => (l.teeth || []).filter(t => m3F(l, t)).length;
@@ -97,4 +95,8 @@ document.addEventListener('input', e => { const i = e.target; if (!i || !i.datas
   try { m2Sync() } catch (x) {} const a = document.querySelector(`[data-arbamt="${l.id}"]`); if (a) a.textContent = fa(arbAmt(l)); try { m2Tot() } catch (x) {} try { a6MoneyLite() } catch (x) {} });
 /* file box and PDF */
 { const _b = arbBr; arbBr = function (l, html) { const s = _b.apply(this, arguments); try { const F = (l.teeth || []).filter(t => m3F(l, t)); if (!F.length || !s) return s; const add = ' — فیل اولیه: ' + toothTxt(F); return html ? s.replace(/\)$/, esc(add) + ')') : s.replace(/\)$/, add + ')') } catch (e) { return s } } }
-{ const _a = api; api = function (action, payload) { try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) payload.arc.lines = (payload.arc.lines || []).map(x => { const l = A6.lines.find(y => y.id === x.id); return l && l.fp != null && l.fp !== '' && m3Nf(l) ? Object.assign({}, x, { fp: l.fp }) : x }) } catch (e) {} return _a.apply(this, arguments) } }
+/* api, fxArc of a paper file only (m2, two layers in one): first the failed-implant tariff (fp) goes with its line, then the session «only» flag and the All on X / overdenture lines (teeth, implants, units, price) */
+{ const _a = api; api = function (action, payload) { try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) payload.arc.lines = (payload.arc.lines || []).map(x => { const l = A6.lines.find(y => y.id === x.id); return l && l.fp != null && l.fp !== '' && m3Nf(l) ? Object.assign({}, x, { fp: l.fp }) : x }) } catch (e) {}
+  try { if (action === 'fxArc' && payload && payload.arc && payload.arc.v6 && A6) { payload.arc.only = m2Only();
+    payload.arc.lines = (payload.arc.lines || []).map(x => { const l = M2_AX[x.k] && A6.lines.find(y => y.id === x.id); if (!l) return x;
+      return Object.assign({}, x, { teeth: l.teeth.slice(), imp: Object.fromEntries(l.teeth.map(t => { const m = (l.imp || {})[t] || {}; return [t, Object.assign({ b: m.b || '', d: m.d || '', l: m.l || '' }, m.f ? { f: 1 } : {})] })), jn: m2Units(l), price: m2Only() === 'i' ? 0 : x.price }) }) } } catch (e) {} return _a.apply(this, arguments) } }

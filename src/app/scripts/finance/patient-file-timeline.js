@@ -1,7 +1,12 @@
 /* ---------- patient file (timeline) ---------- */
 let PF=null;
-async function openFile(id,name,tab,lab){EVF='all';setTimeout(()=>{if(PF&&PF.id===id){PF.ev=null;pfHistLoad()}},50);if(['consultant','staff','manager','accountant'].includes(ROLE))ensurePos();LO=null;PYF={kind:'cash',part:'s'};const sh=$('pfSheet');$('pfTitle').textContent='پرونده‌ی '+(name||'بیمار');$('pfBody').innerHTML='<div class="empty">در حال بارگذاری…</div>';$('pfActs').innerHTML='';sh.hidden=false;
-  try{const j=await api('get',{id},{timeout:12000});PF={id,j,tab:tab||'tl'};if(lab&&canLab()&&j.pros&&j.pros.stage==='impr')loInit(j);renderFile()}catch(e){$('pfBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+/* openFile: base + bdrop (a half-written lab order of this file comes back) + psess (no prosthesis session stays open) + ux6 (opening on «pay» opens the payments).
+   The base runs as an inner async step that is awaited, as bdrop awaited it. up2, pk3, m54a and m58b keep their own layers (later scripts). */
+async function openFile(id,name,tab,lab){if(tab==='pay'&&id)UX6.pay[id]=Object.assign({},UX6.pay[id],{open:true});L5=null;
+  const r=await (async()=>{EVF='all';setTimeout(()=>{if(PF&&PF.id===id){PF.ev=null;pfHistLoad()}},50);if(['consultant','staff','manager','accountant'].includes(ROLE))ensurePos();LO=null;PYF={kind:'cash',part:'s'};const sh=$('pfSheet');$('pfTitle').textContent='پرونده‌ی '+(name||'بیمار');$('pfBody').innerHTML='<div class="empty">در حال بارگذاری…</div>';$('pfActs').innerHTML='';sh.hidden=false;
+  try{const j=await api('get',{id},{timeout:12000});PF={id,j,tab:tab||'tl'};if(lab&&canLab()&&j.pros&&j.pros.stage==='impr')loInit(j);renderFile()}catch(e){$('pfBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}})();
+  const d=BD.lo.get(id);
+  if(d&&PF&&PF.id===id&&!LO&&Date.now()-d.at<3*3600e3){BD.lo.delete(id);LO=d.LO;if(typeof LOF!=='undefined')LOF=d.LOF;PF.tab='pros';renderFile();toast('دستور کار نیمه‌کاره‌ی لابراتوار برگردانده شد.')}return r}
 function renderFile(){if(!PF)return;const {id,j}=PF,r=fromDoc(id,j.data||{}),h=r.h||{},sg=j.surg||{},ses=sg.sessions||[],tasks=j.tasks||[],price=ROLE==='consultant'||ROLE==='staff'||ROLE==='manager'||ROLE==='accountant';
   $('pfTitle').textContent='پرونده‌ی '+(h.name||'بیمار');
   const head=`<div class="pf-head">${j.photo?`<img class="sgphoto" src="${esc(j.photo)}" alt="">`:'<div class="sgphoto pf-noimg">بدون عکس</div>'}<div class="kv">
